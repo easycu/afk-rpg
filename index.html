@@ -281,13 +281,12 @@ body {
 let db, vocabulary = [], isDBReady = false;
 let rpgData = { stage: 1, subStage: 1, atk: 10, aspd: 1.0, crit: 5, cdmg: 150, combo: 0 };
 
-// [사용자 파일 설정]
-// GitHub 저장소에 이 이름으로 파일을 업로드하세요.
+// [사용자 로컬 파일 설정]
+// GitHub에 올린 파일 이름과 똑같아야 합니다!
 const HERO_IDLE_URL = "./hero.gif";     // 대기 모션
 const HERO_ATTACK_URL = "./attack.gif"; // 공격 모션
 
-// 몬스터는 여전히 다양성을 위해 PokeAPI를 사용하지만,
-// 원하신다면 monster.gif 등을 업로드해서 고정할 수도 있습니다.
+// 몬스터 베이스 URL (PokeAPI)
 const SPRITE_BASE_URL = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/";
 
 const MONSTER_POOLS = {
@@ -303,9 +302,12 @@ window.onload = function() {
     // 영웅 초기 이미지 로드
     const heroImg = document.getElementById('hero-img');
     heroImg.src = HERO_IDLE_URL;
-
-    // [중요] 만약 구한 이미지가 '왼쪽'을 보고 있다면 아래 주석(//)을 지우세요.
-    // heroImg.style.transform = "scaleX(-1)"; 
+    
+    // 로딩 실패 시 에러 메시지
+    heroImg.onerror = function() {
+        this.style.display = 'none';
+        this.parentElement.innerHTML += "<div style='color:red; font-size:0.7rem; text-align:center;'>GIF 파일<br>업로드<br>확인필요</div>";
+    };
 };
 
 function showToast(msg) { 
@@ -414,10 +416,9 @@ function heroAttack() {
     hImg.src = HERO_ATTACK_URL;
     hPos.style.zIndex = 20; 
     
-    // [애니메이션 조정]
-    // 본인이 구한 이미지 크기에 맞춰 scale(1.0) 숫자를 조절하세요.
-    // translateX(20px)는 오른쪽으로 20px만큼 돌진하는 효과입니다.
-    hImg.style.transform = "scale(1.0) translateX(20px)"; 
+    // [애니메이션 미세 조정]
+    // 다운받으신 이미지는 크기가 좀 작을 수 있어서 2.0배로 키웠습니다.
+    hImg.style.transform = "scale(2.0) translateX(10px)"; 
 
     // 데미지 타이밍
     setTimeout(() => {
@@ -431,8 +432,7 @@ function heroAttack() {
     setTimeout(() => {
          hImg.src = HERO_IDLE_URL;
          hPos.style.zIndex = 10;
-         // 복귀 시 transform 초기화
-         hImg.style.transform = "scale(1.0) translateX(0)"; 
+         hImg.style.transform = "scale(2.0) translateX(0)"; 
     }, 600);
 }
 
@@ -640,33 +640,6 @@ function applyCrop() {
     const res=c.toDataURL('image/jpeg',0.8); 
     if(currentCropTarget==='question') { document.getElementById('preview-q-img').src=res; document.getElementById('preview-q-img').style.display='block'; }
     closeCrop(); 
-}
-function rotateImage() { showToast("회전: 추후 지원"); }
-
-function toggleAddMode(mode) { 
-    document.getElementById('add-text-box').style.display = mode==='text'?'block':'none'; 
-    document.getElementById('add-image-box').style.display = mode==='image'?'block':'none'; 
-}
-function toggleExcel() { const e=document.getElementById('excel-area'); e.style.display = e.style.display==='none'?'block':'none'; }
-function addTextWord() { 
-    const q=document.getElementById('new-q').value.trim(), a=document.getElementById('new-a').value.trim(), d=document.getElementById('new-desc').value.trim();
-    if(q&&a) saveToDB({type:'text',q,a,desc:d,wrongCount:0}, ()=>{ showToast("등록됨!"); document.getElementById('new-q').value=""; document.getElementById('new-a').value=""; }); 
-}
-function addImageWord() {
-    const src=document.getElementById('preview-q-img').src, a=document.getElementById('img-a').value.trim(), d=document.getElementById('img-desc').value.trim();
-    if(src && src.length>100 && a) saveToDB({type:'image',q:src,qText:'',a,desc:d,wrongCount:0}, ()=>{ showToast("이미지 등록됨!"); closeCrop(); });
-}
-function renderWordList() { 
-    const l=document.getElementById('word-list'); 
-    l.innerHTML = vocabulary.length===0 ? "<div style='padding:20px; text-align:center; color:#888;'>데이터가 없습니다.</div>" 
-    : vocabulary.slice().reverse().map(v=>`<div class="list-item" style="border-bottom:1px solid #ddd; padding:10px; display:flex; align-items:center;">
-    <input type="checkbox" class="chk-del" value="${v.id}" style="margin-right:10px; transform:scale(1.5);">
-    <div>${v.type==='image'?'<span style="color:blue">[IMAGE]</span>':v.q}<br><small style="color:#666">${v.a}</small></div>
-    </div>`).join(''); 
-}
-function deleteSelected() { 
-    const c=document.querySelectorAll('.chk-del:checked'); 
-    if(c.length>0 && confirm(c.length+"개 삭제하시겠습니까?")) deleteFromDB(Array.from(c).map(e=>Number(e.value))); 
 }
 function triggerCamera(target) { currentCropTarget=target; document.getElementById('camera-input').click(); }
 function parseExcel() {
