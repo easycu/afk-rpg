@@ -281,23 +281,31 @@ body {
 let db, vocabulary = [], isDBReady = false;
 let rpgData = { stage: 1, subStage: 1, atk: 10, aspd: 1.0, crit: 5, cdmg: 150, combo: 0 };
 
-// 몬스터 스프라이트 (경로 수정됨)
-// 5세대(블랙/화이트) 움직이는 도트 사용
+// [사용자 파일 설정]
+// GitHub 저장소에 이 이름으로 파일을 업로드하세요.
+const HERO_IDLE_URL = "./hero.gif";     // 대기 모션
+const HERO_ATTACK_URL = "./attack.gif"; // 공격 모션
+
+// 몬스터는 여전히 다양성을 위해 PokeAPI를 사용하지만,
+// 원하신다면 monster.gif 등을 업로드해서 고정할 수도 있습니다.
 const SPRITE_BASE_URL = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/";
 
 const MONSTER_POOLS = {
-    forest: ["1", "10", "13", "16", "19", "29", "32", "43", "69"], // 이상해씨, 캐터피, 모다피 등
-    desert: ["4", "27", "37", "50", "74", "95", "104", "111"], // 파이리, 모래두지, 꼬마돌 등
-    dungeon: ["92", "93", "94", "109", "88", "132", "149", "90"] // 고오스, 또가스, 메타몽 등
+    forest: ["1", "10", "13", "16", "19", "29", "32", "43", "69"], 
+    desert: ["4", "27", "37", "50", "74", "95", "104", "111"], 
+    dungeon: ["92", "93", "94", "109", "88", "132", "149", "90"]
 };
 
 window.onload = function() { 
     initDB(); 
     loadRPGData(); 
-    // 영웅 이미지 로드 확인 및 폴백
-    const hero = document.getElementById('hero-img');
-    hero.onerror = function() { this.src = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png"; }; // 에러시 정지 이미지
-    hero.src = SPRITE_BASE_URL + "25.gif"; // 피카츄
+    
+    // 영웅 초기 이미지 로드
+    const heroImg = document.getElementById('hero-img');
+    heroImg.src = HERO_IDLE_URL;
+
+    // [중요] 만약 구한 이미지가 '왼쪽'을 보고 있다면 아래 주석(//)을 지우세요.
+    // heroImg.style.transform = "scaleX(-1)"; 
 };
 
 function showToast(msg) { 
@@ -339,7 +347,6 @@ function updateStatUI() {
     document.getElementById('stat-crit').innerText = rpgData.crit.toFixed(1) + "%";
     document.getElementById('stat-cdmg').innerText = rpgData.cdmg + "%";
     document.getElementById('stat-combo').innerText = rpgData.combo;
-    
     document.getElementById('ui-stage').innerText = `STAGE ${rpgData.stage}-${rpgData.subStage}`;
 }
 
@@ -361,76 +368,86 @@ function initBattle() {
             showDamageText("TIME OVER!", true);
             showToast("시간 초과! 스테이지 초기화");
             setTimeout(() => {
-                rpgData.subStage = 1; timeLeft = 30;
-                saveRPGData(); initBattle(); 
+                rpgData.subStage = 1; 
+                timeLeft = 30;
+                updateStatUI(); 
+                saveRPGData(); 
+                initBattle(); 
             }, 1500);
         }
     }, 100);
 }
 
 function spawnMonster() {
-    isBoss = (rpgData.subStage === 5); // 5스테이지마다 보스
+    isBoss = (rpgData.subStage === 5); 
     const themes = ['forest', 'desert', 'dungeon'];
     const th = themes[Math.floor((rpgData.stage-1)/5)%3];
     
-    // 배경 교체
     const vp = document.getElementById('battle-viewport');
     vp.className = ""; vp.classList.add('bg-'+th);
 
-    // 몬스터 이미지 교체
     const pool = MONSTER_POOLS[th];
     const id = pool[Math.floor(Math.random()*pool.length)];
-    // 보스일 경우 뮤츠(150)
     const targetId = isBoss ? "150" : id;
     const monSrc = SPRITE_BASE_URL + targetId + ".gif";
     
     const monImg = document.getElementById('mon-img');
     monImg.style.opacity = 0;
     
-    // 이미지 로드 실패 시 처리 (엑스박스 방지)
     monImg.onerror = function() { 
-        this.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${targetId}.png`; // 움직이지 않는 버전으로 대체
+        this.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${targetId}.png`; 
     };
     
-    // 부드러운 전환
     setTimeout(()=>{ monImg.src = monSrc; monImg.style.opacity = 1; }, 200);
 
-    // HP 설정
     let hp = 100 * Math.pow(1.1, rpgData.stage-1) * (1 + rpgData.subStage * 0.2);
     if(isBoss) hp *= 3;
     maxMonHP = Math.floor(hp); currentMonHP = maxMonHP;
-    updateHPUI(true); // 즉시 갱신
+    updateHPUI(true);
 }
 
 function heroAttack() {
-    // 영웅 공격 모션
-    const h = document.getElementById('hero-pos');
-    h.style.transform = "translateX(20px)";
-    setTimeout(()=> h.style.transform = "translateX(0)", 100);
+    const hImg = document.getElementById('hero-img');
+    const hPos = document.getElementById('hero-pos');
 
-    // 데미지 계산
+    // 공격 모션으로 교체
+    hImg.src = HERO_ATTACK_URL;
+    hPos.style.zIndex = 20; 
+    
+    // [애니메이션 조정]
+    // 본인이 구한 이미지 크기에 맞춰 scale(1.0) 숫자를 조절하세요.
+    // translateX(20px)는 오른쪽으로 20px만큼 돌진하는 효과입니다.
+    hImg.style.transform = "scale(1.0) translateX(20px)"; 
+
+    // 데미지 타이밍
     setTimeout(() => {
         let dmg = rpgData.atk;
         let isCrit = Math.random()*100 < rpgData.crit;
         if(isCrit) dmg *= (rpgData.cdmg/100);
         hitMonster(Math.floor(dmg), isCrit);
-    }, 100);
+    }, 200);
+
+    // 복귀 (0.6초 후 대기 모션)
+    setTimeout(() => {
+         hImg.src = HERO_IDLE_URL;
+         hPos.style.zIndex = 10;
+         // 복귀 시 transform 초기화
+         hImg.style.transform = "scale(1.0) translateX(0)"; 
+    }, 600);
 }
 
 function hitMonster(dmg, isCrit) {
     currentMonHP = Math.max(0, currentMonHP - dmg);
-    updateHPUI(); // 애니메이션 갱신
+    updateHPUI(); 
 
-    // 몬스터 피격 효과
     const m = document.getElementById('mon-img');
-    m.style.filter = "brightness(5) sepia(1) hue-rotate(-50deg)"; // 번쩍임
-    m.style.transform = "translateX(5px)";
+    m.style.filter = "brightness(5) sepia(1) hue-rotate(-50deg)"; 
+    m.style.transform = "translateX(8px)";
     setTimeout(() => {
-        m.style.filter = "drop-shadow(4px 4px 0 rgba(0,0,0,0.5))"; // 원상복구
+        m.style.filter = "drop-shadow(4px 4px 0 rgba(0,0,0,0.5))"; 
         m.style.transform = "translateX(0)";
     }, 100);
 
-    // 화면 흔들림 (치명타 시)
     if(isCrit) shakeScreen();
     showDamageText(dmg, isCrit);
     
@@ -473,7 +490,7 @@ function updateHPUI(instant = false) {
         delay.style.transition = 'none';
         delay.style.width = pct + '%';
     } else {
-        delay.style.transition = 'width 0.5s ease-out 0.2s'; // 0.2초 뒤에 따라감
+        delay.style.transition = 'width 0.5s ease-out 0.2s'; 
         delay.style.width = pct + '%';
     }
 }
@@ -487,7 +504,6 @@ function showDamageText(dmg, isCrit) {
     const el = document.createElement('div');
     el.className = isCrit ? 'dmg-text dmg-crit' : 'dmg-text';
     el.innerText = dmg;
-    // 위치 랜덤화
     const left = 50 + (Math.random()*20 - 10);
     const top = 30 + (Math.random()*20 - 10);
     el.style.left = left+'%'; el.style.top = top+'%';
@@ -499,7 +515,7 @@ function showDamageText(dmg, isCrit) {
 function shakeScreen() {
     const vp = document.getElementById('battle-viewport');
     vp.classList.remove('shake-effect');
-    void vp.offsetWidth; // 리플로우 강제
+    void vp.offsetWidth; 
     vp.classList.add('shake-effect');
 }
 
@@ -545,7 +561,6 @@ function checkAnswer() {
 
     if (isCorrect) {
         rpgData.combo++;
-        // 콤보 보너스
         let mult = 1;
         if(rpgData.combo % 5 === 0) { mult = 3; showDamageText("COMBO BONUS!", true); }
         
@@ -553,8 +568,8 @@ function checkAnswer() {
         
         if (currentQuiz.wrongCount > 0) { currentQuiz.wrongCount--; saveToDB(currentQuiz); }
         
-        // 정답 시 즉시 강력한 공격 트리거
-        heroAttack(); heroAttack(); 
+        // 정답 시 즉시 강력한 공격
+        heroAttack(); setTimeout(heroAttack, 300); 
         
         fb.innerText = "EXCELLENT!"; fb.style.color = "var(--success)";
         setTimeout(nextQuiz, 200);
@@ -562,7 +577,7 @@ function checkAnswer() {
         rpgData.combo = 0;
         fb.innerHTML = `답: ${currentQuiz.a} <small>(${currentQuiz.desc||''})</small>`;
         fb.style.color = "var(--danger)";
-        shakeScreen(); // 오답 시 화면 흔들림
+        shakeScreen(); 
         
         currentQuiz.wrongCount = (currentQuiz.wrongCount || 0) + 1;
         saveToDB(currentQuiz);
@@ -572,7 +587,6 @@ function checkAnswer() {
 }
 
 function applyStatGrowth(mult) {
-    // 팝업 애니메이션 리셋
     document.querySelectorAll('.pop-stat').forEach(el => {
         el.style.animation = 'none'; void el.offsetWidth; el.style.animation = 'popUp 0.8s forwards';
     });
