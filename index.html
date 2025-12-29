@@ -281,10 +281,10 @@ body {
 let db, vocabulary = [], isDBReady = false;
 let rpgData = { stage: 1, subStage: 1, atk: 10, aspd: 1.0, crit: 5, cdmg: 150, combo: 0 };
 
-// [긴급 수정] 파일 업로드 없이 바로 보이도록 온라인 주소로 연결했습니다.
-// (Itch.io의 rvros님 무료 에셋 GIF 주소 직접 연결)
-const HERO_IDLE_URL = "https://img.itch.zone/aW1nLzEzNTcyMDUuZ2lm/original/7h%2B%2BqA.gif";     // 대기 모션
-const HERO_ATTACK_URL = "https://img.itch.zone/aW1nLzEzNTcyMDguZ2lm/original/dfS%2B8%2B.gif";  // 공격 모션
+// [사용자 로컬 파일 설정]
+// GitHub에 올린 파일 이름과 똑같아야 합니다!
+const HERO_IDLE_URL = "./hero.gif";     // 대기 모션
+const HERO_ATTACK_URL = "./attack.gif"; // 공격 모션
 
 // 몬스터 베이스 URL (PokeAPI)
 const SPRITE_BASE_URL = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/";
@@ -303,10 +303,10 @@ window.onload = function() {
     const heroImg = document.getElementById('hero-img');
     heroImg.src = HERO_IDLE_URL;
     
-    // 혹시라도 온라인 이미지가 로드 안 될 경우 대비
+    // 로딩 실패 시 에러 메시지
     heroImg.onerror = function() {
         this.style.display = 'none';
-        this.parentElement.innerHTML += "<div style='color:red; font-size:0.7rem;'>이미지<br>로딩<br>실패</div>";
+        this.parentElement.innerHTML += "<div style='color:red; font-size:0.7rem; text-align:center;'>GIF 파일<br>업로드<br>확인필요</div>";
     };
 };
 
@@ -417,8 +417,8 @@ function heroAttack() {
     hPos.style.zIndex = 20; 
     
     // [애니메이션 미세 조정]
-    // rvros 에셋 크기 맞춤 (1.5배, 오른쪽 이동)
-    hImg.style.transform = "scale(1.5) translateX(20px)"; 
+    // 다운받으신 이미지는 크기가 좀 작을 수 있어서 2.0배로 키웠습니다.
+    hImg.style.transform = "scale(2.0) translateX(10px)"; 
 
     // 데미지 타이밍
     setTimeout(() => {
@@ -432,7 +432,7 @@ function heroAttack() {
     setTimeout(() => {
          hImg.src = HERO_IDLE_URL;
          hPos.style.zIndex = 10;
-         hImg.style.transform = "scale(1.5) translateX(0)"; 
+         hImg.style.transform = "scale(2.0) translateX(0)"; 
     }, 600);
 }
 
