@@ -30,10 +30,16 @@ body {
     flex-direction: column; 
 }
 
-/* [2. CRT 모니터 효과 (눈 아픈 격자 제거됨, 비네팅만 유지)] */
+/* [2. CRT 모니터 효과 (레트로 필터 - 격자무늬 제거됨)] */
 #crt-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;
-    box-shadow: inset 0 0 80px rgba(0,0,0,0.7); /* 화면 테두리를 어둡게 하여 몰입감 증대 */
+    /* 스캔라인 효과 제거 */
+    /*
+    background: linear-gradient(rgba(18, 16, 19, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    background-size: 100% 4px, 6px 100%;
+    */
+    box-shadow: inset 0 0 60px rgba(0,0,0,0.7); /* 비네팅(모서리 어둡게) 효과만 유지 */
 }
 
 /* [3. 공통 UI 컴포넌트] */
@@ -76,6 +82,7 @@ body {
 #battle-viewport {
     flex: 1; position: relative; overflow: hidden;
     background: #000; display: flex; justify-content: center; align-items: flex-end;
+    /* transition: background 1s; */ /* 배경 전환 부드럽게 */
 }
 /* 테마별 배경색 (이미지가 없을 때를 대비한 픽셀 아트풍 그라데이션) */
 .bg-forest { background: linear-gradient(to bottom, #3498db 0%, #85c1e9 50%, #2ecc71 50%, #27ae60 100%) !important; }
@@ -156,10 +163,10 @@ body {
         <div id="top-hud">
             <div>
                 <div class="stage-badge" id="ui-stage">STAGE 1-1</div>
-                <div style="font-size:0.7rem; color:#888; letter-spacing:1px;">BATTLE FIELD</div>
+                <div style="font-size:0.8rem; color:#777;">BATTLE FIELD</div>
             </div>
             <div class="timer-container">
-                <span id="ui-timer-text" style="color:var(--accent); font-weight:bold; font-size:1.1rem;">30.0s</span>
+                <span id="ui-timer-text" style="color:#f1c40f; font-weight:bold;">30.0s</span>
                 <div class="timer-bar-bg">
                     <div id="ui-timer-bar" class="timer-bar-fill"></div>
                 </div>
@@ -170,7 +177,7 @@ body {
             <div id="fx-layer" style="position:absolute; width:100%; height:100%; pointer-events:none; z-index:50;"></div>
             
             <div id="hero-pos" class="unit-container">
-                <img id="hero-img" class="sprite" alt="Hero">
+                <img id="hero-img" class="sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v-black-white/animated/25.gif" alt="Hero">
             </div>
 
             <div id="mon-pos" class="unit-container">
@@ -178,34 +185,34 @@ body {
                     <div id="mon-hp-delay" class="hp-delay"></div>
                     <div id="mon-hp-fill" class="hp-fill"></div>
                 </div>
-                <img id="mon-img" class="sprite" alt="Monster">
+                <img id="mon-img" class="sprite" src="" alt="Monster">
             </div>
         </div>
 
         <div id="control-panel" class="pixel-panel">
             <div id="stat-ticker">
-                <span class="stat-item">⚔️ATK <span id="stat-atk" class="stat-val">10</span><span id="pop-atk" class="pop-stat"></span></span>
-                <span class="stat-item">🏹SPD <span id="stat-aspd" class="stat-val">1.00</span><span id="pop-aspd" class="pop-stat"></span></span>
-                <span class="stat-item">⚡CRI <span id="stat-crit" class="stat-val">5.0%</span><span id="pop-crit" class="pop-stat"></span></span>
-                <span class="stat-item">💥CDM <span id="stat-cdmg" class="stat-val">150%</span><span id="pop-cdmg" class="pop-stat"></span></span>
-                <span class="stat-item" style="border-left:1px solid #444; padding-left:10px;">🔥COMBO <span id="stat-combo" class="stat-val" style="color:var(--accent)">0</span></span>
+                <span class="stat-item">⚔️ATK <span id="stat-atk" class="stat-val">10</span><span id="pop-atk" class="pop-stat">+3</span></span>
+                <span class="stat-item">🏹SPD <span id="stat-aspd" class="stat-val">1.0</span><span id="pop-aspd" class="pop-stat">+0.01</span></span>
+                <span class="stat-item">⚡CRI <span id="stat-crit" class="stat-val">5%</span><span id="pop-crit" class="pop-stat">+1%</span></span>
+                <span class="stat-item">💥CDM <span id="stat-cdmg" class="stat-val">150%</span><span id="pop-cdmg" class="pop-stat">+5%</span></span>
+                <span class="stat-item">🔥COMBO <span id="stat-combo" class="stat-val" style="color:var(--accent)">0</span></span>
             </div>
 
             <div id="quiz-area">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:0.75rem; color:var(--text-dim); border-left:3px solid var(--primary); padding-left:5px;">CURRENT MISSION</span>
-                    <button class="pixel-btn" style="padding:4px 8px; font-size:0.7rem; background:#444; color:#fff;" onclick="showScreen('manage')">⚙️ DATABASE</button>
+                    <span style="font-size:0.8rem; color:#888;">MISSION TARGET</span>
+                    <button class="pixel-btn" style="padding:4px 8px; font-size:0.7rem;" onclick="showScreen('manage')">⚙️ DATA</button>
                 </div>
                 
                 <div id="quiz-display">
                     <img id="quiz-img">
-                    <div id="quiz-text">데이터를 로드하는 중...<br>(문제가 없다면 DATABASE에서 등록하세요)</div>
-                    <div id="quiz-feedback" style="position:absolute; bottom:5px; font-weight:bold;"></div>
+                    <div id="quiz-text">전투를 시작하려면<br>데이터를 로드하세요.</div>
+                    <div id="quiz-feedback"></div>
                 </div>
 
                 <div id="input-row">
-                    <input id="game-input" type="text" placeholder="입력 후 ENTER" autocomplete="off" onkeypress="if(event.key==='Enter') checkAnswer()">
-                    <button class="pixel-btn btn-red" style="width:100px; font-weight:bold; font-size:1.1rem;" onclick="checkAnswer()">HIT!</button>
+                    <input id="game-input" type="text" placeholder="정답 입력..." autocomplete="off" onkeypress="if(event.key==='Enter') checkAnswer()">
+                    <button class="pixel-btn btn-red" style="width:80px; font-weight:bold; font-size:1.1rem;" onclick="checkAnswer()">HIT!</button>
                 </div>
             </div>
         </div>
@@ -213,44 +220,44 @@ body {
 
     <div id="screen-manage" class="screen">
         <div style="padding:15px; background:var(--bg-panel); border-bottom:4px solid #000; display:flex; justify-content:space-between; align-items:center;">
-            <h2 style="color:#fff; text-shadow:2px 2px 0 #000; font-size:1.2rem;">DATA MANAGEMENT</h2>
-            <button class="pixel-btn" onclick="showScreen('rpg')">🔙 BATTLE</button>
+            <h2 style="color:#fff; text-shadow:2px 2px 0 #000;">DATABASE</h2>
+            <button class="pixel-btn" onclick="showScreen('rpg')">🔙 BACK</button>
         </div>
         
         <div style="padding:15px; overflow-y:auto; flex:1; background:#f4f4f4;">
             <div style="display:flex; gap:10px; margin-bottom:15px">
-                <button class="pixel-btn btn-green" style="flex:1" onclick="toggleAddMode('text')">📝 텍스트 추가</button>
-                <button class="pixel-btn btn-blue" style="flex:1" onclick="toggleAddMode('image')">📷 이미지 추가</button>
+                <button class="pixel-btn btn-green" style="flex:1" onclick="toggleAddMode('text')">📝 TEXT ADD</button>
+                <button class="pixel-btn btn-blue" style="flex:1" onclick="toggleAddMode('image')">📷 IMAGE ADD</button>
             </div>
             
             <div id="add-text-box" class="pixel-panel" style="display:none; padding:15px; margin-bottom:15px; background:#ddd;">
-                <input id="new-q" placeholder="문제 내용을 입력하세요" style="width:100%; padding:12px; margin-bottom:8px; border:2px solid #000;">
-                <input id="new-a" placeholder="정답을 입력하세요" style="width:100%; padding:12px; margin-bottom:8px; border:2px solid #000;">
-                <input id="new-desc" placeholder="정답 해설 (선택 사항)" style="width:100%; padding:12px; margin-bottom:8px; border:2px solid #000;">
-                <button class="pixel-btn btn-green" style="width:100%" onclick="addTextWord()">저장하기</button>
-                <button class="pixel-btn" style="width:100%; margin-top:10px; font-size:0.8rem;" onclick="toggleExcel()">📋 엑셀 대량 등록</button>
-                <div id="excel-area" style="display:none; margin-top:8px">
-                    <textarea id="excel-input" placeholder="문제[탭]정답 형식으로 붙여넣으세요" style="width:100%; height:100px; border:2px solid #000; font-size:0.8rem;"></textarea>
-                    <button class="pixel-btn btn-blue" style="width:100%; margin-top:5px;" onclick="parseExcel()">일괄 저장</button>
+                <input id="new-q" placeholder="문제 (Question)" style="width:100%; padding:10px; margin-bottom:5px; border:2px solid #000;">
+                <input id="new-a" placeholder="정답 (Answer)" style="width:100%; padding:10px; margin-bottom:5px; border:2px solid #000;">
+                <input id="new-desc" placeholder="해설 (Option)" style="width:100%; padding:10px; margin-bottom:5px; border:2px solid #000;">
+                <button class="pixel-btn btn-green" style="width:100%" onclick="addTextWord()">SAVE</button>
+                <button class="pixel-btn" style="width:100%; margin-top:5px; font-size:0.8rem;" onclick="toggleExcel()">📋 EXCEL PASTE</button>
+                <div id="excel-area" style="display:none; margin-top:5px">
+                    <textarea id="excel-input" placeholder="문제 [탭] 정답" style="width:100%; height:80px; border:2px solid #000;"></textarea>
+                    <button class="pixel-btn btn-blue" style="width:100%; margin-top:5px;" onclick="parseExcel()">BATCH SAVE</button>
                 </div>
             </div>
 
             <div id="add-image-box" class="pixel-panel" style="display:none; padding:15px; margin-bottom:15px; background:#ddd;">
-                <div id="p-area-q" style="width:100%; height:160px; background:#222; display:flex; align-items:center; justify-content:center; border:2px dashed #777; margin-bottom:10px;">
+                <div id="p-area-q" style="width:100%; height:150px; background:#222; display:flex; align-items:center; justify-content:center; border:2px dashed #777; margin-bottom:10px;">
                     <img id="preview-q-img" style="display:none; max-width:100%; max-height:100%">
-                    <span id="img-instruct" style="color:#666">이미지를 선택하세요</span>
+                    <span style="color:#666">NO IMAGE</span>
                 </div>
-                <button class="pixel-btn btn-blue" onclick="triggerCamera('question')" style="width:100%; margin-bottom:10px">📷 촬영 또는 갤러리</button>
-                <input id="img-a" placeholder="정답" style="width:100%; padding:12px; margin-bottom:8px; border:2px solid #000;">
-                <input id="img-desc" placeholder="해설" style="width:100%; padding:12px; margin-bottom:10px; border:2px solid #000;">
-                <button class="pixel-btn btn-green" style="width:100%" onclick="addImageWord()">이미지 문제 저장</button>
+                <button class="pixel-btn btn-blue" onclick="triggerCamera('question')" style="width:100%; margin-bottom:10px">📷 CAMERA / GALLERY</button>
+                <input id="img-a" placeholder="정답" style="width:100%; padding:10px; margin-bottom:5px; border:2px solid #000;">
+                <input id="img-desc" placeholder="해설" style="width:100%; padding:10px; margin-bottom:10px; border:2px solid #000;">
+                <button class="pixel-btn btn-green" style="width:100%" onclick="addImageWord()">SAVE</button>
             </div>
 
-            <div style="background:#333; color:#fff; padding:10px; display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
-                <span style="font-size:0.9rem;">등록된 문제 목록</span>
-                <button class="pixel-btn btn-red" style="font-size:0.7rem; padding:4px 8px;" onclick="deleteSelected()">선택 삭제</button>
+            <div style="background:#333; color:#fff; padding:10px; display:flex; justify-content:space-between; align-items:center;">
+                <span>SAVED DATA</span>
+                <button class="pixel-btn btn-red" style="font-size:0.7rem; padding:4px;" onclick="deleteSelected()">DELETE</button>
             </div>
-            <div id="word-list" style="background:#fff; color:#000; min-height:200px; padding:5px; border:2px solid #333; border-top:none;"></div>
+            <div id="word-list" style="background:#fff; color:#000; min-height:200px; padding:5px;"></div>
         </div>
         <input type="file" id="camera-input" style="display:none" accept="image/*" onchange="handleImageFile(event)">
     </div>
@@ -259,10 +266,10 @@ body {
         <div style="flex:1; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; touch-action:none" id="crop-container">
             <canvas id="crop-canvas"></canvas>
         </div>
-        <div style="height:80px; background:#222; display:flex; justify-content:space-around; align-items:center; border-top:4px solid #fff; padding:0 10px;">
-            <button class="pixel-btn" onclick="rotateImage()">🔄 회전</button>
-            <button class="pixel-btn btn-red" onclick="closeCrop()">취소</button>
-            <button class="pixel-btn btn-green" onclick="applyCrop()">✂️ 자르기 완료</button>
+        <div style="height:80px; background:#222; display:flex; justify-content:space-around; align-items:center; border-top:4px solid #fff;">
+            <button class="pixel-btn" onclick="rotateImage()">🔄 ROTATE</button>
+            <button class="pixel-btn btn-red" onclick="closeCrop()">CANCEL</button>
+            <button class="pixel-btn btn-green" onclick="applyCrop()">✂️ CROP</button>
         </div>
     </div>
 
@@ -274,11 +281,13 @@ body {
 let db, vocabulary = [], isDBReady = false;
 let rpgData = { stage: 1, subStage: 1, atk: 10, aspd: 1.0, crit: 5, cdmg: 150, combo: 0 };
 
-// GitHub 저장소의 로컬 파일 경로
-const HERO_IDLE_URL = "./hero.gif";     
-const HERO_ATTACK_URL = "./attack.gif"; 
+// [사용자 파일 설정]
+// GitHub 저장소에 이 이름으로 파일을 업로드하세요.
+const HERO_IDLE_URL = "./hero.gif";     // 대기 모션
+const HERO_ATTACK_URL = "./attack.gif"; // 공격 모션
 
-// 몬스터 이미지 베이스 URL (PokeAPI)
+// 몬스터는 여전히 다양성을 위해 PokeAPI를 사용하지만,
+// 원하신다면 monster.gif 등을 업로드해서 고정할 수도 있습니다.
 const SPRITE_BASE_URL = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/";
 
 const MONSTER_POOLS = {
@@ -291,14 +300,12 @@ window.onload = function() {
     initDB(); 
     loadRPGData(); 
     
+    // 영웅 초기 이미지 로드
     const heroImg = document.getElementById('hero-img');
     heroImg.src = HERO_IDLE_URL;
-    
-    // 파일 미업로드 시 에러 처리
-    heroImg.onerror = function() {
-        this.style.display = 'none';
-        this.parentElement.innerHTML += "<div style='color:red; font-size:0.7rem; text-align:center;'>GIF 파일을<br>업로드하세요</div>";
-    };
+
+    // [중요] 만약 구한 이미지가 '왼쪽'을 보고 있다면 아래 주석(//)을 지우세요.
+    // heroImg.style.transform = "scaleX(-1)"; 
 };
 
 function showToast(msg) { 
@@ -306,7 +313,6 @@ function showToast(msg) {
     t.innerText=msg; t.style.opacity=1; t.style.top="20%";
     setTimeout(()=>t.style.opacity=0, 2000); 
 }
-
 function showScreen(id) { 
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); 
     document.getElementById('screen-'+id).classList.add('active'); 
@@ -319,13 +325,12 @@ function initDB() {
     r.onupgradeneeded = e => { if(!e.target.result.objectStoreNames.contains('vocab')) e.target.result.createObjectStore('vocab', {keyPath:'id', autoIncrement:true}); };
     r.onsuccess = e => { db=e.target.result; loadVocab(); };
 }
-
 function loadVocab() { db.transaction(['vocab'],'readonly').objectStore('vocab').getAll().onsuccess = e => { vocabulary = e.target.result||[]; isDBReady=true; nextQuiz(); }; }
 function saveToDB(item, cb) { db.transaction(['vocab'],'readwrite').objectStore('vocab').add(item).onsuccess = () => { loadVocab(); if(cb) cb(); }; }
-function deleteFromDB(ids) { const tx=db.transaction(['vocab'],'readwrite'); ids.forEach(id=>tx.objectStore('vocab').delete(id)); tx.oncomplete=()=>{ showToast("삭제 완료"); loadVocab(); renderWordList(); }; }
+function deleteFromDB(ids) { const tx=db.transaction(['vocab'],'readwrite'); ids.forEach(id=>tx.objectStore('vocab').delete(id)); tx.oncomplete=()=>{ showToast("데이터 삭제 완료"); loadVocab(); renderWordList(); }; }
 
 // ============================================================
-// [2. RPG 엔진 & 전투 로직]
+// [2. RPG 엔진 & 비주얼 이펙트]
 // ============================================================
 let battleTimer, attackTimer, timeLeft=30, currentMonHP=100, maxMonHP=100, isBoss=false;
 
@@ -334,7 +339,6 @@ function loadRPGData() {
     if(s) rpgData = JSON.parse(s);
     updateStatUI(); initBattle();
 }
-
 function saveRPGData() { localStorage.setItem('rpg_remaster_v10', JSON.stringify(rpgData)); }
 
 function updateStatUI() {
@@ -362,11 +366,11 @@ function initBattle() {
         if(timeLeft <= 0) { 
             clearInterval(battleTimer); clearInterval(attackTimer);
             showDamageText("TIME OVER!", true);
-            showToast("실패! 스테이지 초기화");
+            showToast("시간 초과! 스테이지 초기화");
             setTimeout(() => {
                 rpgData.subStage = 1; 
                 timeLeft = 30;
-                updateStatUI(); // 스테이지 텍스트 즉시 갱신
+                updateStatUI(); 
                 saveRPGData(); 
                 initBattle(); 
             }, 1500);
@@ -378,7 +382,9 @@ function spawnMonster() {
     isBoss = (rpgData.subStage === 5); 
     const themes = ['forest', 'desert', 'dungeon'];
     const th = themes[Math.floor((rpgData.stage-1)/5)%3];
-    document.getElementById('battle-viewport').className = "bg-"+th);
+    
+    const vp = document.getElementById('battle-viewport');
+    vp.className = ""; vp.classList.add('bg-'+th);
 
     const pool = MONSTER_POOLS[th];
     const id = pool[Math.floor(Math.random()*pool.length)];
@@ -387,7 +393,11 @@ function spawnMonster() {
     
     const monImg = document.getElementById('mon-img');
     monImg.style.opacity = 0;
-    monImg.onerror = function() { this.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${targetId}.png`; };
+    
+    monImg.onerror = function() { 
+        this.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${targetId}.png`; 
+    };
+    
     setTimeout(()=>{ monImg.src = monSrc; monImg.style.opacity = 1; }, 200);
 
     let hp = 100 * Math.pow(1.1, rpgData.stage-1) * (1 + rpgData.subStage * 0.2);
@@ -399,10 +409,17 @@ function spawnMonster() {
 function heroAttack() {
     const hImg = document.getElementById('hero-img');
     const hPos = document.getElementById('hero-pos');
+
+    // 공격 모션으로 교체
     hImg.src = HERO_ATTACK_URL;
     hPos.style.zIndex = 20; 
-    hImg.style.transform = "scale(2.0) translateX(20px)";
+    
+    // [애니메이션 조정]
+    // 본인이 구한 이미지 크기에 맞춰 scale(1.0) 숫자를 조절하세요.
+    // translateX(20px)는 오른쪽으로 20px만큼 돌진하는 효과입니다.
+    hImg.style.transform = "scale(1.0) translateX(20px)"; 
 
+    // 데미지 타이밍
     setTimeout(() => {
         let dmg = rpgData.atk;
         let isCrit = Math.random()*100 < rpgData.crit;
@@ -410,41 +427,72 @@ function heroAttack() {
         hitMonster(Math.floor(dmg), isCrit);
     }, 200);
 
+    // 복귀 (0.6초 후 대기 모션)
     setTimeout(() => {
          hImg.src = HERO_IDLE_URL;
          hPos.style.zIndex = 10;
-         hImg.style.transform = "scale(2.0) translateX(0)"; 
+         // 복귀 시 transform 초기화
+         hImg.style.transform = "scale(1.0) translateX(0)"; 
     }, 600);
 }
 
 function hitMonster(dmg, isCrit) {
     currentMonHP = Math.max(0, currentMonHP - dmg);
     updateHPUI(); 
+
     const m = document.getElementById('mon-img');
-    m.style.filter = "brightness(5) sepia(1)"; 
+    m.style.filter = "brightness(5) sepia(1) hue-rotate(-50deg)"; 
     m.style.transform = "translateX(8px)";
-    setTimeout(() => { m.style.filter = "none"; m.style.transform = "translateX(0)"; }, 100);
+    setTimeout(() => {
+        m.style.filter = "drop-shadow(4px 4px 0 rgba(0,0,0,0.5))"; 
+        m.style.transform = "translateX(0)";
+    }, 100);
+
     if(isCrit) shakeScreen();
     showDamageText(dmg, isCrit);
-    if(currentMonHP <= 0) monsterDeath();
+    
+    if(currentMonHP <= 0) {
+        monsterDeath();
+    }
 }
 
 function monsterDeath() {
     clearInterval(battleTimer); clearInterval(attackTimer);
     const m = document.getElementById('mon-img');
-    m.style.transition = "opacity 0.5s"; m.style.opacity = 0;
+    m.style.transition = "opacity 0.5s, transform 0.5s";
+    m.style.opacity = 0; m.style.transform = "scale(0.5)";
+    
+    showDamageText(isBoss ? "STAGE CLEAR!" : "NEXT!", true);
+    
     rpgData.subStage++;
-    if(rpgData.subStage > 5) { rpgData.subStage = 1; rpgData.stage++; timeLeft = 30; }
+    if(rpgData.subStage > 5) {
+        rpgData.subStage = 1;
+        rpgData.stage++;
+        timeLeft = 30; 
+    }
+    
     saveRPGData(); updateStatUI();
-    setTimeout(() => { initBattle(); }, 1000);
+    setTimeout(() => {
+        m.style.transition = "none"; m.style.transform = "scale(1)";
+        initBattle();
+    }, 1000);
 }
 
+// [핵심] 비주얼 업데이트 함수들
 function updateHPUI(instant = false) {
     const pct = (currentMonHP / maxMonHP) * 100;
-    document.getElementById('mon-hp-fill').style.width = pct + '%';
+    const fill = document.getElementById('mon-hp-fill');
     const delay = document.getElementById('mon-hp-delay');
-    if(instant) { delay.style.transition = 'none'; delay.style.width = pct + '%'; }
-    else { delay.style.transition = 'width 0.5s ease-out 0.2s'; delay.style.width = pct + '%'; }
+    
+    fill.style.width = pct + '%';
+    
+    if(instant) {
+        delay.style.transition = 'none';
+        delay.style.width = pct + '%';
+    } else {
+        delay.style.transition = 'width 0.5s ease-out 0.2s'; 
+        delay.style.width = pct + '%';
+    }
 }
 
 function updateTimerUI() {
@@ -456,64 +504,184 @@ function showDamageText(dmg, isCrit) {
     const el = document.createElement('div');
     el.className = isCrit ? 'dmg-text dmg-crit' : 'dmg-text';
     el.innerText = dmg;
-    el.style.left = (40 + Math.random()*20)+'%'; el.style.top = (30 + Math.random()*20)+'%';
+    const left = 50 + (Math.random()*20 - 10);
+    const top = 30 + (Math.random()*20 - 10);
+    el.style.left = left+'%'; el.style.top = top+'%';
+    
     document.getElementById('fx-layer').appendChild(el);
     setTimeout(()=>el.remove(), 800);
 }
 
 function shakeScreen() {
     const vp = document.getElementById('battle-viewport');
+    vp.classList.remove('shake-effect');
+    void vp.offsetWidth; 
     vp.classList.add('shake-effect');
-    setTimeout(()=>vp.classList.remove('shake-effect'), 300);
 }
 
 // ============================================================
-// [3. 퀴즈 및 시스템 유틸리티]
+// [3. 퀴즈 및 성장 시스템]
 // ============================================================
+let currentQuiz = null;
+
 function nextQuiz() {
-    if (vocabulary.length < 1) { document.getElementById('quiz-text').innerText = "문제를 등록하세요!"; return; }
-    currentQuiz = vocabulary[Math.floor(Math.random() * vocabulary.length)];
+    if (vocabulary.length < 1) {
+        document.getElementById('quiz-text').innerText = "데이터가 없습니다.\n관리 메뉴에서 추가하세요.";
+        return;
+    }
+    
+    let wrongOnes = vocabulary.filter(v => (v.wrongCount || 0) > 0);
+    currentQuiz = (wrongOnes.length > 0 && Math.random() < 0.5) 
+        ? wrongOnes[Math.floor(Math.random() * wrongOnes.length)]
+        : vocabulary[Math.floor(Math.random() * vocabulary.length)];
+    
     const imgView = document.getElementById('quiz-img');
     const textView = document.getElementById('quiz-text');
-    if (currentQuiz.type === 'image') { imgView.src = currentQuiz.q; imgView.style.display = 'block'; textView.innerText = ""; }
-    else { imgView.style.display = 'none'; textView.innerText = currentQuiz.q; }
-    document.getElementById('game-input').value = ""; document.getElementById('game-input').focus();
+    
+    if (currentQuiz.type === 'image') {
+        imgView.src = currentQuiz.q; imgView.style.display = 'block';
+        textView.innerText = currentQuiz.qText || "";
+    } else {
+        imgView.style.display = 'none'; textView.innerText = currentQuiz.q;
+    }
+    
+    document.getElementById('game-input').value = "";
+    document.getElementById('game-input').focus();
 }
 
 function checkAnswer() {
-    if (!currentQuiz) return;
+    if (!currentQuiz) return nextQuiz();
     const input = document.getElementById('game-input').value.trim();
     if (!input) return;
-    const isCorrect = input.toUpperCase() === currentQuiz.a.toUpperCase();
+
+    const userAns = input.replace(/\s/g, "").toUpperCase();
+    const realAns = currentQuiz.a.replace(/\s/g, "").toUpperCase();
+    const isCorrect = (userAns === 'O' || userAns === 'X') ? (realAns.charAt(0) === userAns) : (userAns === realAns);
+    const fb = document.getElementById('quiz-feedback');
+
     if (isCorrect) {
-        rpgData.combo++; applyStatGrowth(rpgData.combo % 5 === 0 ? 3 : 1);
-        heroAttack(); setTimeout(nextQuiz, 200);
+        rpgData.combo++;
+        let mult = 1;
+        if(rpgData.combo % 5 === 0) { mult = 3; showDamageText("COMBO BONUS!", true); }
+        
+        applyStatGrowth(mult);
+        
+        if (currentQuiz.wrongCount > 0) { currentQuiz.wrongCount--; saveToDB(currentQuiz); }
+        
+        // 정답 시 즉시 강력한 공격
+        heroAttack(); setTimeout(heroAttack, 300); 
+        
+        fb.innerText = "EXCELLENT!"; fb.style.color = "var(--success)";
+        setTimeout(nextQuiz, 200);
     } else {
-        rpgData.combo = 0; showToast("오답: " + currentQuiz.a); setTimeout(nextQuiz, 1500);
+        rpgData.combo = 0;
+        fb.innerHTML = `답: ${currentQuiz.a} <small>(${currentQuiz.desc||''})</small>`;
+        fb.style.color = "var(--danger)";
+        shakeScreen(); 
+        
+        currentQuiz.wrongCount = (currentQuiz.wrongCount || 0) + 1;
+        saveToDB(currentQuiz);
+        setTimeout(nextQuiz, 2500);
     }
     saveRPGData(); updateStatUI();
 }
 
 function applyStatGrowth(mult) {
+    document.querySelectorAll('.pop-stat').forEach(el => {
+        el.style.animation = 'none'; void el.offsetWidth; el.style.animation = 'popUp 0.8s forwards';
+    });
+
     for(let i=0; i<mult; i++) {
         const r = Math.random();
-        if(r < 0.4) rpgData.atk += 2;
-        else if(r < 0.6) rpgData.aspd += 0.01;
-        else if(r < 0.8) rpgData.crit += 0.1;
-        else rpgData.cdmg += 2;
+        if(r < 0.4) { rpgData.atk += 2; setPop('atk', 2); }
+        else if(r < 0.6) { rpgData.aspd = Math.min(5.0, rpgData.aspd + 0.005); setPop('aspd', 0.01); }
+        else if(r < 0.8) { rpgData.crit = Math.min(100, rpgData.crit + 0.05); setPop('crit', 0.1); }
+        else { rpgData.cdmg += 2; setPop('cdmg', 2); }
     }
 }
+function setPop(type, val) { document.getElementById('pop-'+type).innerText = "+"+val; }
 
-// 이미지 관리 및 기타 유틸리티 함수들 (기존 로직 유지)
-function toggleAddMode(mode) { document.getElementById('add-text-box').style.display = mode==='text'?'block':'none'; document.getElementById('add-image-box').style.display = mode==='image'?'block':'none'; }
+// ============================================================
+// [4. 유틸리티 (이미지 처리 등)]
+// ============================================================
+let cropImg=new Image(), cropCanvas=document.getElementById('crop-canvas'), cropCtx=cropCanvas.getContext('2d');
+let cropRect={x:0,y:0,w:100,h:100}, dragMode=null, startPos={x:0,y:0}, baseRect={x:0,y:0,w:0,h:0}, currentCropTarget=null;
+
+function handleImageFile(e) { const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ cropImg.src=ev.target.result; cropImg.onload=()=>startCropping(); }; r.readAsDataURL(f); }
+function startCropping() { document.getElementById('modal-crop').style.display='flex'; const cw=Math.min(window.innerWidth*0.9, cropImg.width); cropRect={x:10,y:10,w:cw,h:cw*0.6}; drawCrop(); }
+function drawCrop() {
+    const maxW=window.innerWidth, maxH=window.innerHeight*0.7; const scale=Math.min(maxW/cropImg.width, maxH/cropImg.height);
+    cropCanvas.width=cropImg.width*scale; cropCanvas.height=cropImg.height*scale;
+    cropCtx.clearRect(0,0,cropCanvas.width,cropCanvas.height); 
+    cropCtx.drawImage(cropImg,0,0,cropCanvas.width,cropCanvas.height); 
+    cropCtx.fillStyle='rgba(0,0,0,0.6)'; cropCtx.fillRect(0,0,cropCanvas.width,cropCanvas.height);
+    const sX=cropRect.x*scale, sY=cropRect.y*scale, sW=cropRect.w*scale, sH=cropRect.h*scale;
+    cropCtx.clearRect(sX,sY,sW,sH); cropCtx.drawImage(cropImg,cropRect.x,cropRect.y,cropRect.w,cropRect.h,sX,sY,sW,sH); 
+    cropCtx.strokeStyle='#fff'; cropCtx.lineWidth=2; cropCtx.strokeRect(sX,sY,sW,sH);
+}
+cropCanvas.addEventListener('pointerdown', e=>{ 
+    const rect=cropCanvas.getBoundingClientRect(), scale=cropImg.width/cropCanvas.width;
+    const cx=e.clientX-rect.left, cy=e.clientY-rect.top; 
+    const sX=cropRect.x/scale, sY=cropRect.y/scale, sW=cropRect.w/scale, sH=cropRect.h/scale;
+    if(cx>sX && cx<sX+sW && cy>sY && cy<sY+sH) { dragMode='move'; startPos={x:e.clientX, y:e.clientY}; baseRect={...cropRect}; cropCanvas.setPointerCapture(e.pointerId); }
+});
+cropCanvas.addEventListener('pointermove', e=>{ 
+    if(!dragMode) return; 
+    const scale=cropImg.width/cropCanvas.width;
+    const dx=(e.clientX-startPos.x)*scale, dy=(e.clientY-startPos.y)*scale;
+    if(dragMode==='move') { cropRect.x=Math.max(0, Math.min(cropImg.width-cropRect.w, baseRect.x+dx)); cropRect.y=Math.max(0, Math.min(cropImg.height-cropRect.h, baseRect.y+dy)); drawCrop(); }
+});
+cropCanvas.addEventListener('pointerup', ()=>dragMode=null);
+
+function closeCrop() { document.getElementById('modal-crop').style.display='none'; document.getElementById('camera-input').value=""; }
+function applyCrop() { 
+    const c=document.createElement('canvas'); c.width=cropRect.w; c.height=cropRect.h; 
+    c.getContext('2d').drawImage(cropImg,cropRect.x,cropRect.y,cropRect.w,cropRect.h,0,0,cropRect.w,cropRect.h); 
+    const res=c.toDataURL('image/jpeg',0.8); 
+    if(currentCropTarget==='question') { document.getElementById('preview-q-img').src=res; document.getElementById('preview-q-img').style.display='block'; }
+    closeCrop(); 
+}
+function rotateImage() { showToast("회전: 추후 지원"); }
+
+function toggleAddMode(mode) { 
+    document.getElementById('add-text-box').style.display = mode==='text'?'block':'none'; 
+    document.getElementById('add-image-box').style.display = mode==='image'?'block':'none'; 
+}
+function toggleExcel() { const e=document.getElementById('excel-area'); e.style.display = e.style.display==='none'?'block':'none'; }
 function addTextWord() { 
-    const q=document.getElementById('new-q').value, a=document.getElementById('new-a').value;
-    if(q&&a) saveToDB({type:'text',q,a,wrongCount:0}, ()=>{ showToast("저장됨"); nextQuiz(); }); 
+    const q=document.getElementById('new-q').value.trim(), a=document.getElementById('new-a').value.trim(), d=document.getElementById('new-desc').value.trim();
+    if(q&&a) saveToDB({type:'text',q,a,desc:d,wrongCount:0}, ()=>{ showToast("등록됨!"); document.getElementById('new-q').value=""; document.getElementById('new-a').value=""; }); 
+}
+function addImageWord() {
+    const src=document.getElementById('preview-q-img').src, a=document.getElementById('img-a').value.trim(), d=document.getElementById('img-desc').value.trim();
+    if(src && src.length>100 && a) saveToDB({type:'image',q:src,qText:'',a,desc:d,wrongCount:0}, ()=>{ showToast("이미지 등록됨!"); closeCrop(); });
 }
 function renderWordList() { 
-    const l = document.getElementById('word-list');
-    l.innerHTML = vocabulary.map(v=>`<div class='list-item'><input type='checkbox' class='chk-del' value='${v.id}'> ${v.q} (${v.a})</div>`).join('');
+    const l=document.getElementById('word-list'); 
+    l.innerHTML = vocabulary.length===0 ? "<div style='padding:20px; text-align:center; color:#888;'>데이터가 없습니다.</div>" 
+    : vocabulary.slice().reverse().map(v=>`<div class="list-item" style="border-bottom:1px solid #ddd; padding:10px; display:flex; align-items:center;">
+    <input type="checkbox" class="chk-del" value="${v.id}" style="margin-right:10px; transform:scale(1.5);">
+    <div>${v.type==='image'?'<span style="color:blue">[IMAGE]</span>':v.q}<br><small style="color:#666">${v.a}</small></div>
+    </div>`).join(''); 
+}
+function deleteSelected() { 
+    const c=document.querySelectorAll('.chk-del:checked'); 
+    if(c.length>0 && confirm(c.length+"개 삭제하시겠습니까?")) deleteFromDB(Array.from(c).map(e=>Number(e.value))); 
+}
+function triggerCamera(target) { currentCropTarget=target; document.getElementById('camera-input').click(); }
+function parseExcel() {
+    const val = document.getElementById('excel-input').value;
+    if(!val) return;
+    const lines = val.split('\n');
+    let cnt = 0;
+    lines.forEach(line => {
+        const p = line.split('\t');
+        if(p.length >= 2) {
+            saveToDB({type:'text', q:p[0].trim(), a:p[1].trim(), wrongCount:0});
+            cnt++;
+        }
+    });
+    showToast(cnt + "개 일괄 등록 완료");
+    document.getElementById('excel-input').value = "";
 }
 </script>
-</body>
-</html>
