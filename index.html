@@ -274,11 +274,12 @@ body {
 let db, vocabulary = [], isDBReady = false;
 let rpgData = { stage: 1, subStage: 1, atk: 10, aspd: 1.0, crit: 5, cdmg: 150, combo: 0 };
 
-// GitHub 저장소의 로컬 파일 경로
-const HERO_IDLE_URL = "./hero.gif";     
-const HERO_ATTACK_URL = "./attack.gif"; 
+// [사용자 로컬 파일 설정]
+// GitHub에 올린 파일 이름과 똑같아야 합니다!
+const HERO_IDLE_URL = "./hero.gif";     // 대기 모션
+const HERO_ATTACK_URL = "./attack.gif"; // 공격 모션
 
-// 몬스터 이미지 베이스 URL (PokeAPI)
+// 몬스터 베이스 URL (PokeAPI)
 const SPRITE_BASE_URL = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/";
 
 const MONSTER_POOLS = {
@@ -291,13 +292,14 @@ window.onload = function() {
     initDB(); 
     loadRPGData(); 
     
+    // 영웅 초기 이미지 로드
     const heroImg = document.getElementById('hero-img');
     heroImg.src = HERO_IDLE_URL;
     
-    // 파일 미업로드 시 에러 처리
+    // 로딩 실패 시 에러 메시지
     heroImg.onerror = function() {
         this.style.display = 'none';
-        this.parentElement.innerHTML += "<div style='color:red; font-size:0.7rem; text-align:center;'>GIF 파일을<br>업로드하세요</div>";
+        this.parentElement.innerHTML += "<div style='color:red; font-size:0.7rem; text-align:center;'>GIF 파일<br>업로드<br>확인필요</div>";
     };
 };
 
@@ -306,7 +308,6 @@ function showToast(msg) {
     t.innerText=msg; t.style.opacity=1; t.style.top="20%";
     setTimeout(()=>t.style.opacity=0, 2000); 
 }
-
 function showScreen(id) { 
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); 
     document.getElementById('screen-'+id).classList.add('active'); 
@@ -319,13 +320,12 @@ function initDB() {
     r.onupgradeneeded = e => { if(!e.target.result.objectStoreNames.contains('vocab')) e.target.result.createObjectStore('vocab', {keyPath:'id', autoIncrement:true}); };
     r.onsuccess = e => { db=e.target.result; loadVocab(); };
 }
-
 function loadVocab() { db.transaction(['vocab'],'readonly').objectStore('vocab').getAll().onsuccess = e => { vocabulary = e.target.result||[]; isDBReady=true; nextQuiz(); }; }
 function saveToDB(item, cb) { db.transaction(['vocab'],'readwrite').objectStore('vocab').add(item).onsuccess = () => { loadVocab(); if(cb) cb(); }; }
-function deleteFromDB(ids) { const tx=db.transaction(['vocab'],'readwrite'); ids.forEach(id=>tx.objectStore('vocab').delete(id)); tx.oncomplete=()=>{ showToast("삭제 완료"); loadVocab(); renderWordList(); }; }
+function deleteFromDB(ids) { const tx=db.transaction(['vocab'],'readwrite'); ids.forEach(id=>tx.objectStore('vocab').delete(id)); tx.oncomplete=()=>{ showToast("데이터 삭제 완료"); loadVocab(); renderWordList(); }; }
 
 // ============================================================
-// [2. RPG 엔진 & 전투 로직]
+// [2. RPG 엔진 & 비주얼 이펙트]
 // ============================================================
 let battleTimer, attackTimer, timeLeft=30, currentMonHP=100, maxMonHP=100, isBoss=false;
 
@@ -334,7 +334,6 @@ function loadRPGData() {
     if(s) rpgData = JSON.parse(s);
     updateStatUI(); initBattle();
 }
-
 function saveRPGData() { localStorage.setItem('rpg_remaster_v10', JSON.stringify(rpgData)); }
 
 function updateStatUI() {
@@ -362,11 +361,11 @@ function initBattle() {
         if(timeLeft <= 0) { 
             clearInterval(battleTimer); clearInterval(attackTimer);
             showDamageText("TIME OVER!", true);
-            showToast("실패! 스테이지 초기화");
+            showToast("시간 초과! 스테이지 초기화");
             setTimeout(() => {
                 rpgData.subStage = 1; 
                 timeLeft = 30;
-                updateStatUI(); // 스테이지 텍스트 즉시 갱신
+                updateStatUI(); 
                 saveRPGData(); 
                 initBattle(); 
             }, 1500);
@@ -378,7 +377,9 @@ function spawnMonster() {
     isBoss = (rpgData.subStage === 5); 
     const themes = ['forest', 'desert', 'dungeon'];
     const th = themes[Math.floor((rpgData.stage-1)/5)%3];
-    document.getElementById('battle-viewport').className = "bg-"+th);
+    
+    const vp = document.getElementById('battle-viewport');
+    vp.className = ""; vp.classList.add('bg-'+th);
 
     const pool = MONSTER_POOLS[th];
     const id = pool[Math.floor(Math.random()*pool.length)];
@@ -387,7 +388,11 @@ function spawnMonster() {
     
     const monImg = document.getElementById('mon-img');
     monImg.style.opacity = 0;
-    monImg.onerror = function() { this.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${targetId}.png`; };
+    
+    monImg.onerror = function() { 
+        this.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${targetId}.png`; 
+    };
+    
     setTimeout(()=>{ monImg.src = monSrc; monImg.style.opacity = 1; }, 200);
 
     let hp = 100 * Math.pow(1.1, rpgData.stage-1) * (1 + rpgData.subStage * 0.2);
@@ -399,10 +404,16 @@ function spawnMonster() {
 function heroAttack() {
     const hImg = document.getElementById('hero-img');
     const hPos = document.getElementById('hero-pos');
+
+    // 공격 모션으로 교체
     hImg.src = HERO_ATTACK_URL;
     hPos.style.zIndex = 20; 
-    hImg.style.transform = "scale(2.0) translateX(20px)";
+    
+    // [애니메이션 미세 조정]
+    // 다운받으신 이미지는 크기가 좀 작을 수 있어서 2.0배로 키웠습니다.
+    hImg.style.transform = "scale(2.0) translateX(10px)"; 
 
+    // 데미지 타이밍
     setTimeout(() => {
         let dmg = rpgData.atk;
         let isCrit = Math.random()*100 < rpgData.crit;
@@ -410,6 +421,7 @@ function heroAttack() {
         hitMonster(Math.floor(dmg), isCrit);
     }, 200);
 
+    // 복귀 (0.6초 후 대기 모션)
     setTimeout(() => {
          hImg.src = HERO_IDLE_URL;
          hPos.style.zIndex = 10;
@@ -420,31 +432,60 @@ function heroAttack() {
 function hitMonster(dmg, isCrit) {
     currentMonHP = Math.max(0, currentMonHP - dmg);
     updateHPUI(); 
+
     const m = document.getElementById('mon-img');
-    m.style.filter = "brightness(5) sepia(1)"; 
+    m.style.filter = "brightness(5) sepia(1) hue-rotate(-50deg)"; 
     m.style.transform = "translateX(8px)";
-    setTimeout(() => { m.style.filter = "none"; m.style.transform = "translateX(0)"; }, 100);
+    setTimeout(() => {
+        m.style.filter = "drop-shadow(4px 4px 0 rgba(0,0,0,0.5))"; 
+        m.style.transform = "translateX(0)";
+    }, 100);
+
     if(isCrit) shakeScreen();
     showDamageText(dmg, isCrit);
-    if(currentMonHP <= 0) monsterDeath();
+    
+    if(currentMonHP <= 0) {
+        monsterDeath();
+    }
 }
 
 function monsterDeath() {
     clearInterval(battleTimer); clearInterval(attackTimer);
     const m = document.getElementById('mon-img');
-    m.style.transition = "opacity 0.5s"; m.style.opacity = 0;
+    m.style.transition = "opacity 0.5s, transform 0.5s";
+    m.style.opacity = 0; m.style.transform = "scale(0.5)";
+    
+    showDamageText(isBoss ? "STAGE CLEAR!" : "NEXT!", true);
+    
     rpgData.subStage++;
-    if(rpgData.subStage > 5) { rpgData.subStage = 1; rpgData.stage++; timeLeft = 30; }
+    if(rpgData.subStage > 5) {
+        rpgData.subStage = 1;
+        rpgData.stage++;
+        timeLeft = 30; 
+    }
+    
     saveRPGData(); updateStatUI();
-    setTimeout(() => { initBattle(); }, 1000);
+    setTimeout(() => {
+        m.style.transition = "none"; m.style.transform = "scale(1)";
+        initBattle();
+    }, 1000);
 }
 
+// [핵심] 비주얼 업데이트 함수들
 function updateHPUI(instant = false) {
     const pct = (currentMonHP / maxMonHP) * 100;
-    document.getElementById('mon-hp-fill').style.width = pct + '%';
+    const fill = document.getElementById('mon-hp-fill');
     const delay = document.getElementById('mon-hp-delay');
-    if(instant) { delay.style.transition = 'none'; delay.style.width = pct + '%'; }
-    else { delay.style.transition = 'width 0.5s ease-out 0.2s'; delay.style.width = pct + '%'; }
+    
+    fill.style.width = pct + '%';
+    
+    if(instant) {
+        delay.style.transition = 'none';
+        delay.style.width = pct + '%';
+    } else {
+        delay.style.transition = 'width 0.5s ease-out 0.2s'; 
+        delay.style.width = pct + '%';
+    }
 }
 
 function updateTimerUI() {
@@ -456,64 +497,157 @@ function showDamageText(dmg, isCrit) {
     const el = document.createElement('div');
     el.className = isCrit ? 'dmg-text dmg-crit' : 'dmg-text';
     el.innerText = dmg;
-    el.style.left = (40 + Math.random()*20)+'%'; el.style.top = (30 + Math.random()*20)+'%';
+    const left = 50 + (Math.random()*20 - 10);
+    const top = 30 + (Math.random()*20 - 10);
+    el.style.left = left+'%'; el.style.top = top+'%';
+    
     document.getElementById('fx-layer').appendChild(el);
     setTimeout(()=>el.remove(), 800);
 }
 
 function shakeScreen() {
     const vp = document.getElementById('battle-viewport');
+    vp.classList.remove('shake-effect');
+    void vp.offsetWidth; 
     vp.classList.add('shake-effect');
-    setTimeout(()=>vp.classList.remove('shake-effect'), 300);
 }
 
 // ============================================================
-// [3. 퀴즈 및 시스템 유틸리티]
+// [3. 퀴즈 및 성장 시스템]
 // ============================================================
+let currentQuiz = null;
+
 function nextQuiz() {
-    if (vocabulary.length < 1) { document.getElementById('quiz-text').innerText = "문제를 등록하세요!"; return; }
-    currentQuiz = vocabulary[Math.floor(Math.random() * vocabulary.length)];
+    if (vocabulary.length < 1) {
+        document.getElementById('quiz-text').innerText = "데이터가 없습니다.\n관리 메뉴에서 추가하세요.";
+        return;
+    }
+    
+    let wrongOnes = vocabulary.filter(v => (v.wrongCount || 0) > 0);
+    currentQuiz = (wrongOnes.length > 0 && Math.random() < 0.5) 
+        ? wrongOnes[Math.floor(Math.random() * wrongOnes.length)]
+        : vocabulary[Math.floor(Math.random() * vocabulary.length)];
+    
     const imgView = document.getElementById('quiz-img');
     const textView = document.getElementById('quiz-text');
-    if (currentQuiz.type === 'image') { imgView.src = currentQuiz.q; imgView.style.display = 'block'; textView.innerText = ""; }
-    else { imgView.style.display = 'none'; textView.innerText = currentQuiz.q; }
-    document.getElementById('game-input').value = ""; document.getElementById('game-input').focus();
+    
+    if (currentQuiz.type === 'image') {
+        imgView.src = currentQuiz.q; imgView.style.display = 'block';
+        textView.innerText = currentQuiz.qText || "";
+    } else {
+        imgView.style.display = 'none'; textView.innerText = currentQuiz.q;
+    }
+    
+    document.getElementById('game-input').value = "";
+    document.getElementById('game-input').focus();
 }
 
 function checkAnswer() {
-    if (!currentQuiz) return;
+    if (!currentQuiz) return nextQuiz();
     const input = document.getElementById('game-input').value.trim();
     if (!input) return;
-    const isCorrect = input.toUpperCase() === currentQuiz.a.toUpperCase();
+
+    const userAns = input.replace(/\s/g, "").toUpperCase();
+    const realAns = currentQuiz.a.replace(/\s/g, "").toUpperCase();
+    const isCorrect = (userAns === 'O' || userAns === 'X') ? (realAns.charAt(0) === userAns) : (userAns === realAns);
+    const fb = document.getElementById('quiz-feedback');
+
     if (isCorrect) {
-        rpgData.combo++; applyStatGrowth(rpgData.combo % 5 === 0 ? 3 : 1);
-        heroAttack(); setTimeout(nextQuiz, 200);
+        rpgData.combo++;
+        let mult = 1;
+        if(rpgData.combo % 5 === 0) { mult = 3; showDamageText("COMBO BONUS!", true); }
+        
+        applyStatGrowth(mult);
+        
+        if (currentQuiz.wrongCount > 0) { currentQuiz.wrongCount--; saveToDB(currentQuiz); }
+        
+        // 정답 시 즉시 강력한 공격
+        heroAttack(); setTimeout(heroAttack, 300); 
+        
+        fb.innerText = "EXCELLENT!"; fb.style.color = "var(--success)";
+        setTimeout(nextQuiz, 200);
     } else {
-        rpgData.combo = 0; showToast("오답: " + currentQuiz.a); setTimeout(nextQuiz, 1500);
+        rpgData.combo = 0;
+        fb.innerHTML = `답: ${currentQuiz.a} <small>(${currentQuiz.desc||''})</small>`;
+        fb.style.color = "var(--danger)";
+        shakeScreen(); 
+        
+        currentQuiz.wrongCount = (currentQuiz.wrongCount || 0) + 1;
+        saveToDB(currentQuiz);
+        setTimeout(nextQuiz, 2500);
     }
     saveRPGData(); updateStatUI();
 }
 
 function applyStatGrowth(mult) {
+    document.querySelectorAll('.pop-stat').forEach(el => {
+        el.style.animation = 'none'; void el.offsetWidth; el.style.animation = 'popUp 0.8s forwards';
+    });
+
     for(let i=0; i<mult; i++) {
         const r = Math.random();
-        if(r < 0.4) rpgData.atk += 2;
-        else if(r < 0.6) rpgData.aspd += 0.01;
-        else if(r < 0.8) rpgData.crit += 0.1;
-        else rpgData.cdmg += 2;
+        if(r < 0.4) { rpgData.atk += 2; setPop('atk', 2); }
+        else if(r < 0.6) { rpgData.aspd = Math.min(5.0, rpgData.aspd + 0.005); setPop('aspd', 0.01); }
+        else if(r < 0.8) { rpgData.crit = Math.min(100, rpgData.crit + 0.05); setPop('crit', 0.1); }
+        else { rpgData.cdmg += 2; setPop('cdmg', 2); }
     }
 }
+function setPop(type, val) { document.getElementById('pop-'+type).innerText = "+"+val; }
 
-// 이미지 관리 및 기타 유틸리티 함수들 (기존 로직 유지)
-function toggleAddMode(mode) { document.getElementById('add-text-box').style.display = mode==='text'?'block':'none'; document.getElementById('add-image-box').style.display = mode==='image'?'block':'none'; }
-function addTextWord() { 
-    const q=document.getElementById('new-q').value, a=document.getElementById('new-a').value;
-    if(q&&a) saveToDB({type:'text',q,a,wrongCount:0}, ()=>{ showToast("저장됨"); nextQuiz(); }); 
+// ============================================================
+// [4. 유틸리티 (이미지 처리 등)]
+// ============================================================
+let cropImg=new Image(), cropCanvas=document.getElementById('crop-canvas'), cropCtx=cropCanvas.getContext('2d');
+let cropRect={x:0,y:0,w:100,h:100}, dragMode=null, startPos={x:0,y:0}, baseRect={x:0,y:0,w:0,h:0}, currentCropTarget=null;
+
+function handleImageFile(e) { const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ cropImg.src=ev.target.result; cropImg.onload=()=>startCropping(); }; r.readAsDataURL(f); }
+function startCropping() { document.getElementById('modal-crop').style.display='flex'; const cw=Math.min(window.innerWidth*0.9, cropImg.width); cropRect={x:10,y:10,w:cw,h:cw*0.6}; drawCrop(); }
+function drawCrop() {
+    const maxW=window.innerWidth, maxH=window.innerHeight*0.7; const scale=Math.min(maxW/cropImg.width, maxH/cropImg.height);
+    cropCanvas.width=cropImg.width*scale; cropCanvas.height=cropImg.height*scale;
+    cropCtx.clearRect(0,0,cropCanvas.width,cropCanvas.height); 
+    cropCtx.drawImage(cropImg,0,0,cropCanvas.width,cropCanvas.height); 
+    cropCtx.fillStyle='rgba(0,0,0,0.6)'; cropCtx.fillRect(0,0,cropCanvas.width,cropCanvas.height);
+    const sX=cropRect.x*scale, sY=cropRect.y*scale, sW=cropRect.w*scale, sH=cropRect.h*scale;
+    cropCtx.clearRect(sX,sY,sW,sH); cropCtx.drawImage(cropImg,cropRect.x,cropRect.y,cropRect.w,cropRect.h,sX,sY,sW,sH); 
+    cropCtx.strokeStyle='#fff'; cropCtx.lineWidth=2; cropCtx.strokeRect(sX,sY,sW,sH);
 }
-function renderWordList() { 
-    const l = document.getElementById('word-list');
-    l.innerHTML = vocabulary.map(v=>`<div class='list-item'><input type='checkbox' class='chk-del' value='${v.id}'> ${v.q} (${v.a})</div>`).join('');
+cropCanvas.addEventListener('pointerdown', e=>{ 
+    const rect=cropCanvas.getBoundingClientRect(), scale=cropImg.width/cropCanvas.width;
+    const cx=e.clientX-rect.left, cy=e.clientY-rect.top; 
+    const sX=cropRect.x/scale, sY=cropRect.y/scale, sW=cropRect.w/scale, sH=cropRect.h/scale;
+    if(cx>sX && cx<sX+sW && cy>sY && cy<sY+sH) { dragMode='move'; startPos={x:e.clientX, y:e.clientY}; baseRect={...cropRect}; cropCanvas.setPointerCapture(e.pointerId); }
+});
+cropCanvas.addEventListener('pointermove', e=>{ 
+    if(!dragMode) return; 
+    const scale=cropImg.width/cropCanvas.width;
+    const dx=(e.clientX-startPos.x)*scale, dy=(e.clientY-startPos.y)*scale;
+    if(dragMode==='move') { cropRect.x=Math.max(0, Math.min(cropImg.width-cropRect.w, baseRect.x+dx)); cropRect.y=Math.max(0, Math.min(cropImg.height-cropRect.h, baseRect.y+dy)); drawCrop(); }
+});
+cropCanvas.addEventListener('pointerup', ()=>dragMode=null);
+
+function closeCrop() { document.getElementById('modal-crop').style.display='none'; document.getElementById('camera-input').value=""; }
+function applyCrop() { 
+    const c=document.createElement('canvas'); c.width=cropRect.w; c.height=cropRect.h; 
+    c.getContext('2d').drawImage(cropImg,cropRect.x,cropRect.y,cropRect.w,cropRect.h,0,0,cropRect.w,cropRect.h); 
+    const res=c.toDataURL('image/jpeg',0.8); 
+    if(currentCropTarget==='question') { document.getElementById('preview-q-img').src=res; document.getElementById('preview-q-img').style.display='block'; }
+    closeCrop(); 
+}
+function triggerCamera(target) { currentCropTarget=target; document.getElementById('camera-input').click(); }
+function parseExcel() {
+    const val = document.getElementById('excel-input').value;
+    if(!val) return;
+    const lines = val.split('\n');
+    let cnt = 0;
+    lines.forEach(line => {
+        const p = line.split('\t');
+        if(p.length >= 2) {
+            saveToDB({type:'text', q:p[0].trim(), a:p[1].trim(), wrongCount:0});
+            cnt++;
+        }
+    });
+    showToast(cnt + "개 일괄 등록 완료");
+    document.getElementById('excel-input').value = "";
 }
 </script>
-</body>
-</html>
