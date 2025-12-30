@@ -728,8 +728,10 @@ function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById('screen-' + id).classList.add('active');
     
-    // 관리 화면 진입 시 목록 새로고침
-    if (id === 'manage') renderWordList();
+    // 관리 화면 들어올 때마다 목록 최신화
+    if (id === 'manage') {
+        loadVocabulary(); 
+    }
 }
 
 function toggleAddMode(mode) {
@@ -752,18 +754,14 @@ function escapeHtml(text) {
 function addTextWord() {
     const q = document.getElementById('new-q').value.trim();
     const a = document.getElementById('new-a').value.trim();
-    const exText = document.getElementById('new-ex-text').value.trim(); // 해설
+    if (!q || !a) return showToast("내용을 입력하세요", 'error');
     
-    if (!q || !a) return showToast("문제와 정답을 입력하세요", 'error');
-    
-    // 해설(exText)도 같이 저장
-    saveToDB({ type: 'text', q: escapeHtml(q), a: escapeHtml(a), exText: escapeHtml(exText) });
-    
+    saveToDB({ type: 'text', q: escapeHtml(q), a: escapeHtml(a) });
     document.getElementById('new-q').value = "";
     document.getElementById('new-a').value = "";
-    document.getElementById('new-ex-text').value = "";
 }
 
+// ★ [수정됨] 엑셀 일괄 등록 함수
 function parseExcel() {
     const val = document.getElementById('excel-input').value.trim();
     if (!val) return showToast("내용이 없습니다.", 'error');
@@ -775,20 +773,12 @@ function parseExcel() {
     const store = tx.objectStore('vocab');
 
     lines.forEach(line => {
-        // [문제] [정답] [해설(옵션)]
         const parts = line.split('\t');
         if (parts.length >= 2) {
             const q = parts[0].trim();
             const a = parts[1].trim();
-            const ex = parts[2] ? parts[2].trim() : "";
-            
             if (q && a) {
-                store.add({ 
-                    type: 'text', 
-                    q: escapeHtml(q), 
-                    a: escapeHtml(a),
-                    exText: escapeHtml(ex) // 해설 저장
-                });
+                store.add({ type: 'text', q: escapeHtml(q), a: escapeHtml(a) });
                 count++;
             }
         }
@@ -798,260 +788,154 @@ function parseExcel() {
         showToast(`${count}개 일괄 등록 완료!`, 'success');
         document.getElementById('excel-input').value = "";
         toggleExcel();
-        renderWordList(); // 즉시 목록 갱신
+        // ★ 핵심: 등록 끝나면 무조건 데이터 다시 불러오기
+        loadVocabulary(); 
     };
 }
 
 // ============================================================
-// [7. 이미지 자르기 시스템 (크기 조절 포함)]
+// [7. 이미지 자르기(Crop) 시스템]
 // ============================================================
-function handleImageFile(e, type) {
+function handleImageFile(e) {
     const file = e.target.files[0];
     if (!file) return;
-    
-    currentTargetType = type; // 'q' 또는 'ex'
     
     const reader = new FileReader();
     reader.onload = function(ev) {
         cropImg.src = ev.target.result;
+        currentCropBlob = file;
     };
     reader.readAsDataURL(file);
 
     cropImg.onload = function() {
         startCropping();
     };
-    e.target.value = ""; // 같은 파일 다시 선택 가능하게
 }
 
 function startCropping() {
     document.getElementById('crop-modal').style.display = 'flex';
     rotationAngle = 0;
-    
-    // 캔버스 크기 설정
-    const container = document.getElementById('crop-area');
-    const canvas = document.getElementById('crop-canvas');
-    canvas.width = container.clientWidth;
-    canvas.height = container.clientHeight;
-
-    // 초기 자르기 영역 (중앙, 200x200)
-    const cw = canvas.width;
-    const ch = canvas.height;
-    cropRect = { 
-        x: (cw - 200) / 2, 
-        y: (ch - 200) / 2, 
-        w: 200, 
-        h: 200 
-    };
-    
+    const cw = document.getElementById('crop-canvas-container').clientWidth;
+    const ch = window.innerHeight * 0.5;
+    const size = Math.min(cw, ch) * 0.6;
+    cropRect = { x: (cw - size)/2, y: (ch - size)/2, w: size, h: size };
     drawCropCanvas();
 }
 
 function drawCropCanvas() {
-    if (!cropCtx) return;
+    const container = document.getElementById('crop-canvas-container');
     const canvas = document.getElementById('crop-canvas');
-    const cw = canvas.width;
-    const ch = canvas.height;
+    const cw = container.clientWidth;
+    const ch = window.innerHeight * 0.6; 
+
+    canvas.width = cw;
+    canvas.height = ch;
     
-    // 배경 (어둡게)
-    cropCtx.fillStyle = "#222";
+    cropCtx.fillStyle = "#333";
     cropCtx.fillRect(0, 0, cw, ch);
 
-    // 이미지 그리기 (회전 적용)
     cropCtx.save();
     cropCtx.translate(cw/2, ch/2);
     cropCtx.rotate(rotationAngle * Math.PI / 180);
     
-    // 이미지 비율 유지하며 캔버스에 맞춤 (여백 남김)
-    const scale = Math.min(cw / cropImg.width, ch / cropImg.height) * 0.9; 
+    const scale = Math.min(cw / cropImg.width, ch / cropImg.height) * 0.8; 
     const dw = cropImg.width * scale;
     const dh = cropImg.height * scale;
     
     cropCtx.drawImage(cropImg, -dw/2, -dh/2, dw, dh);
     cropCtx.restore();
 
-    // 자르기 사각형 그리기
     cropCtx.strokeStyle = "#fff";
     cropCtx.lineWidth = 2;
     cropCtx.strokeRect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
 
-    // 크기 조절 핸들 그리기 (우측 하단)
-    const handleSize = 20;
-    cropCtx.fillStyle = "#fff";
-    cropCtx.fillRect(cropRect.x + cropRect.w - handleSize/2, cropRect.y + cropRect.h - handleSize/2, handleSize, handleSize);
-
-    // 어두운 오버레이 (선택 영역 밖)
-    cropCtx.fillStyle = "rgba(0,0,0,0.6)";
-    // 상, 하, 좌, 우
+    cropCtx.fillStyle = "rgba(0,0,0,0.5)";
     cropCtx.fillRect(0, 0, cw, cropRect.y);
     cropCtx.fillRect(0, cropRect.y + cropRect.h, cw, ch - (cropRect.y + cropRect.h));
     cropCtx.fillRect(0, cropRect.y, cropRect.x, cropRect.h);
     cropCtx.fillRect(cropRect.x + cropRect.w, cropRect.y, cw - (cropRect.x + cropRect.w), cropRect.h);
 }
 
-// 터치/마우스 이벤트 (이동 및 크기 조절)
-const cropCanvas = document.getElementById('crop-canvas');
-cropCanvas.addEventListener('touchstart', dragStart, {passive: false});
-cropCanvas.addEventListener('touchmove', dragMove, {passive: false});
-cropCanvas.addEventListener('touchend', dragEnd);
-cropCanvas.addEventListener('mousedown', dragStart);
-cropCanvas.addEventListener('mousemove', dragMove);
-cropCanvas.addEventListener('mouseup', dragEnd);
+let isDragging = false;
+let lastX = 0, lastY = 0;
+const cropContainer = document.getElementById('crop-canvas-container');
+cropContainer.addEventListener('touchstart', dragStart, {passive: false});
+cropContainer.addEventListener('touchmove', dragMove, {passive: false});
+cropContainer.addEventListener('touchend', dragEnd);
+cropContainer.addEventListener('mousedown', dragStart);
+cropContainer.addEventListener('mousemove', dragMove);
+cropContainer.addEventListener('mouseup', dragEnd);
 
 function dragStart(e) {
     e.preventDefault();
     isDragging = true;
-    const pt = getPoint(e);
-    lastX = pt.x;
-    lastY = pt.y;
-    
-    // 핸들 터치 판정 (우측 하단)
-    const hx = cropRect.x + cropRect.w;
-    const hy = cropRect.y + cropRect.h;
-    const dist = Math.sqrt(Math.pow(pt.x - hx, 2) + Math.pow(pt.y - hy, 2));
-
-    if (dist < 30) {
-        dragMode = 'resize';
-    } else if (pt.x > cropRect.x && pt.x < hx && pt.y > cropRect.y && pt.y < hy) {
-        dragMode = 'move';
-    } else {
-        isDragging = false;
-        dragMode = null;
-    }
+    const pt = e.touches ? e.touches[0] : e;
+    lastX = pt.clientX;
+    lastY = pt.clientY;
 }
 
 function dragMove(e) {
     if (!isDragging) return;
     e.preventDefault();
-    const pt = getPoint(e);
-    const dx = pt.x - lastX;
-    const dy = pt.y - lastY;
-    
-    if (dragMode === 'move') {
-        cropRect.x += dx;
-        cropRect.y += dy;
-    } else if (dragMode === 'resize') {
-        cropRect.w += dx;
-        cropRect.h += dy;
-        // 최소 크기 제한 (50px)
-        if (cropRect.w < 50) cropRect.w = 50;
-        if (cropRect.h < 50) cropRect.h = 50;
-    }
-    
-    lastX = pt.x;
-    lastY = pt.y;
+    const pt = e.touches ? e.touches[0] : e;
+    const dx = pt.clientX - lastX;
+    const dy = pt.clientY - lastY;
+    cropRect.x += dx;
+    cropRect.y += dy;
+    lastX = pt.clientX;
+    lastY = pt.clientY;
     drawCropCanvas();
 }
 
-function dragEnd() {
-    isDragging = false;
-    dragMode = null;
-}
-
-function getPoint(e) {
-    if (e.touches) {
-        const rect = e.target.getBoundingClientRect();
-        return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
-    }
-    return { x: e.offsetX, y: e.offsetY };
-}
-
-function rotateImage() {
-    rotationAngle = (rotationAngle + 90) % 360;
-    drawCropCanvas();
-}
-
-function closeCrop() {
-    document.getElementById('crop-modal').style.display = 'none';
-}
+function dragEnd() { isDragging = false; }
+function rotateImage() { rotationAngle = (rotationAngle + 90) % 360; drawCropCanvas(); }
+function closeCrop() { document.getElementById('crop-modal').style.display = 'none'; }
 
 function applyCrop() {
-    // 현재 캔버스 화면 그대로 캡처 (WYSIWYG)
     const canvas = document.getElementById('crop-canvas');
     const tempCvs = document.createElement('canvas');
     tempCvs.width = cropRect.w;
     tempCvs.height = cropRect.h;
     const tCtx = tempCvs.getContext('2d');
     
-    tCtx.drawImage(canvas, 
-        cropRect.x, cropRect.y, cropRect.w, cropRect.h, 
-        0, 0, cropRect.w, cropRect.h
-    );
+    tCtx.drawImage(canvas, cropRect.x, cropRect.y, cropRect.w, cropRect.h, 0, 0, cropRect.w, cropRect.h);
+    const finalBase64 = tempCvs.toDataURL('image/jpeg', 0.8);
     
-    // 고화질 저장을 위해 0.9 품질 사용
-    const finalBase64 = tempCvs.toDataURL('image/jpeg', 0.9);
-    
-    // 미리보기 설정
-    let previewId = currentTargetType === 'q' ? 'preview-q-img' : 'preview-ex-img';
-    const preview = document.getElementById(previewId);
+    const preview = document.getElementById('preview-q-img');
     preview.src = finalBase64;
     preview.style.display = 'block';
-    preview.dataset.base64 = finalBase64;
-    
+    preview.dataset.base64 = finalBase64; 
     closeCrop();
 }
 
 function addImageWord() {
-    const qPreview = document.getElementById('preview-q-img');
-    const qBase64 = qPreview.dataset.base64;
+    const preview = document.getElementById('preview-q-img');
+    const base64 = preview.dataset.base64;
     
-    // 이미지가 없으면 경고
-    if (!qBase64) return showToast("메인 이미지(문제)가 필요합니다", 'error');
-    
+    if (!base64) return showToast("이미지를 선택/촬영하세요", 'error');
     const qText = document.getElementById('img-q-text').value.trim();
     const a = document.getElementById('img-a').value.trim();
-    const exText = document.getElementById('img-ex-text').value.trim();
-    
-    // 해설 이미지 (선택)
-    const exPreview = document.getElementById('preview-ex-img');
-    const exBase64 = exPreview.dataset.base64 || null;
-
     if (!a) return showToast("정답을 입력하세요", 'error');
 
     saveToDB({ 
         type: 'image', 
-        q: qBase64, 
+        q: base64, 
         qText: escapeHtml(qText), 
-        a: escapeHtml(a),
-        exText: escapeHtml(exText),
-        exImg: exBase64
+        a: escapeHtml(a) 
     });
     
-    // 초기화
-    qPreview.src = ""; qPreview.style.display = "none"; delete qPreview.dataset.base64;
-    exPreview.src = ""; exPreview.style.display = "none"; delete exPreview.dataset.base64;
-    
+    preview.src = "";
+    preview.style.display = "none";
+    delete preview.dataset.base64;
     document.getElementById('img-q-text').value = "";
     document.getElementById('img-a').value = "";
-    document.getElementById('img-ex-text').value = "";
 }
 
-// 줌 모달 관련
-function openImgModal(src) {
-    if (!src) return;
-    const modal = document.getElementById('img-modal');
-    const img = document.getElementById('img-modal-target');
-    img.src = src;
-    img.style.transform = "scale(1)"; // 줌 초기화
-    modal.style.display = "flex";
-}
-function closeImgModal() {
-    document.getElementById('img-modal').style.display = "none";
-}
-function toggleZoom(img) {
-    if (img.style.transform === "scale(2)") {
-        img.style.transform = "scale(1)";
-        img.style.cursor = "zoom-in";
-    } else {
-        img.style.transform = "scale(2)";
-        img.style.cursor = "zoom-out";
-    }
-}
-/* [파트 4 끝] */
 // ============================================================
-// [8. 데이터베이스 보조 및 유틸리티 (수정됨)]
+// [8. 데이터베이스 보조 및 유틸리티]
 // ============================================================
 
-// [중요] 저장 후 화면 갱신 타이밍을 맞추기 위해 함수 재정의
+// ★ [수정됨] 데이터 불러오는 함수 (화면 갱신 로직 포함)
 function loadVocabulary() {
     if(!db) return;
     const tx = db.transaction(['vocab'], 'readonly');
@@ -1059,10 +943,11 @@ function loadVocabulary() {
     store.getAll().onsuccess = function(e) {
         vocabulary = e.target.result || [];
         
-        // 로딩 화면 해제 및 게임 시작 버튼 활성화
+        // 로딩 화면 제거
         const loader = document.getElementById('loading-overlay');
         if(loader) loader.style.display = 'none';
         
+        // 게임 시작 버튼 활성화
         const btnStart = document.getElementById('btn-start');
         if(btnStart) {
             btnStart.disabled = false;
@@ -1071,7 +956,7 @@ function loadVocabulary() {
         
         updateHomeUI();
         
-        // ★ 수정된 부분: 데이터 로드가 끝나면 즉시 목록을 다시 그립니다.
+        // ★ 중요: 데이터 로드 후 즉시 목록 다시 그리기
         if(document.getElementById('screen-manage').classList.contains('active')) {
             renderWordList();
         }
@@ -1082,11 +967,8 @@ function saveToDB(item) {
     const tx = db.transaction(['vocab'], 'readwrite');
     tx.objectStore('vocab').add(item);
     tx.oncomplete = function() {
-        if(item.type === 'text') showToast("추가되었습니다.", 'success');
-        
-        // ★ 수정된 부분: 여기서 renderWordList를 직접 호출하지 않고
-        // loadVocabulary()를 호출하여 데이터 로드 후 그리도록 위임합니다.
-        loadVocabulary(); 
+        if(item.type === 'text') showToast("추가되었습니다.", 'success'); else showToast("이미지 문제 추가됨", 'success');
+        loadVocabulary(); // 저장 후 즉시 목록 갱신
     }
 }
 
