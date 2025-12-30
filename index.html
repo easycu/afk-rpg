@@ -3,20 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>암기 용사: 무한 타임어택 (Final v3)</title>
+<title>암기 용사: Final Remaster</title>
 <style>
-/* --- [1. 기본 설정 & 모바일 최적화] --- */
+/* --- [1. 기본 설정 & 앱 레이아웃] --- */
 :root { --p: #2e7d32; --s: #66bb6a; --bg: #f1f8e9; --text: #1b5e20; --danger: #e53935; --gold: #fdd835; --excel: #1b5e20; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; user-select: none; touch-action: manipulation; }
-body { font-family: -apple-system, 'Pretendard', sans-serif; background: var(--bg); color: var(--text); width: 100vw; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+body { 
+    font-family: -apple-system, 'Pretendard', sans-serif; 
+    background: var(--bg); color: var(--text); 
+    width: 100vw; height: 100dvh; 
+    overflow: hidden; display: flex; flex-direction: column; 
+}
 button { cursor: pointer; font-family: inherit; }
-/* iOS 입력 시 자동 확대 방지 (16px 강제) */
 input, textarea { user-select: text; -webkit-user-select: text; font-size: 16px !important; }
 
 /* --- [2. 공통 UI] --- */
 .screen { display: none; width: 100%; height: 100%; flex-direction: column; background: var(--bg); position: relative; }
 .active { display: flex; }
-.menu-btn { width: 100%; padding: 14px; margin: 5px 0; border: none; border-radius: 12px; color: #fff; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.1s; }
+.menu-btn { width: 100%; padding: 12px; margin: 4px 0; border: none; border-radius: 10px; color: #fff; font-weight: bold; font-size: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 .menu-btn:active { transform: scale(0.98); }
 .btn-game { background: var(--p); }
 .btn-manage { background: #795548; }
@@ -24,44 +28,94 @@ input, textarea { user-select: text; -webkit-user-select: text; font-size: 16px 
 .toast { position: fixed; bottom: 20%; left: 50%; transform: translate(-50%, 20px); background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px; border-radius: 20px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 9999; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-/* --- [3. 게임 화면 UI] --- */
-#area-battle { height: 40%; position: relative; background: linear-gradient(to bottom, #81c784, #a5d6a7); overflow: hidden; display: flex; flex-direction: column; align-items: center; border-bottom: 4px solid var(--text); }
-.stage-info-bar { width: 100%; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.1); color: #fff; font-weight: bold; font-size: 1.1rem; z-index: 10; }
-.time-bar-bg { width: 60%; height: 10px; background: rgba(255,255,255,0.3); border-radius: 5px; overflow: hidden; }
+/* --- [3. 게임 화면 UI (앱 최적화)] --- */
+/* (1) 전투 화면: 25% */
+#area-battle { 
+    flex: 0 0 25%; 
+    position: relative; 
+    background: linear-gradient(to bottom, #81c784, #a5d6a7); 
+    overflow: hidden; 
+    display: flex; flex-direction: column; 
+    border-bottom: 2px solid var(--text); 
+}
+.stage-info-bar { 
+    width: 100%; padding: 5px 10px; 
+    display: flex; justify-content: space-between; align-items: center; 
+    background: rgba(0,0,0,0.15); color: #fff; 
+    font-weight: bold; font-size: 0.9rem; z-index: 10; 
+}
+/* 시간 막대와 텍스트 컨테이너 */
+.timer-container {
+    flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-left: 10px;
+}
+.time-bar-bg { width: 100%; max-width: 150px; height: 6px; background: rgba(255,255,255,0.3); border-radius: 3px; overflow: hidden; }
 .time-bar-fill { height: 100%; width: 100%; background: #fff; transition: width 0.1s linear; }
-.battle-field { flex: 1; width: 100%; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 10% 20px 10%; position: relative; }
-.sprite { font-size: 4rem; position: relative; transition: transform 0.1s; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2)); }
+#time-text { font-family: monospace; font-size: 0.9rem; width: 45px; text-align: right; }
+
+.battle-field { 
+    flex: 1; width: 100%; 
+    display: flex; justify-content: space-between; align-items: flex-end; 
+    padding: 0 12% 10px 12%; 
+    position: relative; 
+}
+.sprite { font-size: 3rem; position: relative; transition: transform 0.1s; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.2)); }
 .sprite.hero { transform: scaleX(-1); }
 .sprite.hit { animation: shake 0.2s; filter: brightness(2) sepia(1) hue-rotate(-50deg); }
 .sprite.attack { animation: lunge 0.15s; }
-.hp-bar-box { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 80px; height: 8px; background: #333; border-radius: 4px; overflow: hidden; }
+.hp-bar-box { 
+    position: absolute; top: -10px; left: 50%; transform: translateX(-50%); 
+    width: 60px; height: 5px; background: #333; border-radius: 3px; overflow: hidden; 
+}
 .hp-fill { height: 100%; background: var(--danger); width: 100%; transition: width 0.2s; }
-.dmg-text { position: absolute; font-weight: 900; color: #fff; font-size: 1.5rem; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; pointer-events: none; animation: floatUp 0.8s forwards; z-index: 20; white-space: nowrap;}
-.crit-text { color: var(--gold) !important; font-size: 2rem !important; }
-.jin-crit-text { color: #e040fb !important; font-size: 2.2rem !important; }
+.dmg-text { position: absolute; font-weight: 900; color: #fff; font-size: 1.2rem; text-shadow: -1px -1px 0 #000; pointer-events: none; animation: floatUp 0.8s forwards; z-index: 20; white-space: nowrap;}
+.crit-text { color: var(--gold) !important; font-size: 1.5rem !important; }
 
-#area-stat { height: 10%; background: #263238; color: #fff; display: flex; align-items: center; justify-content: space-around; padding: 0 10px; font-size: 0.85rem; border-bottom: 1px solid #444; }
-.stat-box { text-align: center; }
-.stat-label { color: #cfd8dc; font-size: 0.7rem; margin-bottom: 2px; }
-.stat-val { font-weight: bold; font-family: monospace; font-size: 1rem; color: var(--s); }
-.buff-badge { background: var(--danger); color: #fff; border-radius: 4px; padding: 2px 6px; font-size: 0.7rem; animation: pulse 1s infinite; display: none; }
+/* (2) 스탯 화면: 6% */
+#area-stat { 
+    flex: 0 0 6%; 
+    background: #263238; color: #fff; 
+    display: flex; align-items: center; justify-content: space-around; 
+    padding: 0 5px; font-size: 0.75rem; border-bottom: 1px solid #444; 
+}
+.stat-box { text-align: center; display:flex; flex-direction:column; justify-content:center; }
+.stat-label { color: #cfd8dc; font-size: 0.65rem; margin-bottom: 0px; }
+.stat-val { font-weight: bold; font-family: monospace; font-size: 0.85rem; color: var(--s); }
+.buff-badge { position:absolute; top:-15px; left:50%; transform:translateX(-50%); background: var(--danger); color: #fff; border-radius: 3px; padding: 1px 4px; font-size: 0.6rem; animation: pulse 1s infinite; display: none; }
 
-#area-quiz { height: 40%; padding: 15px; background: #fff; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
-#q-image { max-height: 120px; max-width: 100%; object-fit: contain; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd; display: none; cursor: zoom-in; }
-#q-text { font-size: 1.1rem; font-weight: bold; text-align: center; margin-bottom: 15px; line-height: 1.4; width: 100%; }
-.input-group { display: flex; width: 100%; gap: 10px; margin-top: auto; }
-#q-input { flex: 1; padding: 12px; font-size: 1rem; border: 2px solid #ccc; border-radius: 10px; outline: none; transition: 0.2s; }
+/* (3) 퀴즈 화면 */
+#area-quiz { 
+    flex: 1; 
+    padding: 10px 15px; background: #fff; 
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    overflow-y: auto; 
+}
+#q-image { max-height: 100px; max-width: 100%; object-fit: contain; margin-bottom: 5px; border-radius: 6px; border: 1px solid #ddd; display: none; }
+#q-text { font-size: 1.0rem; font-weight: bold; text-align: center; margin: 5px 0 10px 0; line-height: 1.3; width: 100%; }
+
+.input-group { display: flex; width: 100%; gap: 8px; margin-top: auto; }
+#q-input { flex: 1; padding: 10px; font-size: 1rem; border: 2px solid #ccc; border-radius: 8px; outline: none; transition: 0.2s; }
 #q-input:focus { border-color: var(--p); }
-#btn-submit { padding: 0 20px; background: var(--p); color: #fff; border: none; border-radius: 10px; font-weight: bold; font-size: 1.1rem; }
-/* 오답 해설 표시용 스타일 */
-#q-desc-display { width:100%; margin-top:8px; padding:8px; background:#e3f2fd; border-radius:5px; color:#1565c0; font-size:0.9rem; display:none; white-space: pre-wrap; }
+#btn-submit { padding: 0 15px; background: var(--p); color: #fff; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; }
 
-#area-menu { height: 10%; background: #f5f5f5; border-top: 1px solid #ddd; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; }
-.small-btn { padding: 8px 12px; background: #fff; border: 1px solid #ccc; border-radius: 8px; font-size: 0.8rem; color: #555; }
+/* 오답/정답 피드백 UI */
+#q-feedback { height:18px; margin-top:3px; font-size:0.8rem; font-weight:bold; }
+#q-desc-display { width:100%; margin-top:5px; padding:8px; background:#e3f2fd; border-radius:4px; color:#1565c0; font-size:0.85rem; display:none; white-space: pre-wrap; text-align: left; }
+#btn-next-quiz { 
+    display: none; width: 100%; margin-top: 10px; padding: 12px; 
+    background: #FF9800; color: #fff; border: none; border-radius: 10px; 
+    font-weight: bold; font-size: 1rem; animation: pulse 1s infinite;
+}
+
+/* (4) 메뉴 화면 */
+#area-menu { 
+    flex: 0 0 8%; min-height: 40px;
+    background: #f5f5f5; border-top: 1px solid #ddd; 
+    display: flex; align-items: center; justify-content: space-between; padding: 0 10px; 
+}
+.small-btn { padding: 6px 10px; background: #fff; border: 1px solid #ccc; border-radius: 6px; font-size: 0.75rem; color: #555; }
 
 /* --- [4. 관리 및 자르기 UI] --- */
 #crop-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:#222; display:none; flex-direction:column; justify-content:center; align-items:center; z-index:9500; }
-/* 모바일 드래그 간섭 방지 (중요: touch-action: none) */
 #crop-canvas-container { position:relative; width:100%; max-height:60vh; overflow:hidden; background:#333; margin-bottom:10px; touch-action: none; }
 #excel-area { display:none; width:100%; background:#f9f9f9; padding:10px; border:2px dashed var(--excel); border-radius:10px; margin-bottom:10px; }
 
@@ -85,17 +139,17 @@ input, textarea { user-select: text; -webkit-user-select: text; font-size: 16px 
     <h3 style="color:#fff; margin-bottom:10px;">이미지 자르기</h3>
     <div id="crop-canvas-container"><canvas id="crop-canvas"></canvas></div>
     <div style="display:flex; gap:10px;">
-        <button class="menu-btn" style="background:#555; padding:10px; width:auto;" onclick="rotateImage()">🔄 회전</button>
-        <button class="menu-btn btn-manage" style="padding:10px; width:auto;" onclick="closeCrop()">취소</button>
-        <button class="menu-btn btn-game" style="padding:10px; width:auto;" onclick="applyCrop()">완료</button>
+        <button class="menu-btn" style="background:#555; padding:8px; width:auto; font-size:0.9rem;" onclick="rotateImage()">🔄 회전</button>
+        <button class="menu-btn btn-manage" style="padding:8px; width:auto; font-size:0.9rem;" onclick="closeCrop()">취소</button>
+        <button class="menu-btn btn-game" style="padding:8px; width:auto; font-size:0.9rem;" onclick="applyCrop()">완료</button>
     </div>
 </div>
 
 <div id="screen-home" class="screen active">
     <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;">
-        <div style="font-size:5rem;margin-bottom:10px;">🛡️</div>
+        <div style="font-size:4rem;margin-bottom:10px;">🛡️</div>
         <h1 style="color:var(--text);margin-bottom:5px;">암기 용사</h1>
-        <p style="color:#666;font-size:0.9rem;">무한 타임어택 RPG</p>
+        <p style="color:#666;font-size:0.9rem;">Final Remaster</p>
         <div style="background:#fff;padding:15px;border-radius:15px;margin:30px 0;width:80%;box-shadow:0 2px 10px rgba(0,0,0,0.05);">
             <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span>최고 스테이지</span><b style="color:var(--p)" id="home-best-stage">1-1</b></div>
             <div style="display:flex;justify-content:space-between;"><span>총 처치</span><b id="home-kill-count">0</b></div>
@@ -109,7 +163,13 @@ input, textarea { user-select: text; -webkit-user-select: text; font-size: 16px 
 
 <div id="screen-game" class="screen">
     <div id="area-battle">
-        <div class="stage-info-bar"><span id="stage-display">STAGE 1-1</span><div class="time-bar-bg"><div id="time-bar" class="time-bar-fill"></div></div></div>
+        <div class="stage-info-bar">
+            <span id="stage-display">STAGE 1-1</span>
+            <div class="timer-container">
+                <div class="time-bar-bg"><div id="time-bar" class="time-bar-fill"></div></div>
+                <div id="time-text">30.0s</div>
+            </div>
+        </div>
         <div class="battle-field">
             <div style="position:relative; text-align:center;"><div class="hp-bar-box"><div id="hero-hp" class="hp-fill"></div></div><div class="sprite hero">⚔️</div></div>
             <div style="position:relative; text-align:center;"><div class="hp-bar-box"><div id="mob-hp" class="hp-fill"></div></div><div id="mob-sprite" class="sprite">👾</div></div>
@@ -123,51 +183,57 @@ input, textarea { user-select: text; -webkit-user-select: text; font-size: 16px 
     </div>
     <div id="area-quiz">
         <img id="q-image" onclick="viewImage(this.src)">
-        <div id="q-text">문제를 불러오는 중...</div>
-        <div class="input-group"><input type="text" id="q-input" placeholder="정답 입력" autocomplete="off"><button id="btn-submit" onclick="submitAnswer()">제출</button></div>
-        <div id="q-feedback" style="height:20px; margin-top:5px; font-size:0.8rem; font-weight:bold;"></div>
+        <div id="q-text">로딩 중...</div>
+        <div class="input-group">
+            <input type="text" id="q-input" placeholder="정답 입력" autocomplete="off">
+            <button id="btn-submit" onclick="submitAnswer()">제출</button>
+        </div>
+        <div id="q-feedback"></div>
         <div id="q-desc-display"></div>
+        <button id="btn-next-quiz" onclick="manualNextQuiz()">🔜 다음 문제</button>
     </div>
     <div id="area-menu">
-        <button class="small-btn" onclick="stopGame()">🏠 홈으로</button><span style="font-size:0.8rem; color:#888;">자동 공격 중...</span><button class="small-btn" onclick="toggleSound()">🔊 소리</button>
+        <button class="small-btn" onclick="stopGame()">🏠 홈</button><span style="font-size:0.7rem; color:#888;">자동 공격 중</span><button class="small-btn" onclick="toggleSound()">🔊 소리</button>
     </div>
 </div>
 
 <div id="screen-manage" class="screen" style="padding:15px; overflow-y:auto;">
-    <h2 style="margin-bottom:15px; color:var(--text);">문제 관리</h2>
-    <div style="display:flex; gap:10px; margin-bottom:10px;">
-        <button class="menu-btn btn-game" style="flex:1; margin:0; padding:10px;" onclick="toggleAddMode('text')">텍스트 문제</button>
-        <button class="menu-btn btn-blue" style="flex:1; margin:0; padding:10px;" onclick="toggleAddMode('image')">이미지 문제</button>
+    <h2 style="margin-bottom:10px; color:var(--text); font-size:1.2rem;">문제 관리</h2>
+    <div style="display:flex; gap:8px; margin-bottom:10px;">
+        <button class="menu-btn btn-game" style="flex:1; margin:0; padding:10px; font-size:0.9rem;" onclick="toggleAddMode('text')">텍스트 문제</button>
+        <button class="menu-btn btn-blue" style="flex:1; margin:0; padding:10px; font-size:0.9rem;" onclick="toggleAddMode('image')">이미지 문제</button>
     </div>
     
-    <div id="add-text-box" class="add-box" style="display:none; background:#fff; padding:15px; border-radius:10px; margin-bottom:10px; border:1px solid #ddd;">
-        <textarea id="new-q" placeholder="문제" style="width:100%; height:50px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; padding:5px;"></textarea>
-        <textarea id="new-a" placeholder="정답 (O/X 가능)" style="width:100%; height:40px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; padding:5px;"></textarea>
-        <button onclick="addTextWord()" class="menu-btn btn-game" style="padding:10px;">등록</button>
+    <div id="add-text-box" class="add-box" style="display:none; background:#fff; padding:12px; border-radius:10px; margin-bottom:10px; border:1px solid #ddd;">
+        <textarea id="new-q" placeholder="문제" style="width:100%; height:40px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; padding:5px;"></textarea>
+        <textarea id="new-a" placeholder="정답 (O/X 가능)" style="width:100%; height:35px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; padding:5px;"></textarea>
+        <textarea id="new-desc" placeholder="해설/설명 (선택사항)" style="width:100%; height:40px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; padding:5px;"></textarea>
         
-        <button class="menu-btn" style="background:var(--excel); margin-top:10px; padding:10px; font-size:0.9rem;" onclick="toggleExcel()">📋 엑셀 붙여넣기</button>
+        <button onclick="addTextWord()" class="menu-btn btn-game" style="padding:8px; font-size:0.9rem;">등록</button>
+        
+        <button class="menu-btn" style="background:var(--excel); margin-top:10px; padding:8px; font-size:0.8rem;" onclick="toggleExcel()">📋 엑셀 붙여넣기</button>
         <div id="excel-area">
-            <p style="font-size:0.8rem; color:#555; margin-bottom:5px;">엑셀에서 <b>[문제] [정답]</b> 열을 복사해서 붙여넣으세요.</p>
-            <textarea id="excel-input" placeholder="Apple   사과" style="width:100%; height:80px; padding:5px;"></textarea>
-            <button class="menu-btn btn-game" style="margin-top:5px; padding:8px; font-size:0.9rem;" onclick="parseExcel()">일괄 등록</button>
+            <p style="font-size:0.75rem; color:#555; margin-bottom:5px;">[문제] [정답] [해설] 순서로 복사</p>
+            <textarea id="excel-input" placeholder="Apple   사과   과일" style="width:100%; height:60px; padding:5px; font-size:0.8rem;"></textarea>
+            <button class="menu-btn btn-game" style="margin-top:5px; padding:6px; font-size:0.8rem;" onclick="parseExcel()">일괄 등록</button>
         </div>
     </div>
 
-    <div id="add-image-box" class="add-box" style="display:none; background:#fff; padding:15px; border-radius:10px; margin-bottom:10px; border:1px solid #ddd;">
-        <button onclick="document.getElementById('camera-input').click()" class="menu-btn btn-blue" style="padding:10px; margin-bottom:5px;">📷 사진 선택/촬영</button>
+    <div id="add-image-box" class="add-box" style="display:none; background:#fff; padding:12px; border-radius:10px; margin-bottom:10px; border:1px solid #ddd;">
+        <button onclick="document.getElementById('camera-input').click()" class="menu-btn btn-blue" style="padding:8px; margin-bottom:5px; font-size:0.9rem;">📷 사진 선택</button>
         <img id="preview-q-img" style="max-width:100%; display:none; margin-bottom:5px; border:2px solid var(--p);">
         
-        <textarea id="img-q-text" placeholder="문제 텍스트(선택)" style="width:100%; height:40px; margin-bottom:5px; padding:5px; border:1px solid #ccc;"></textarea>
-        <textarea id="img-a" placeholder="정답 (필수)" style="width:100%; height:40px; margin-bottom:5px; padding:5px; border:1px solid #ccc; font-weight:bold;"></textarea>
-        <textarea id="img-desc" placeholder="해설/설명 (오답 시 표시)" style="width:100%; height:40px; margin-bottom:5px; padding:5px; border:1px solid #ccc;"></textarea>
+        <textarea id="img-q-text" placeholder="문제 텍스트(선택)" style="width:100%; height:35px; margin-bottom:5px; padding:5px; border:1px solid #ccc;"></textarea>
+        <textarea id="img-a" placeholder="정답 (필수)" style="width:100%; height:35px; margin-bottom:5px; padding:5px; border:1px solid #ccc; font-weight:bold;"></textarea>
+        <textarea id="img-desc" placeholder="해설/설명 (선택사항)" style="width:100%; height:35px; margin-bottom:5px; padding:5px; border:1px solid #ccc;"></textarea>
         
-        <button onclick="addImageWord()" class="menu-btn btn-game" style="padding:10px;">등록</button>
+        <button onclick="addImageWord()" class="menu-btn btn-game" style="padding:8px; font-size:0.9rem;">등록</button>
     </div>
 
-    <div id="word-list" style="margin-top:20px;"></div>
-    <div style="margin-top:20px; display:flex; gap:5px;">
-        <button class="small-btn" style="flex:1;" onclick="selectAll()">✅ 전체 선택</button>
-        <button class="small-btn" style="flex:1; color:var(--danger); border-color:var(--danger);" onclick="deleteSelected()">🗑️ 선택 삭제</button>
+    <div id="word-list" style="margin-top:15px;"></div>
+    <div style="margin-top:15px; display:flex; gap:5px;">
+        <button class="small-btn" style="flex:1;" onclick="selectAll()">✅ 전체</button>
+        <button class="small-btn" style="flex:1; color:var(--danger); border-color:var(--danger);" onclick="deleteSelected()">🗑️ 삭제</button>
     </div>
     <div style="margin-top:5px; display:flex; gap:5px;">
         <button class="small-btn" style="flex:1;" onclick="exportJSON()">💾 백업</button>
@@ -182,7 +248,7 @@ input, textarea { user-select: text; -webkit-user-select: text; font-size: 16px 
 // [1. 전역 변수 및 설정]
 // ============================================================
 const DB_NAME = "HeroQuizDB";
-const DB_VERSION = 3; // ★ 수정됨: 버전 3으로 올려서 기존 DB 충돌(무한로딩) 해결
+const DB_VERSION = 5; 
 let db;
 let vocabulary = [];
 
@@ -226,11 +292,9 @@ window.onload = function() {
     initDB();
     loadPlayerStats();
     
-    // 자르기 캔버스 컨텍스트 미리 확보
     const cvs = document.getElementById('crop-canvas');
     if(cvs) cropCtx = cvs.getContext('2d');
     
-    // 모바일 뒤로가기 제스처 방어 (자르기 모달 닫기용)
     window.addEventListener('popstate', function() {
         const modal = document.getElementById('crop-modal');
         if(modal.style.display === 'flex') {
@@ -238,11 +302,9 @@ window.onload = function() {
         }
     });
 
-    // ★ 로딩 안전장치: 3초 이상 걸리면 강제 진입
     setTimeout(() => {
         const loader = document.getElementById('loading-overlay');
         if(loader && loader.style.display !== 'none') {
-            console.warn("로딩 시간 초과: 강제 진입");
             loader.style.display = 'none';
             const btnStart = document.getElementById('btn-start');
             if(btnStart) {
@@ -254,72 +316,53 @@ window.onload = function() {
 };
 
 function initDB() {
-    // 버전 3으로 열면서 업그레이드 이벤트 강제 발생
     const req = indexedDB.open(DB_NAME, DB_VERSION);
-    
     req.onupgradeneeded = function(e) {
         db = e.target.result;
-        // 기존 저장소가 있으면 날리고 새로 생성 (구조 변경 대비)
         if (db.objectStoreNames.contains('vocab')) {
             db.deleteObjectStore('vocab');
         }
         db.createObjectStore('vocab', { keyPath: 'id', autoIncrement: true });
     };
-    
     req.onsuccess = function(e) {
         db = e.target.result;
         loadVocabulary();
     };
-    
     req.onerror = function(e) {
-        console.error("DB Error:", e);
         document.getElementById('loading-overlay').style.display = 'none';
     };
 }
 
 function loadVocabulary() {
     if(!db) return;
-    try {
-        const tx = db.transaction(['vocab'], 'readonly');
-        const store = tx.objectStore('vocab');
-        store.getAll().onsuccess = function(e) {
-            vocabulary = e.target.result || [];
-            
-            // 로딩 화면 해제
-            const loader = document.getElementById('loading-overlay');
-            if(loader) loader.style.display = 'none';
-            
-            // 게임 시작 버튼 활성화
-            const btnStart = document.getElementById('btn-start');
-            if(btnStart) {
-                btnStart.disabled = false;
-                btnStart.innerText = "게임 시작";
-            }
-            
-            updateHomeUI();
-            
-            // 관리 화면이 켜져있다면 목록 즉시 갱신
-            if(document.getElementById('screen-manage').classList.contains('active')) {
-                renderWordList();
-            }
-        };
-    } catch(err) {
-        console.error(err);
+    const tx = db.transaction(['vocab'], 'readonly');
+    const store = tx.objectStore('vocab');
+    store.getAll().onsuccess = function(e) {
+        vocabulary = e.target.result || [];
         document.getElementById('loading-overlay').style.display = 'none';
-    }
+        const btnStart = document.getElementById('btn-start');
+        if(btnStart) {
+            btnStart.disabled = false;
+            btnStart.innerText = "게임 시작";
+        }
+        updateHomeUI();
+        if(document.getElementById('screen-manage').classList.contains('active')) {
+            renderWordList();
+        }
+    };
 }
 
 function savePlayerStats() {
-    localStorage.setItem('hero_stats_final_v3', JSON.stringify(player));
+    localStorage.setItem('hero_stats_final_v5', JSON.stringify(player));
 }
 function loadPlayerStats() {
-    const data = localStorage.getItem('hero_stats_final_v3');
+    const data = localStorage.getItem('hero_stats_final_v5');
     if (data) player = { ...player, ...JSON.parse(data) };
     updateHomeUI();
 }
 
 function updateHomeUI() {
-    document.getElementById('home-best-stage').innerText = `1-${player.maxStage}`;
+    document.getElementById('home-best-stage').innerText = `${player.maxStage}-1`; 
     document.getElementById('home-kill-count').innerText = player.killCount;
 }
 
@@ -329,10 +372,8 @@ function updateHomeUI() {
 function startGame() {
     if (vocabulary.length < 1) return showToast("문제가 최소 1개 있어야 합니다!", 'error');
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    
     document.getElementById('screen-home').classList.remove('active');
     document.getElementById('screen-game').classList.add('active');
-    
     currentStage = player.maxStage; 
     startStage(currentStage);
     gameRunning = true;
@@ -343,11 +384,9 @@ function startGame() {
 
 function stopGame() {
     gameRunning = false;
-    // ★ 수정됨: 게임 종료 시 콤보 타이머 확실히 제거 (유령 콤보 방지)
     if (comboTimer) clearTimeout(comboTimer);
     combo = 0;
     updateBuffUI();
-    
     savePlayerStats();
     document.getElementById('screen-game').classList.remove('active');
     document.getElementById('screen-home').classList.add('active');
@@ -356,7 +395,6 @@ function stopGame() {
 
 function startStage(stg) {
     currentStage = stg;
-    if(currentStage < 1) currentStage = 1;
     subStage = 0;
     stageTimeLeft = 30;
     spawnMob();
@@ -365,16 +403,13 @@ function startStage(stg) {
 
 function spawnMob() {
     const isBoss = subStage === 2;
-    // 체력 공식
     let hp = Math.floor(200 * Math.pow(1.07, currentStage - 1));
     if (isBoss) hp *= 3; 
-
     mob = { hp: hp, maxHp: hp, isBoss: isBoss };
-    
     const sprite = document.getElementById('mob-sprite');
     sprite.innerText = isBoss ? "👹" : "👾";
     sprite.style.transform = isBoss ? "scale(1.5)" : "scale(1)";
-    document.getElementById('stage-display').innerText = `STAGE 1-${currentStage} (${subStage+1}/3)`;
+    document.getElementById('stage-display').innerText = `STAGE ${currentStage}-${subStage + 1}`;
     updateMobHpUI();
 }
 
@@ -390,12 +425,15 @@ function gameLoop(timestamp) {
     const bar = document.getElementById('time-bar');
     bar.style.width = pct + "%";
     bar.style.background = stageTimeLeft < 5 ? "#e53935" : "#fff";
+    
+    const timeText = document.getElementById('time-text');
+    if(timeText) {
+        timeText.innerText = Math.max(0, stageTimeLeft).toFixed(1) + "s";
+        timeText.style.color = stageTimeLeft < 5 ? "#ff5252" : "#fff";
+    }
 
-    // ★ 수정됨: 공속 상한(2.5) 절대 제한 로직
-    // (기본공속 + 보너스)가 2.5를 넘지 못하게 함
     let totalAspd = player.aspd + (combo * 0.1);
     let currentAspd = Math.min(2.5, totalAspd);
-    
     document.getElementById('stat-aspd').innerText = currentAspd.toFixed(1);
 
     attackTimer += dt;
@@ -409,15 +447,10 @@ function gameLoop(timestamp) {
 function handleStageFail() {
     showToast("시간 초과! 스테이지 강등", 'error');
     playSound('fail');
-    
-    // 실패 시에도 콤보 타이머 정리
     if (comboTimer) clearTimeout(comboTimer);
     combo = 0;
     updateBuffUI();
-
-    currentStage--;
-    if (currentStage < 1) currentStage = 1;
-    
+    currentStage = Math.max(1, currentStage - 1);
     startStage(currentStage);
 }
 
@@ -427,24 +460,18 @@ function heroAttack() {
     void hero.offsetWidth;
     hero.classList.add('attack');
     playSound('attack');
-
     const result = calculateInfiniteCrit(player.atk, player.crit, 0);
-    
-    mob.hp -= result.damage;
-    if (mob.hp < 0) mob.hp = 0;
-    
+    mob.hp = Math.max(0, mob.hp - result.damage);
     createDamageText(result.damage, result.tier);
     updateMobHpUI();
-    
     const mobEl = document.getElementById('mob-sprite');
     mobEl.classList.remove('hit');
     void mobEl.offsetWidth;
     mobEl.classList.add('hit');
-
     if (mob.hp <= 0) {
         player.killCount++;
         subStage++;
-        if (subStage >= 3) {
+        if (subStage >= 3) { 
             playSound('clear');
             player.maxStage = Math.max(player.maxStage, currentStage + 1);
             startStage(currentStage + 1);
@@ -457,17 +484,12 @@ function heroAttack() {
 function calculateInfiniteCrit(dmg, critRate, tier) {
     let currentTierCrit = false;
     let chance = critRate - (tier * 100);
-    
-    if (chance >= 100) currentTierCrit = true; 
-    else if (Math.random() * 100 < chance) currentTierCrit = true;
-
+    if (chance >= 100 || Math.random() * 100 < chance) currentTierCrit = true;
     if (currentTierCrit) {
         let multiplier = player.cdmg / 100; 
         if (chance >= 100) return calculateInfiniteCrit(Math.floor(dmg * multiplier), critRate, tier + 1);
         else return { damage: Math.floor(dmg * multiplier), tier: tier + 1 };
-    } else {
-        return { damage: dmg, tier: tier };
-    }
+    } else return { damage: dmg, tier: tier };
 }
 
 function createDamageText(dmg, tier) {
@@ -475,14 +497,11 @@ function createDamageText(dmg, tier) {
     const el = document.createElement('div');
     el.className = 'dmg-text';
     el.innerText = dmg.toLocaleString();
-    if (tier === 0) { el.style.color = "#fff"; el.style.fontSize = "1.2rem"; } 
-    else if (tier === 1) { el.classList.add('crit-text'); el.innerText += "!"; } 
-    else { el.classList.add('jin-crit-text'); el.innerText += ` (진${tier-1})!`; }
-
+    if (tier === 1) el.classList.add('crit-text');
+    else if (tier > 1) el.classList.add('jin-crit-text');
     const x = 50 + (Math.random() * 40 - 20);
     const y = 40 + (Math.random() * 20 - 10);
-    el.style.left = x + "%";
-    el.style.top = y + "%";
+    el.style.left = x + "%"; el.style.top = y + "%";
     field.appendChild(el);
     setTimeout(() => el.remove(), 800);
 }
@@ -495,8 +514,7 @@ function updateStatUI() {
     document.getElementById('stat-atk').innerText = player.atk;
     document.getElementById('stat-crit').innerText = player.crit.toFixed(1) + "%";
     document.getElementById('stat-cdmg').innerText = player.cdmg + "%";
-    if(player.crit >= 100) document.getElementById('stat-crit').style.color = "#e040fb"; 
-    else document.getElementById('stat-crit').style.color = "#66bb6a";
+    document.getElementById('stat-crit').style.color = player.crit >= 100 ? "#e040fb" : "#66bb6a";
 }
 /* [파트 2 끝] */
 // ============================================================
@@ -510,26 +528,26 @@ function nextQuiz() {
         return;
     }
 
+    // UI 상태 초기화 (새 문제)
+    document.getElementById('btn-submit').style.display = 'block';
+    document.getElementById('btn-next-quiz').style.display = 'none';
+    const inputEl = document.getElementById('q-input');
+    inputEl.disabled = false;
+    inputEl.value = "";
+    inputEl.focus();
+    
+    document.getElementById('q-feedback').innerText = "";
+    const descDisplay = document.getElementById('q-desc-display');
+    descDisplay.style.display = 'none';
+    descDisplay.innerText = "";
+
     // 랜덤 문제 선택
     const idx = Math.floor(Math.random() * vocabulary.length);
     currentQuizData = vocabulary[idx];
 
-    // UI 표시 초기화
     const qText = document.getElementById('q-text');
     const qImg = document.getElementById('q-image');
-    const descDisplay = document.getElementById('q-desc-display');
-    
-    // 해설창 숨기기 (새 문제 시작 시)
-    descDisplay.style.display = 'none';
-    descDisplay.innerText = "";
-    
-    // 입력창 초기화
-    const inputEl = document.getElementById('q-input');
-    inputEl.value = "";
-    inputEl.focus();
-    document.getElementById('q-feedback').innerText = "";
 
-    // 이미지/텍스트 분기 처리
     if (currentQuizData.type === 'image') {
         qImg.style.display = 'block';
         qImg.src = currentQuizData.q;
@@ -540,102 +558,88 @@ function nextQuiz() {
     }
 }
 
+// [수동 넘기기] 정답/오답 확인 후 버튼 클릭 시 실행
+function manualNextQuiz() {
+    playSound('click'); 
+    nextQuiz();
+}
+
 function submitAnswer() {
+    // 결과창 상태에서 엔터/클릭 시 다음 문제로
+    if (document.getElementById('btn-next-quiz').style.display === 'block') {
+        manualNextQuiz();
+        return;
+    }
+
     if (!currentQuizData) return;
     const input = document.getElementById('q-input').value.trim();
     if (!input) return;
 
-    // 정답 체크 (공백제거, 대소문자 무시)
     const userAns = input.replace(/\s/g, "").toUpperCase();
     const realAns = currentQuizData.a.replace(/\s/g, "").toUpperCase();
     
-    let isCorrect = (userAns === realAns);
-
-    if (isCorrect) handleCorrect();
+    if (userAns === realAns) handleCorrect();
     else handleWrong();
 }
 
-// 엔터키 입력 지원 & 모바일 키보드 시야 확보
-const inputEl = document.getElementById('q-input');
-inputEl.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') submitAnswer();
-});
+// 결과 공통 처리 (정답/오답 시 화면 멈춤 및 해설 표시)
+function showResultUI() {
+    const descDisplay = document.getElementById('q-desc-display');
+    // 해설이 있으면 무조건 표시
+    if (currentQuizData.desc && currentQuizData.desc.trim() !== "") {
+        descDisplay.style.display = 'block';
+        descDisplay.innerText = "💡 해설: " + currentQuizData.desc;
+    }
 
-inputEl.addEventListener('focus', function() {
-    setTimeout(() => {
-        const area = document.getElementById('area-quiz');
-        // 문제 이미지나 텍스트가 보이도록 스크롤 위치 보정
-        area.scrollTop = area.scrollHeight; 
-        this.scrollIntoView({behavior: "smooth", block: "center"});
-    }, 300);
-});
+    document.getElementById('btn-submit').style.display = 'none';
+    document.getElementById('q-input').disabled = true;
+    document.getElementById('btn-next-quiz').style.display = 'block';
+    document.getElementById('btn-next-quiz').focus();
+}
 
 function handleCorrect() {
     playSound('correct');
-    
-    // 1. 콤보 및 버프 적용
     combo++;
     updateBuffUI();
     resetComboTimer();
 
-    // 2. 스탯 보상 (랜덤 성장)
     const rand = Math.random();
     let msg = "";
+    if (rand < 0.4) { player.atk += 2; msg = "⚔️공 +2"; } 
+    else if (rand < 0.7) { player.crit += 0.1; msg = "⚡치명 +0.1%"; } 
+    else { player.cdmg += 1; msg = "💪치피 +1%"; }
     
-    if (rand < 0.4) {
-        player.atk += 2;
-        msg = "⚔️공격력 +2";
-    } else if (rand < 0.7) {
-        player.crit += 0.1;
-        msg = "⚡치명타 +0.1%";
-    } else {
-        player.cdmg += 1;
-        msg = "💪치명피해 +1%";
-    }
     updateStatUI();
     savePlayerStats();
-
-    // 3. 보너스 공격
     heroAttack(); 
 
-    // 피드백
     const fb = document.getElementById('q-feedback');
     fb.style.color = "var(--p)";
     fb.innerText = `정답! (${msg})`;
     
-    setTimeout(nextQuiz, 600); 
+    showResultUI(); // 정답 시에도 멈춤
 }
 
 function handleWrong() {
     playSound('wrong');
-    
-    // 콤보 초기화
     combo = 0;
     updateBuffUI();
     if (comboTimer) clearTimeout(comboTimer);
 
     const fb = document.getElementById('q-feedback');
     fb.style.color = "var(--danger)";
-    fb.innerText = `오답! 정답은: ${currentQuizData.a}`;
+    fb.innerText = `오답! 정답: ${currentQuizData.a}`;
     
-    // ★ [수정됨] 해설(Description)이 있으면 보여주기
-    const descDisplay = document.getElementById('q-desc-display');
-    if (currentQuizData.desc && currentQuizData.desc.trim() !== "") {
-        descDisplay.style.display = 'block';
-        descDisplay.innerText = "💡 해설: " + currentQuizData.desc;
-    }
-    
-    document.getElementById('q-input').value = "";
+    showResultUI(); // 오답 시 멈춤
 }
 
 function updateBuffUI() {
     const badge = document.getElementById('buff-badge');
     if (combo > 0) {
         badge.style.display = 'block';
-        // 공속 제한 로직에 맞춰 표시 텍스트 수정
         let totalAspd = player.aspd + (combo * 0.1);
         let finalAspd = Math.min(2.5, totalAspd);
-        badge.innerText = `${combo}콤보! (공속 ${finalAspd.toFixed(1)})`;
+        badge.innerText = `${combo}콤보 (공속 ${finalAspd.toFixed(1)})`;
     } else {
         badge.style.display = 'none';
     }
@@ -643,13 +647,14 @@ function updateBuffUI() {
 
 function resetComboTimer() {
     if (comboTimer) clearTimeout(comboTimer);
+    // 버프 유지 시간 15초로 설정
     comboTimer = setTimeout(() => {
         if (combo > 0) {
-            showToast("콤보 지속시간 종료", 'info');
+            showToast("콤보 종료", 'info');
             combo = 0;
             updateBuffUI();
         }
-    }, 5000); // 5초 유지
+    }, 15000); 
 }
 
 function viewImage(src) {
@@ -659,7 +664,7 @@ function viewImage(src) {
 }
 
 // ============================================================
-// [5. 오디오 시스템 (사운드 믹싱 최적화)]
+// [5. 오디오 시스템]
 // ============================================================
 function toggleSound() {
     isSoundOn = !isSoundOn;
@@ -667,56 +672,48 @@ function toggleSound() {
 }
 
 const snd = {
+    click: (t) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'triangle'; o.frequency.setValueAtTime(600, t);
+        g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(t); o.stop(t + 0.05);
+    },
     attack: (t) => {
         const o = audioCtx.createOscillator();
         const g = audioCtx.createGain();
-        o.frequency.setValueAtTime(150, t);
-        o.frequency.exponentialRampToValueAtTime(0.01, t + 0.1);
-        // 타격음 볼륨을 낮춰 정답 소리와 간섭 최소화
-        g.gain.setValueAtTime(0.05, t); 
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(0.01, t + 0.1);
+        g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
         o.connect(g); g.connect(audioCtx.destination);
         o.start(t); o.stop(t + 0.1);
     },
     correct: (t) => {
-        const g = audioCtx.createGain();
-        // 정답음 볼륨 확보
-        g.gain.value = 0.1;
-        g.connect(audioCtx.destination);
+        const g = audioCtx.createGain(); g.gain.value = 0.1; g.connect(audioCtx.destination);
         [523.25, 659.25, 783.99].forEach((f, i) => { 
-            const o = audioCtx.createOscillator();
-            o.type = 'sine'; o.frequency.value = f;
+            const o = audioCtx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
             o.connect(g); o.start(t + i * 0.05); o.stop(t + i * 0.05 + 0.1);
         });
     },
     wrong: (t) => {
         const o = audioCtx.createOscillator();
         const g = audioCtx.createGain();
-        o.type = 'sawtooth';
-        o.frequency.setValueAtTime(100, t);
-        o.frequency.linearRampToValueAtTime(50, t + 0.3);
-        g.gain.setValueAtTime(0.1, t);
-        g.gain.linearRampToValueAtTime(0, t + 0.3);
+        o.type = 'sawtooth'; o.frequency.setValueAtTime(100, t); o.frequency.linearRampToValueAtTime(50, t + 0.3);
+        g.gain.setValueAtTime(0.1, t); g.gain.linearRampToValueAtTime(0, t + 0.3);
         o.connect(g); g.connect(audioCtx.destination);
         o.start(t); o.stop(t + 0.3);
     },
     fail: (t) => {
         const o = audioCtx.createOscillator();
         const g = audioCtx.createGain();
-        o.type = 'triangle';
-        o.frequency.setValueAtTime(300, t);
-        o.frequency.linearRampToValueAtTime(100, t + 1);
-        g.gain.value = 0.1;
-        o.connect(g); g.connect(audioCtx.destination);
+        o.type = 'triangle'; o.frequency.setValueAtTime(300, t); o.frequency.linearRampToValueAtTime(100, t + 1);
+        g.gain.value = 0.1; o.connect(g); g.connect(audioCtx.destination);
         o.start(t); o.stop(t + 1);
     },
     clear: (t) => {
-        const g = audioCtx.createGain();
-        g.gain.value = 0.1;
-        g.connect(audioCtx.destination);
+        const g = audioCtx.createGain(); g.gain.value = 0.1; g.connect(audioCtx.destination);
         [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
-            const o = audioCtx.createOscillator();
-            o.type = 'square'; o.frequency.value = f;
+            const o = audioCtx.createOscillator(); o.type = 'square'; o.frequency.value = f;
             o.connect(g); o.start(t + i * 0.1); o.stop(t + i * 0.1 + 0.3);
         });
     }
@@ -729,23 +726,21 @@ function playSound(type) {
     if (snd[type]) snd[type](t);
 }
 
-/* [파트 3 끝] script 태그는 여전히 열려있습니다. */
+// 엔터키 지원
+document.getElementById('q-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') submitAnswer(); });
+/* [파트 3 끝] */
 // ============================================================
-// [6. 관리자 기능: 메뉴 및 엑셀 (강화됨)]
+// [6. 관리자 기능: 메뉴 및 엑셀 (3열 해설 인식 강화)]
 // ============================================================
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById('screen-' + id).classList.add('active');
-    
-    // 관리 화면 진입 시 목록 새로고침
-    if (id === 'manage') {
-        loadVocabulary(); 
-    }
+    if (id === 'manage') loadVocabulary(); 
 }
 
 function toggleAddMode(mode) {
-    document.getElementById('add-text-box').style.display = mode === 'text' ? 'block' : 'none';
-    document.getElementById('add-image-box').style.display = mode === 'image' ? 'block' : 'none';
+    document.querySelectorAll('.add-box').forEach(b => b.style.display = 'none');
+    document.getElementById(`add-${mode}-box`).style.display = 'block';
 }
 
 function toggleExcel() {
@@ -755,166 +750,117 @@ function toggleExcel() {
 
 function escapeHtml(text) {
     if (!text) return text;
-    // 특수문자 처리로 HTML 깨짐 및 엑셀 따옴표 충돌 방지
-    return text.replace(/[&<>"']/g, function(m) {
-        return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'}[m];
-    });
+    return text.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#039;"}[m]));
 }
 
 function addTextWord() {
     const q = document.getElementById('new-q').value.trim();
     const a = document.getElementById('new-a').value.trim();
+    const desc = document.getElementById('new-desc').value.trim();
     if (!q || !a) return showToast("내용을 입력하세요", 'error');
-    
-    saveToDB({ type: 'text', q: escapeHtml(q), a: escapeHtml(a) });
+    saveToDB({ type: 'text', q: escapeHtml(q), a: escapeHtml(a), desc: escapeHtml(desc) });
     document.getElementById('new-q').value = "";
     document.getElementById('new-a').value = "";
+    document.getElementById('new-desc').value = "";
 }
 
-// [수정됨] 엑셀 파싱 로직 강화 (빈 줄, 탭, 특수문자 완벽 처리)
 function parseExcel() {
     const val = document.getElementById('excel-input').value.trim();
     if (!val) return showToast("내용이 없습니다.", 'error');
-    
-    // 줄바꿈 문자를 기준으로 나누되, 빈 줄은 필터링
     const lines = val.split(/\r?\n/).filter(line => line.trim() !== "");
     let count = 0;
-    
     const tx = db.transaction(['vocab'], 'readwrite');
     const store = tx.objectStore('vocab');
-
     lines.forEach(line => {
-        // 탭(Tab)으로 분리하거나, 탭이 없으면 연속된 공백으로 분리 시도
         let parts = line.split('\t');
-        if (parts.length < 2) {
-            parts = line.split(/ {2,}/); // 2칸 이상 공백
-        }
-
+        if (parts.length < 2) parts = line.split(/ {2,}/);
         if (parts.length >= 2) {
             const q = parts[0].trim();
             const a = parts[1].trim();
+            const desc = parts[2] ? parts[2].trim() : ""; 
             if (q && a) {
-                store.add({ type: 'text', q: escapeHtml(q), a: escapeHtml(a) });
+                store.add({ type: 'text', q: escapeHtml(q), a: escapeHtml(a), desc: escapeHtml(desc) });
                 count++;
             }
         }
     });
-
-    tx.oncomplete = function() {
-        showToast(`${count}개 일괄 등록 완료!`, 'success');
+    tx.oncomplete = () => {
+        showToast(`${count}개 등록 완료!`, 'success');
         document.getElementById('excel-input').value = "";
         toggleExcel();
-        // 등록 직후 목록 갱신 보장
         loadVocabulary(); 
     };
 }
 
 // ============================================================
-// [7. 이미지 자르기(Crop) 시스템 (핸들 조작감 개선)]
+// [7. 이미지 자르기(Crop) 시스템 (터치 핸들 조작)]
 // ============================================================
 let imgDrawInfo = { x:0, y:0, w:0, h:0, scale:1 };
-// [수정] 터치 영역(HitBox)은 크게, 시각적 핸들(Visual)은 적당하게 설정
-const TOUCH_BUFFER = 40; // 손가락 터치 감지 범위 (40px)
-const VISUAL_HANDLE = 10; // 눈에 보이는 흰 점 크기 (10px)
-let dragMode = null; // 'move', 'resize-tl', 'resize-tr', 'resize-bl', 'resize-br'
+const TOUCH_BUFFER = 40;
+const VISUAL_HANDLE = 10;
+let dragMode = null;
+let isDragging = false;
+let startX = 0, startY = 0;
+let startRect = {};
 
 function handleImageFile(e) {
     const file = e.target.files[0];
     if (!file) return;
-    
     if(cropImg.src) URL.revokeObjectURL(cropImg.src);
-    
     const reader = new FileReader();
-    reader.onload = function(ev) {
+    reader.onload = (ev) => {
         cropImg.src = ev.target.result;
         currentCropBlob = file;
     };
     reader.readAsDataURL(file);
-
-    cropImg.onload = function() {
-        startCropping();
-    };
+    cropImg.onload = () => startCropping();
     e.target.value = "";
 }
 
 function startCropping() {
     document.getElementById('crop-modal').style.display = 'flex';
     rotationAngle = 0;
-    
-    const container = document.getElementById('crop-canvas-container');
-    const cw = container.clientWidth;
+    const cw = document.getElementById('crop-canvas-container').clientWidth;
     const ch = window.innerHeight * 0.5; 
-    
-    const size = Math.min(cw, ch) * 0.5;
+    const size = Math.min(cw, ch) * 0.6;
     cropRect = { x: (cw - size)/2, y: (ch - size)/2, w: size, h: size };
-    
     drawCropCanvas();
 }
 
 function drawCropCanvas() {
-    const container = document.getElementById('crop-canvas-container');
     const canvas = document.getElementById('crop-canvas');
+    const container = document.getElementById('crop-canvas-container');
     const cw = container.clientWidth;
-    const ch = window.innerHeight * 0.5; 
-
-    canvas.width = cw;
-    canvas.height = ch;
-    
-    // 1. 배경 초기화 (검은색)
+    const ch = window.innerHeight * 0.5;
+    canvas.width = cw; canvas.height = ch;
     cropCtx.fillStyle = "#222";
     cropCtx.fillRect(0, 0, cw, ch);
-
-    // 2. 이미지 그리기 (회전 적용)
     cropCtx.save();
     cropCtx.translate(cw/2, ch/2);
     cropCtx.rotate(rotationAngle * Math.PI / 180);
-    
-    let imgW = cropImg.width;
-    let imgH = cropImg.height;
-    if (rotationAngle % 180 !== 0) {
-        imgW = cropImg.height;
-        imgH = cropImg.width;
-    }
-
-    const scale = Math.min(cw / imgW, ch / imgH) * 0.9; 
-    const dw = cropImg.width * scale;
-    const dh = cropImg.height * scale;
-    
+    let imgW = cropImg.width, imgH = cropImg.height;
+    if (rotationAngle % 180 !== 0) { imgW = cropImg.height; imgH = cropImg.width; }
+    const scale = Math.min(cw / imgW, ch / imgH) * 0.9;
+    const dw = cropImg.width * scale, dh = cropImg.height * scale;
     cropCtx.drawImage(cropImg, -dw/2, -dh/2, dw, dh);
     cropCtx.restore();
-    
     imgDrawInfo = { w: dw, h: dh, scale: scale, angle: rotationAngle };
-
-    // 3. 어두운 오버레이 (Dimming) - 4분할 방식
     cropCtx.fillStyle = "rgba(0,0,0,0.6)";
-    cropCtx.fillRect(0, 0, cw, cropRect.y); // 상
-    cropCtx.fillRect(0, cropRect.y + cropRect.h, cw, ch - (cropRect.y + cropRect.h)); // 하
-    cropCtx.fillRect(0, cropRect.y, cropRect.x, cropRect.h); // 좌
-    cropCtx.fillRect(cropRect.x + cropRect.w, cropRect.y, cw - (cropRect.x + cropRect.w), cropRect.h); // 우
-
-    // 4. 자르기 영역 테두리
-    cropCtx.strokeStyle = "#fff";
-    cropCtx.lineWidth = 2;
+    cropCtx.fillRect(0, 0, cw, cropRect.y);
+    cropCtx.fillRect(0, cropRect.y + cropRect.h, cw, ch - (cropRect.y + cropRect.h));
+    cropCtx.fillRect(0, cropRect.y, cropRect.x, cropRect.h);
+    cropCtx.fillRect(cropRect.x + cropRect.w, cropRect.y, cw - (cropRect.x + cropRect.w), cropRect.h);
+    cropCtx.strokeStyle = "#fff"; cropCtx.lineWidth = 2;
     cropCtx.strokeRect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
-
-    // 5. 리사이즈 핸들 그리기 (시각적 크기)
     cropCtx.fillStyle = "#fff";
     const r = VISUAL_HANDLE / 2;
-    // TL, TR, BL, BR
     cropCtx.fillRect(cropRect.x - r, cropRect.y - r, VISUAL_HANDLE, VISUAL_HANDLE);
     cropCtx.fillRect(cropRect.x + cropRect.w - r, cropRect.y - r, VISUAL_HANDLE, VISUAL_HANDLE);
     cropCtx.fillRect(cropRect.x - r, cropRect.y + cropRect.h - r, VISUAL_HANDLE, VISUAL_HANDLE);
     cropCtx.fillRect(cropRect.x + cropRect.w - r, cropRect.y + cropRect.h - r, VISUAL_HANDLE, VISUAL_HANDLE);
 }
 
-// 터치 이벤트 처리
-let isDragging = false;
-let startX = 0, startY = 0;
-let startRect = {}; 
-
 const cropContainer = document.getElementById('crop-canvas-container');
-
-// [중요] touch-action: none이 CSS에 적용되어 있어야 함 (Part 1에 포함됨)
 cropContainer.addEventListener('touchstart', dragStart, {passive: false});
 cropContainer.addEventListener('touchmove', dragMove, {passive: false});
 cropContainer.addEventListener('touchend', dragEnd);
@@ -923,333 +869,241 @@ cropContainer.addEventListener('mousemove', dragMove);
 cropContainer.addEventListener('mouseup', dragEnd);
 
 function getHandle(x, y) {
-    const b = TOUCH_BUFFER; // 터치 감지 범위 (40px)
-    
-    // 모서리 근처인지 확인 (판정 범위 대폭 확대)
-    if (Math.abs(x - cropRect.x) < b && Math.abs(y - cropRect.y) < b) return 'resize-tl';
-    if (Math.abs(x - (cropRect.x + cropRect.w)) < b && Math.abs(y - cropRect.y) < b) return 'resize-tr';
-    if (Math.abs(x - cropRect.x) < b && Math.abs(y - (cropRect.y + cropRect.h)) < b) return 'resize-bl';
-    if (Math.abs(x - (cropRect.x + cropRect.w)) < b && Math.abs(y - (cropRect.y + cropRect.h)) < b) return 'resize-br';
-    
-    // 내부인지 확인
+    const b = TOUCH_BUFFER;
+    if (Math.abs(x - cropRect.x) < b && Math.abs(y - cropRect.y) < b) return 'tl';
+    if (Math.abs(x - (cropRect.x+cropRect.w)) < b && Math.abs(y - cropRect.y) < b) return 'tr';
+    if (Math.abs(x - cropRect.x) < b && Math.abs(y - (cropRect.y+cropRect.h)) < b) return 'bl';
+    if (Math.abs(x - (cropRect.x+cropRect.w)) < b && Math.abs(y - (cropRect.y+cropRect.h)) < b) return 'br';
     if (x > cropRect.x && x < cropRect.x + cropRect.w && y > cropRect.y && y < cropRect.y + cropRect.h) return 'move';
-    
     return null;
 }
 
 function dragStart(e) {
     if(e.target.id !== 'crop-canvas') return;
     e.preventDefault();
-    
     const pt = e.touches ? e.touches[0] : e;
     const bcr = e.target.getBoundingClientRect();
-    const ex = pt.clientX - bcr.left;
-    const ey = pt.clientY - bcr.top;
-    
-    dragMode = getHandle(ex, ey);
+    dragMode = getHandle(pt.clientX - bcr.left, pt.clientY - bcr.top);
     if (!dragMode) return;
-
-    isDragging = true;
-    startX = pt.clientX;
-    startY = pt.clientY;
-    startRect = { ...cropRect };
+    isDragging = true; startX = pt.clientX; startY = pt.clientY; startRect = { ...cropRect };
 }
 
 function dragMove(e) {
     if (!isDragging) return;
     e.preventDefault();
     const pt = e.touches ? e.touches[0] : e;
-    const dx = pt.clientX - startX;
-    const dy = pt.clientY - startY;
-    
-    const MIN_SIZE = 50; // 최소 크기 제한
-
-    if (dragMode === 'move') {
-        cropRect.x = startRect.x + dx;
-        cropRect.y = startRect.y + dy;
-    } else if (dragMode === 'resize-br') {
-        cropRect.w = Math.max(MIN_SIZE, startRect.w + dx);
-        cropRect.h = Math.max(MIN_SIZE, startRect.h + dy);
-    } else if (dragMode === 'resize-bl') {
-        const newW = startRect.w - dx;
-        if(newW > MIN_SIZE) {
-            cropRect.x = startRect.x + dx;
-            cropRect.w = newW;
-        }
-        cropRect.h = Math.max(MIN_SIZE, startRect.h + dy);
-    } else if (dragMode === 'resize-tr') {
-        cropRect.w = Math.max(MIN_SIZE, startRect.w + dx);
-        const newH = startRect.h - dy;
-        if(newH > MIN_SIZE) {
-            cropRect.y = startRect.y + dy;
-            cropRect.h = newH;
-        }
-    } else if (dragMode === 'resize-tl') {
-        const newW = startRect.w - dx;
-        if(newW > MIN_SIZE) {
-            cropRect.x = startRect.x + dx;
-            cropRect.w = newW;
-        }
-        const newH = startRect.h - dy;
-        if(newH > MIN_SIZE) {
-            cropRect.y = startRect.y + dy;
-            cropRect.h = newH;
-        }
-    }
-    
+    const dx = pt.clientX - startX, dy = pt.clientY - startY;
+    if (dragMode === 'move') { cropRect.x = startRect.x + dx; cropRect.y = startRect.y + dy; }
+    else if (dragMode === 'br') { cropRect.w = Math.max(50, startRect.w + dx); cropRect.h = Math.max(50, startRect.h + dy); }
+    else if (dragMode === 'bl') { const nw = startRect.w - dx; if(nw>50){ cropRect.x = startRect.x + dx; cropRect.w = nw; } cropRect.h = Math.max(50, startRect.h + dy); }
+    else if (dragMode === 'tr') { cropRect.w = Math.max(50, startRect.w + dx); const nh = startRect.h - dy; if(nh>50){ cropRect.y = startRect.y + dy; cropRect.h = nh; } }
+    else if (dragMode === 'tl') { const nw = startRect.w - dx; if(nw>50){ cropRect.x = startRect.x + dx; cropRect.w = nw; } const nh = startRect.h - dy; if(nh>50){ cropRect.y = startRect.y + dy; cropRect.h = nh; } }
     drawCropCanvas();
 }
-
 function dragEnd() { isDragging = false; dragMode = null; }
-
-function rotateImage() { 
-    rotationAngle = (rotationAngle + 90) % 360; 
-    // 회전 시 중앙 초기화
-    const cw = document.getElementById('crop-canvas').width;
-    const ch = document.getElementById('crop-canvas').height;
-    const size = Math.min(cw, ch) * 0.5;
-    cropRect = { x: (cw - size)/2, y: (ch - size)/2, w: size, h: size };
-    drawCropCanvas(); 
-}
+function rotateImage() { rotationAngle = (rotationAngle + 90) % 360; startCropping(); }
 function closeCrop() { document.getElementById('crop-modal').style.display = 'none'; }
 
-// [수정됨] 고화질 원본 좌표 역산 방식 (화질 저하 없음)
 function applyCrop() {
     const tempCvs = document.createElement('canvas');
-    let rad = imgDrawInfo.angle * Math.PI / 180;
-    let sin = Math.abs(Math.sin(rad));
-    let cos = Math.abs(Math.cos(rad));
-    let newWidth = cropImg.width * cos + cropImg.height * sin;
-    let newHeight = cropImg.width * sin + cropImg.height * cos;
-    
-    tempCvs.width = newWidth;
-    tempCvs.height = newHeight;
+    let rad = imgDrawInfo.angle * Math.PI / 180, sin = Math.abs(Math.sin(rad)), cos = Math.abs(Math.cos(rad));
+    let nw = cropImg.width * cos + cropImg.height * sin, nh = cropImg.width * sin + cropImg.height * cos;
+    tempCvs.width = nw; tempCvs.height = nh;
     const tCtx = tempCvs.getContext('2d');
-    
-    tCtx.translate(newWidth/2, newHeight/2);
-    tCtx.rotate(rad);
-    tCtx.drawImage(cropImg, -cropImg.width/2, -cropImg.height/2);
-    
+    tCtx.translate(nw/2, nh/2); tCtx.rotate(rad); tCtx.drawImage(cropImg, -cropImg.width/2, -cropImg.height/2);
     const canvas = document.getElementById('crop-canvas');
-    const screenCenterX = canvas.width / 2;
-    const screenCenterY = canvas.height / 2;
-    
-    const distX = cropRect.x - screenCenterX;
-    const distY = cropRect.y - screenCenterY;
-    
-    const sourceX = (newWidth / 2) + (distX / imgDrawInfo.scale);
-    const sourceY = (newHeight / 2) + (distY / imgDrawInfo.scale);
-    const sourceW = cropRect.w / imgDrawInfo.scale;
-    const sourceH = cropRect.h / imgDrawInfo.scale;
-    
+    const sx = (nw/2) + ((cropRect.x - canvas.width/2) / imgDrawInfo.scale);
+    const sy = (nh/2) + ((cropRect.y - canvas.height/2) / imgDrawInfo.scale);
+    const sw = cropRect.w / imgDrawInfo.scale, sh = cropRect.h / imgDrawInfo.scale;
     const finalCvs = document.createElement('canvas');
-    finalCvs.width = sourceW;
-    finalCvs.height = sourceH;
-    const fCtx = finalCvs.getContext('2d');
-    
-    fCtx.drawImage(tempCvs, sourceX, sourceY, sourceW, sourceH, 0, 0, sourceW, sourceH);
-    
-    const finalBase64 = finalCvs.toDataURL('image/jpeg', 0.85);
-    
+    finalCvs.width = sw; finalCvs.height = sh;
+    finalCvs.getContext('2d').drawImage(tempCvs, sx, sy, sw, sh, 0, 0, sw, sh);
+    const base64 = finalCvs.toDataURL('image/jpeg', 0.85);
     const preview = document.getElementById('preview-q-img');
-    preview.src = finalBase64;
-    preview.style.display = 'block';
-    preview.dataset.base64 = finalBase64; 
-    
+    preview.src = base64; preview.style.display = 'block'; preview.dataset.base64 = base64;
     closeCrop();
-}
-
-function addImageWord() {
-    const preview = document.getElementById('preview-q-img');
-    const base64 = preview.dataset.base64;
-    
-    if (!base64) return showToast("이미지를 선택/촬영하세요", 'error');
-    const qText = document.getElementById('img-q-text').value.trim();
-    const a = document.getElementById('img-a').value.trim();
-    // ★ [수정됨] 해설(desc) 값 가져오기
-    const desc = document.getElementById('img-desc').value.trim();
-    
-    if (!a) return showToast("정답을 입력하세요", 'error');
-
-    saveToDB({ 
-        type: 'image', 
-        q: base64, 
-        qText: escapeHtml(qText), 
-        a: escapeHtml(a),
-        desc: escapeHtml(desc) // DB 저장
-    });
-    
-    // 초기화
-    preview.src = "";
-    preview.style.display = "none";
-    delete preview.dataset.base64;
-    document.getElementById('img-q-text').value = "";
-    document.getElementById('img-a').value = "";
-    document.getElementById('img-desc').value = ""; 
-    showToast("이미지 문제 등록 완료!", 'success');
 }
 /* [파트 4 끝] */
 // ============================================================
-// [8. 데이터베이스 보조 및 유틸리티 (최종)]
+// [8. 데이터베이스 실제 입출력 및 목록 UI]
 // ============================================================
 
-function saveToDB(item) {
-    const tx = db.transaction(['vocab'], 'readwrite');
-    tx.objectStore('vocab').add(item);
-    tx.oncomplete = function() {
-        if(item.type === 'text') showToast("추가되었습니다.", 'success');
-        // 저장 후 즉시 목록 갱신 (반응성 향상)
-        loadVocabulary(); 
-    }
-}
-
-function renderWordList() {
-    const listEl = document.getElementById('word-list');
-    listEl.innerHTML = "";
-
-    if (vocabulary.length === 0) {
-        listEl.innerHTML = "<div style='text-align:center; color:#999; padding:20px;'>등록된 문제가 없습니다.</div>";
-        return;
-    }
-
-    // 최신순 정렬
-    const sorted = [...vocabulary].reverse();
-    
-    sorted.forEach(item => {
-        const div = document.createElement('div');
-        div.style.background = "#fff";
-        div.style.borderBottom = "1px solid #eee";
-        div.style.padding = "10px";
-        div.style.display = "flex";
-        div.style.alignItems = "center";
-        
-        let content = "";
-        // 텍스트/이미지 구분 렌더링
-        if (item.type === 'image') {
-            content = `<div style="flex:1;">
-                <span style="font-size:0.8rem; color:#1976d2;">[이미지]</span>
-                <span style="font-weight:bold;">${item.qText ? item.qText : '(이미지 문제)'}</span>
-                <div style="font-size:0.8rem; color:#555;">답: ${item.a}</div>
-            </div>
-            <img src="${item.q}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; margin-right:10px; background:#eee;">`;
-        } else {
-            content = `<div style="flex:1;">
-                <div style="font-weight:bold;">${item.q}</div>
-                <div style="font-size:0.8rem; color:#555;">답: ${item.a}</div>
-            </div>`;
-        }
-
-        div.innerHTML = `<input type="checkbox" class="del-chk" value="${item.id}" style="margin-right:10px; transform:scale(1.2);">${content}`;
-        listEl.appendChild(div);
-    });
-}
-
-// [수정됨] 전체 선택 / 해제 토글 기능 (잔상 버그 해결)
-function selectAll() {
-    const chks = document.querySelectorAll('.del-chk');
-    if (chks.length === 0) return;
-    
-    // 하나라도 체크 안 된 게 있으면 -> 모두 체크
-    // 전부 체크되어 있으면 -> 모두 해제
-    let hasUnchecked = false;
-    chks.forEach(c => { if(!c.checked) hasUnchecked = true; });
-    
-    chks.forEach(c => c.checked = hasUnchecked);
-    
-    if(hasUnchecked) showToast("전체 선택되었습니다.");
-    else showToast("선택 해제되었습니다.");
-}
-
-function deleteSelected() {
-    const chks = document.querySelectorAll('.del-chk:checked');
-    if (chks.length === 0) return showToast("선택된 항목이 없습니다.", 'error');
-    if (!confirm(`${chks.length}개를 삭제하시겠습니까?`)) return;
-
+// 공통 저장 함수
+function saveToDB(data) {
     const tx = db.transaction(['vocab'], 'readwrite');
     const store = tx.objectStore('vocab');
-    chks.forEach(chk => store.delete(Number(chk.value)));
-
-    tx.oncomplete = function() {
-        showToast("삭제되었습니다.", 'success');
-        // 삭제 후 '전체 선택' 상태가 꼬이지 않도록 목록 갱신
-        loadVocabulary(); 
+    store.add(data);
+    tx.oncomplete = () => {
+        showToast("등록 완료!");
+        loadVocabulary(); // 목록 갱신
     };
 }
 
-function exportJSON() {
-    if (vocabulary.length === 0) return showToast("데이터가 없습니다.", 'error');
-    const dataStr = JSON.stringify(vocabulary, null, 2);
-    const blob = new Blob([dataStr], {type: "application/json"});
-    const url = URL.createObjectURL(blob);
+// 이미지 문제 전용 등록 (Part 4의 applyCrop 결과 사용)
+function addImageWord() {
+    const preview = document.getElementById('preview-q-img');
+    const base64 = preview.dataset.base64;
+    const a = document.getElementById('img-a').value.trim();
+    const qText = document.getElementById('img-q-text').value.trim();
+    const desc = document.getElementById('img-desc').value.trim();
+
+    if (!base64) return showToast("사진을 선택하고 '완료'를 눌러주세요.", 'error');
+    if (!a) return showToast("정답을 입력하세요.", 'error');
+
+    saveToDB({
+        type: 'image',
+        q: base64, // Base64 데이터 저장
+        qText: escapeHtml(qText),
+        a: escapeHtml(a),
+        desc: escapeHtml(desc)
+    });
+
+    // 입력창 초기화
+    preview.style.display = 'none';
+    preview.dataset.base64 = "";
+    document.getElementById('img-a').value = "";
+    document.getElementById('img-q-text').value = "";
+    document.getElementById('img-desc').value = "";
+}
+
+// 단어 목록 렌더링 (해설 포함)
+function renderWordList() {
+    const list = document.getElementById('word-list');
+    list.innerHTML = "";
     
+    if (vocabulary.length === 0) {
+        list.innerHTML = "<p style='text-align:center; padding:20px; color:#888;'>등록된 문제가 없습니다.</p>";
+        return;
+    }
+
+    vocabulary.forEach(v => {
+        const div = document.createElement('div');
+        div.style = "background:#fff; padding:10px; border-radius:8px; margin-bottom:8px; display:flex; align-items:center; gap:10px; border:1px solid #eee; box-shadow:0 1px 3px rgba(0,0,0,0.05);";
+        
+        const check = document.createElement('input');
+        check.type = "checkbox"; 
+        check.className = "word-check"; 
+        check.dataset.id = v.id;
+
+        const info = document.createElement('div');
+        info.style = "flex:1; font-size:0.85rem; overflow:hidden;";
+        
+        let titleHtml = "";
+        if (v.type === 'image') {
+            titleHtml = `<span style="color:#1976d2; font-weight:bold;">[이미지]</span> ${v.qText || '(텍스트 없음)'}`;
+        } else {
+            titleHtml = `<b>${v.q}</b>`;
+        }
+
+        info.innerHTML = `
+            <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${titleHtml}</div>
+            <div style="color:var(--p); font-weight:bold; margin-top:2px;">정답: ${v.a}</div>
+            ${v.desc ? `<div style="color:#666; font-size:0.75rem; margin-top:2px; background:#f9f9f9; padding:2px 5px; border-radius:3px;">💡 ${v.desc}</div>` : ""}
+        `;
+
+        div.appendChild(check);
+        div.appendChild(info);
+        list.appendChild(div);
+    });
+}
+
+// 선택 항목 삭제
+function deleteSelected() {
+    const checks = document.querySelectorAll('.word-check:checked');
+    if (checks.length === 0) return showToast("삭제할 항목을 선택하세요.");
+    
+    if (!confirm(`${checks.length}개의 문제를 삭제하시겠습니까?`)) return;
+
+    const tx = db.transaction(['vocab'], 'readwrite');
+    const store = tx.objectStore('vocab');
+    
+    checks.forEach(c => {
+        store.delete(Number(c.dataset.id));
+    });
+
+    tx.oncomplete = () => {
+        showToast("삭제되었습니다.");
+        loadVocabulary();
+    };
+}
+
+// 전체 선택/해제
+function selectAll() {
+    const checks = document.querySelectorAll('.word-check');
+    const isAllChecked = Array.from(checks).every(c => c.checked);
+    checks.forEach(c => c.checked = !isAllChecked);
+}
+
+// ============================================================
+// [9. 백업 및 복구 (JSON)]
+// ============================================================
+function exportJSON() {
+    if (vocabulary.length === 0) return showToast("백업할 데이터가 없습니다.");
+    
+    const data = JSON.stringify(vocabulary);
+    const blob = new Blob([data], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    // 파일명에 날짜 포함
-    a.download = `quiz_backup_${new Date().toISOString().slice(0,10)}.json`;
-    document.body.appendChild(a);
+    a.download = `hero_quiz_backup_${new Date().toISOString().slice(0,10)}.json`;
     a.click();
-    document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
 
-// [수정됨] 복구 시 '덮어쓰기' vs '추가하기' 선택 로직
 function handleJsonFile(e) {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     const reader = new FileReader();
-    reader.onload = function(ev) {
+    reader.onload = (event) => {
         try {
-            const data = JSON.parse(ev.target.result);
-            if (!Array.isArray(data)) throw new Error("배열 형식이 아닙니다.");
-            
-            // 데이터 병합 방식 선택
-            const isOverwrite = confirm(
-                `총 ${data.length}개의 데이터를 불러옵니다.\n\n` +
-                `[확인] = 기존 데이터를 모두 지우고 덮어쓰기 (초기화)\n` +
-                `[취소] = 기존 데이터 뒤에 추가하기 (병합)`
-            );
+            const imported = JSON.parse(event.target.result);
+            if (!Array.isArray(imported)) throw new Error();
+
+            if (!confirm(`${imported.length}개의 데이터를 복구할까요? (기존 데이터와 합쳐집니다)`)) return;
 
             const tx = db.transaction(['vocab'], 'readwrite');
             const store = tx.objectStore('vocab');
             
-            // 덮어쓰기 모드면 기존 데이터 전체 삭제
-            if (isOverwrite) {
-                store.clear(); 
-            }
-
-            let count = 0;
-            data.forEach(item => {
-                delete item.id; // 기존 ID 충돌 방지 (새로 채번)
-                store.add(item);
-                count++;
+            imported.forEach(item => {
+                // 기존 ID는 삭제하고 새로 생성되도록 함
+                const newItem = { ...item };
+                delete newItem.id; 
+                store.add(newItem);
             });
-            
-            tx.oncomplete = function() {
-                showToast(isOverwrite ? "덮어쓰기 완료!" : "추가 완료!", 'success');
+
+            tx.oncomplete = () => {
+                showToast("데이터 복구 성공!");
                 loadVocabulary();
             };
-        } catch (err) { alert("파일 오류: " + err); }
+        } catch(err) {
+            showToast("유효한 백업 파일이 아닙니다.", 'error');
+        }
     };
     reader.readAsText(file);
-    e.target.value = ""; // 같은 파일 재선택 가능하게 초기화
+    e.target.value = ""; // 초기화
 }
 
-function showToast(msg, type='normal') {
+// 토스트 메시지 함수 (중복 방지용 재정의)
+function showToast(msg, type = 'info') {
     const container = document.getElementById('toast-container');
-    const el = document.createElement('div');
-    el.className = 'toast show';
-    el.innerText = msg;
-    if (type === 'error') el.style.background = "rgba(229, 57, 53, 0.95)";
-    else if (type === 'success') el.style.background = "rgba(67, 160, 71, 0.95)";
-    else if (type === 'info') el.style.background = "rgba(25, 118, 210, 0.95)";
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerText = msg;
+    if (type === 'error') toast.style.background = "var(--danger)";
+    if (type === 'success') toast.style.background = "#43a047";
     
-    container.appendChild(el);
-    setTimeout(() => { 
-        el.classList.remove('show'); 
-        setTimeout(() => el.remove(), 300); 
-    }, 2000);
+    container.appendChild(toast);
+    
+    // 리플로우 강제 후 클래스 추가
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
 }
+
 </script>
 </body>
 </html>
