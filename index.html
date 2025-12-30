@@ -3,685 +3,945 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>암기 RPG PRO: REMASTER</title>
+<title>암기 용사: 무한 타임어택</title>
 <style>
-/* [1. 폰트 및 기본 설정] */
-@font-face { font-family: 'NeoDunggeunmo'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.3/NeoDunggeunmo.woff') format('woff'); font-weight: normal; font-style: normal; }
+/* --- [1. 기본 설정] --- */
+:root { --p: #2e7d32; --s: #66bb6a; --bg: #f1f8e9; --text: #1b5e20; --danger: #e53935; --gold: #fdd835; --boss: #5e35b1; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; user-select: none; touch-action: manipulation; }
+body { font-family: -apple-system, 'Pretendard', sans-serif; background: var(--bg); color: var(--text); width: 100vw; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+button { cursor: pointer; font-family: inherit; }
+input, textarea { user-select: text; -webkit-user-select: text; }
 
-:root { 
-    --bg-dark: #121013; 
-    --bg-panel: #222034; 
-    --text-main: #e0d8e8; 
-    --accent: #f1c40f; 
-    --primary: #8e44ad; 
-    --success: #2ecc71; 
-    --danger: #e74c3c;
-}
-
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; user-select: none; touch-action: manipulation; font-family: 'NeoDunggeunmo', monospace; }
-
-body { 
-    background: #000; 
-    color: var(--text-main); 
-    width: 100vw; 
-    height: 100dvh; 
-    overflow: hidden; 
-    display: flex; 
-    flex-direction: column; 
-}
-
-/* [2. CRT 모니터 효과 (레트로 필터 - 격자무늬 제거됨)] */
-#crt-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;
-    /* 스캔라인 효과 제거 */
-    /*
-    background: linear-gradient(rgba(18, 16, 19, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-    background-size: 100% 4px, 6px 100%;
-    */
-    box-shadow: inset 0 0 60px rgba(0,0,0,0.7); /* 비네팅(모서리 어둡게) 효과만 유지 */
-}
-
-/* [3. 공통 UI 컴포넌트] */
-.screen { display: none; width: 100%; height: 100%; flex-direction: column; background: var(--bg-dark); }
+/* --- [2. 공통 UI] --- */
+.screen { display: none; width: 100%; height: 100%; flex-direction: column; background: var(--bg); position: relative; }
 .active { display: flex; }
+.menu-btn { width: 100%; padding: 14px; margin: 5px 0; border: none; border-radius: 12px; color: #fff; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.1s; }
+.menu-btn:active { transform: scale(0.98); }
+.btn-game { background: var(--p); }
+.btn-manage { background: #795548; }
+.btn-blue { background: #1976d2; }
+.toast { position: fixed; bottom: 20%; left: 50%; transform: translate(-50%, 20px); background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px; border-radius: 20px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 9999; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-/* 입체 픽셀 버튼 (CSS 그림자로 입체감 표현) */
-.pixel-btn {
-    position: relative; display: inline-flex; align-items: center; justify-content: center;
-    padding: 10px 15px; margin: 2px;
-    background: #e0e0e0; color: #222; font-size: 1rem; text-transform: uppercase;
-    border: none; cursor: pointer; image-rendering: pixelated;
-    box-shadow: inset -4px -4px 0px 0px rgba(0,0,0,0.4), inset 4px 4px 0px 0px #fff, 0 4px 0 #000;
-    transition: transform 0.1s;
-}
-.pixel-btn:active { transform: translateY(4px); box-shadow: inset -4px -4px 0px 0px rgba(0,0,0,0.4), inset 4px 4px 0px 0px #fff, 0 0 0 #000; }
-.btn-green { background: #4cd964; color: #000; }
-.btn-blue { background: #3498db; color: #fff; }
-.btn-red { background: #ff3b30; color: #fff; }
+/* --- [3. 게임 화면 (RPG 레이아웃)] --- */
+/* (1) 상단 40%: 전투 영역 */
+#area-battle { height: 40%; position: relative; background: linear-gradient(to bottom, #81c784, #a5d6a7); overflow: hidden; display: flex; flex-direction: column; align-items: center; border-bottom: 4px solid var(--text); }
+.stage-info-bar { width: 100%; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.1); color: #fff; font-weight: bold; font-size: 1.1rem; z-index: 10; }
+.time-bar-bg { width: 60%; height: 10px; background: rgba(255,255,255,0.3); border-radius: 5px; overflow: hidden; }
+.time-bar-fill { height: 100%; width: 100%; background: #fff; transition: width 0.1s linear; }
 
-/* 9-Slice 패널 스타일 (컨트롤 패널 배경) */
-.pixel-panel {
-    background: var(--bg-panel); border: 4px solid #000;
-    box-shadow: inset 4px 4px 0 #3f3f74, inset -4px -4px 0 #181425;
-    position: relative;
-}
+.battle-field { flex: 1; width: 100%; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 10% 20px 10%; position: relative; }
+.sprite { font-size: 4rem; position: relative; transition: transform 0.1s; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2)); }
+.sprite.hero { transform: scaleX(-1); } /* 용사는 오른쪽을 봄 */
+.sprite.hit { animation: shake 0.2s; filter: brightness(2) sepia(1) hue-rotate(-50deg); }
+.sprite.attack { animation: lunge 0.15s; }
 
-/* [4. 전투 화면 레이아웃] */
-/* 상단 HUD */
-#top-hud {
-    height: 60px; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; 
-    z-index: 20; background: rgba(0,0,0,0.6); border-bottom: 4px solid #000;
-}
-.stage-badge { color: var(--accent); font-size: 1.4rem; text-shadow: 2px 2px 0 #000; }
-.timer-container { display: flex; flex-direction: column; align-items: flex-end; width: 120px; }
-.timer-bar-bg { width: 100%; height: 10px; background: #333; border: 2px solid #000; margin-top: 4px; }
-.timer-bar-fill { height: 100%; background: #f1c40f; width: 100%; transition: width 0.1s linear; }
+.hp-bar-box { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 80px; height: 8px; background: #333; border-radius: 4px; overflow: hidden; }
+.hp-fill { height: 100%; background: var(--danger); width: 100%; transition: width 0.2s; }
+.dmg-text { position: absolute; font-weight: 900; color: #fff; font-size: 1.5rem; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; pointer-events: none; animation: floatUp 0.8s forwards; z-index: 20; white-space: nowrap;}
+.crit-text { color: var(--gold) !important; font-size: 2rem !important; }
+.jin-crit-text { color: #e040fb !important; font-size: 2.2rem !important; }
 
-/* 전투 필드 (배경) */
-#battle-viewport {
-    flex: 1; position: relative; overflow: hidden;
-    background: #000; display: flex; justify-content: center; align-items: flex-end;
-    /* transition: background 1s; */ /* 배경 전환 부드럽게 */
-}
-/* 테마별 배경색 (이미지가 없을 때를 대비한 픽셀 아트풍 그라데이션) */
-.bg-forest { background: linear-gradient(to bottom, #3498db 0%, #85c1e9 50%, #2ecc71 50%, #27ae60 100%) !important; }
-.bg-desert { background: linear-gradient(to bottom, #e67e22 0%, #f39c12 50%, #f1c40f 50%, #d35400 100%) !important; }
-.bg-dungeon { background: linear-gradient(to bottom, #2c3e50 0%, #34495e 60%, #7f8c8d 60%, #95a5a6 100%) !important; }
+/* (2) 중단 10%: 스탯 영역 */
+#area-stat { height: 10%; background: #263238; color: #fff; display: flex; align-items: center; justify-content: space-around; padding: 0 10px; font-size: 0.85rem; border-bottom: 1px solid #444; }
+.stat-box { text-align: center; }
+.stat-label { color: #cfd8dc; font-size: 0.7rem; margin-bottom: 2px; }
+.stat-val { font-weight: bold; font-family: monospace; font-size: 1rem; color: var(--s); }
+.buff-badge { background: var(--danger); color: #fff; border-radius: 4px; padding: 2px 6px; font-size: 0.7rem; animation: pulse 1s infinite; display: none; }
 
-/* 캐릭터/몬스터 */
-.unit-container { position: absolute; bottom: 18%; width: 128px; height: 128px; display: flex; justify-content: center; align-items: flex-end; }
-#hero-pos { left: 15%; z-index: 10; filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.5)); }
-#mon-pos { right: 15%; z-index: 5; filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.5)); }
-.sprite { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+/* (3) 하단 40%: 퀴즈 영역 */
+#area-quiz { height: 40%; padding: 15px; background: #fff; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
+#q-image { max-height: 120px; max-width: 100%; object-fit: contain; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd; display: none; cursor: zoom-in; }
+#q-text { font-size: 1.1rem; font-weight: bold; text-align: center; margin-bottom: 15px; line-height: 1.4; width: 100%; }
+.input-group { display: flex; width: 100%; gap: 10px; margin-top: auto; }
+#q-input { flex: 1; padding: 12px; font-size: 1.1rem; border: 2px solid #ccc; border-radius: 10px; outline: none; transition: 0.2s; }
+#q-input:focus { border-color: var(--p); }
+#btn-submit { padding: 0 20px; background: var(--p); color: #fff; border: none; border-radius: 10px; font-weight: bold; font-size: 1.1rem; }
 
-/* HP Bar (지연 효과 포함) */
-.hp-frame { position: absolute; top: -25px; width: 100px; height: 14px; background: #111; border: 2px solid #fff; padding: 2px; }
-.hp-fill { height: 100%; background: #e74c3c; width: 100%; position: relative; z-index: 2; transition: width 0.1s; }
-.hp-delay { position: absolute; top: 2px; left: 2px; height: calc(100% - 4px); background: #fff; width: 100%; z-index: 1; transition: width 0.5s ease-out 0.2s; }
+/* (4) 최하단 10%: 메뉴 영역 */
+#area-menu { height: 10%; background: #f5f5f5; border-top: 1px solid #ddd; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; }
+.small-btn { padding: 8px 12px; background: #fff; border: 1px solid #ccc; border-radius: 8px; font-size: 0.8rem; color: #555; }
 
-/* 하단 컨트롤 패널 */
-#control-panel {
-    height: 40%; min-height: 280px; display: flex; flex-direction: column; padding: 12px;
-    z-index: 30;
-}
-/* 스탯 띠 */
-#stat-ticker {
-    display: flex; gap: 15px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; margin-bottom: 10px;
-    overflow-x: auto; white-space: nowrap; border: 2px solid rgba(255,255,255,0.1);
-}
-.stat-item { color: #ccc; font-size: 0.9rem; }
-.stat-val { color: #fff; font-weight: bold; margin-left: 4px; }
-.pop-stat { color: var(--success); font-weight: bold; font-size: 0.8rem; margin-left:2px; animation: popUp 0.8s forwards; opacity:0; }
-
-/* 퀴즈 영역 */
-#quiz-area { flex: 1; display: flex; flex-direction: column; gap: 10px; }
-#quiz-display {
-    flex: 1; background: #141414; border: 2px solid #555; padding: 10px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-    position: relative; box-shadow: inset 0 0 20px #000;
-}
-#quiz-text { font-size: 1.3rem; line-height: 1.4; color: #fff; z-index: 2; white-space: pre-wrap; }
-#quiz-img { max-height: 120px; max-width: 100%; border: 2px solid #000; margin-bottom: 8px; display: none; }
-#input-row { display: flex; gap: 8px; height: 55px; }
-#game-input {
-    flex: 1; background: #eee; border: 4px solid #000; font-size: 1.4rem; padding: 0 15px;
-    font-family: 'NeoDunggeunmo'; outline: none; border-radius: 0;
-    box-shadow: inset 4px 4px 5px rgba(0,0,0,0.2);
-}
-#game-input:focus { background: #fff; border-color: var(--primary); }
-
-/* [5. 특수 효과 및 애니메이션] */
-@keyframes shake { 
-    0% { transform: translate(0, 0); } 
-    25% { transform: translate(-4px, 4px); } 
-    50% { transform: translate(4px, -4px); } 
-    75% { transform: translate(-4px, -4px); } 
-    100% { transform: translate(0, 0); } 
-}
-.shake-effect { animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both; }
-
-.dmg-text { 
-    position: absolute; font-size: 2rem; font-weight: bold; color: #fff; 
-    text-shadow: 3px 3px 0 #000; pointer-events: none; z-index: 100; 
-    animation: dmgFloat 0.8s ease-out forwards; 
-}
-.dmg-crit { color: #ff005c; font-size: 2.5rem; text-shadow: 3px 3px 0 #fff, 5px 5px 0 #000; }
-@keyframes dmgFloat { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-80px) scale(1.5); opacity: 0; } }
-@keyframes popUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-20px); } }
-
-/* [6. 모달 및 기타] */
-#modal-crop { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#111; z-index:9999; flex-direction:column; }
-#toast { position:fixed; top:20%; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#fff; padding:10px 20px; border:2px solid #fff; opacity:0; pointer-events:none; transition:opacity 0.3s; z-index:10000; }
+/* --- [4. 애니메이션] --- */
+@keyframes shake { 0%{transform:translateX(0)} 25%{transform:translateX(-5px)} 50%{transform:translateX(5px)} 75%{transform:translateX(-5px)} 100%{transform:translateX(0)} }
+@keyframes lunge { 0%{transform:scaleX(-1) translateX(0)} 50%{transform:scaleX(-1) translateX(15px)} 100%{transform:scaleX(-1) translateX(0)} }
+@keyframes floatUp { 0%{opacity:1; transform:translate(-50%,0) scale(1)} 100%{opacity:0; transform:translate(-50%,-50px) scale(1.2)} }
+@keyframes pulse { 0%{opacity:1} 50%{opacity:0.6} 100%{opacity:1} }
 </style>
 </head>
 <body>
-    <div id="crt-overlay"></div>
 
-    <div id="screen-rpg" class="screen active">
+<div id="loading-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;justify-content:center;align-items:center;color:#fff;font-weight:bold;flex-direction:column;">
+    <div style="font-size:2rem;margin-bottom:10px;">⚔️</div>
+    <div>데이터 로딩 중...</div>
+</div>
+
+<div id="toast-container"></div>
+
+<div id="img-modal" onclick="this.style.display='none'" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9000;justify-content:center;align-items:center;">
+    <img id="img-modal-target" style="max-width:95%;max-height:95%;object-fit:contain;">
+</div>
+
+<div id="screen-home" class="screen active">
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+        <div style="font-size:5rem;margin-bottom:10px;">🛡️</div>
+        <h1 style="color:var(--text);margin-bottom:5px;">암기 용사</h1>
+        <p style="color:#666;font-size:0.9rem;">무한 타임어택 RPG</p>
         
-        <div id="top-hud">
-            <div>
-                <div class="stage-badge" id="ui-stage">STAGE 1-1</div>
-                <div style="font-size:0.8rem; color:#777;">BATTLE FIELD</div>
+        <div style="background:#fff;padding:15px;border-radius:15px;margin:30px 0;width:80%;box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                <span>최고 스테이지</span>
+                <b style="color:var(--p)" id="home-best-stage">1-1</b>
             </div>
-            <div class="timer-container">
-                <span id="ui-timer-text" style="color:#f1c40f; font-weight:bold;">30.0s</span>
-                <div class="timer-bar-bg">
-                    <div id="ui-timer-bar" class="timer-bar-fill"></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="battle-viewport" class="bg-forest">
-            <div id="fx-layer" style="position:absolute; width:100%; height:100%; pointer-events:none; z-index:50;"></div>
-            
-            <div id="hero-pos" class="unit-container">
-                <img id="hero-img" class="sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v-black-white/animated/25.gif" alt="Hero">
-            </div>
-
-            <div id="mon-pos" class="unit-container">
-                <div class="hp-frame">
-                    <div id="mon-hp-delay" class="hp-delay"></div>
-                    <div id="mon-hp-fill" class="hp-fill"></div>
-                </div>
-                <img id="mon-img" class="sprite" src="" alt="Monster">
-            </div>
-        </div>
-
-        <div id="control-panel" class="pixel-panel">
-            <div id="stat-ticker">
-                <span class="stat-item">⚔️ATK <span id="stat-atk" class="stat-val">10</span><span id="pop-atk" class="pop-stat">+3</span></span>
-                <span class="stat-item">🏹SPD <span id="stat-aspd" class="stat-val">1.0</span><span id="pop-aspd" class="pop-stat">+0.01</span></span>
-                <span class="stat-item">⚡CRI <span id="stat-crit" class="stat-val">5%</span><span id="pop-crit" class="pop-stat">+1%</span></span>
-                <span class="stat-item">💥CDM <span id="stat-cdmg" class="stat-val">150%</span><span id="pop-cdmg" class="pop-stat">+5%</span></span>
-                <span class="stat-item">🔥COMBO <span id="stat-combo" class="stat-val" style="color:var(--accent)">0</span></span>
-            </div>
-
-            <div id="quiz-area">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:0.8rem; color:#888;">MISSION TARGET</span>
-                    <button class="pixel-btn" style="padding:4px 8px; font-size:0.7rem;" onclick="showScreen('manage')">⚙️ DATA</button>
-                </div>
-                
-                <div id="quiz-display">
-                    <img id="quiz-img">
-                    <div id="quiz-text">전투를 시작하려면<br>데이터를 로드하세요.</div>
-                    <div id="quiz-feedback"></div>
-                </div>
-
-                <div id="input-row">
-                    <input id="game-input" type="text" placeholder="정답 입력..." autocomplete="off" onkeypress="if(event.key==='Enter') checkAnswer()">
-                    <button class="pixel-btn btn-red" style="width:80px; font-weight:bold; font-size:1.1rem;" onclick="checkAnswer()">HIT!</button>
-                </div>
+            <div style="display:flex;justify-content:space-between;">
+                <span>총 처치</span>
+                <b id="home-kill-count">0</b>
             </div>
         </div>
     </div>
+    <div style="padding:20px;">
+        <button id="btn-start" class="menu-btn btn-game" onclick="startGame()" disabled>게임 시작 (로딩 중)</button>
+        <button class="menu-btn btn-manage" onclick="showScreen('manage')">문제 관리</button>
+    </div>
+</div>
 
-    <div id="screen-manage" class="screen">
-        <div style="padding:15px; background:var(--bg-panel); border-bottom:4px solid #000; display:flex; justify-content:space-between; align-items:center;">
-            <h2 style="color:#fff; text-shadow:2px 2px 0 #000;">DATABASE</h2>
-            <button class="pixel-btn" onclick="showScreen('rpg')">🔙 BACK</button>
+<div id="screen-game" class="screen">
+    <div id="area-battle">
+        <div class="stage-info-bar">
+            <span id="stage-display">STAGE 1-1</span>
+            <div class="time-bar-bg"><div id="time-bar" class="time-bar-fill"></div></div>
         </div>
-        
-        <div style="padding:15px; overflow-y:auto; flex:1; background:#f4f4f4;">
-            <div style="display:flex; gap:10px; margin-bottom:15px">
-                <button class="pixel-btn btn-green" style="flex:1" onclick="toggleAddMode('text')">📝 TEXT ADD</button>
-                <button class="pixel-btn btn-blue" style="flex:1" onclick="toggleAddMode('image')">📷 IMAGE ADD</button>
+        <div class="battle-field">
+            <div style="position:relative; text-align:center;">
+                <div class="hp-bar-box"><div id="hero-hp" class="hp-fill"></div></div>
+                <div class="sprite hero">⚔️</div>
             </div>
-            
-            <div id="add-text-box" class="pixel-panel" style="display:none; padding:15px; margin-bottom:15px; background:#ddd;">
-                <input id="new-q" placeholder="문제 (Question)" style="width:100%; padding:10px; margin-bottom:5px; border:2px solid #000;">
-                <input id="new-a" placeholder="정답 (Answer)" style="width:100%; padding:10px; margin-bottom:5px; border:2px solid #000;">
-                <input id="new-desc" placeholder="해설 (Option)" style="width:100%; padding:10px; margin-bottom:5px; border:2px solid #000;">
-                <button class="pixel-btn btn-green" style="width:100%" onclick="addTextWord()">SAVE</button>
-                <button class="pixel-btn" style="width:100%; margin-top:5px; font-size:0.8rem;" onclick="toggleExcel()">📋 EXCEL PASTE</button>
-                <div id="excel-area" style="display:none; margin-top:5px">
-                    <textarea id="excel-input" placeholder="문제 [탭] 정답" style="width:100%; height:80px; border:2px solid #000;"></textarea>
-                    <button class="pixel-btn btn-blue" style="width:100%; margin-top:5px;" onclick="parseExcel()">BATCH SAVE</button>
-                </div>
+            <div style="position:relative; text-align:center;">
+                <div class="hp-bar-box"><div id="mob-hp" class="hp-fill"></div></div>
+                <div id="mob-sprite" class="sprite">👾</div>
             </div>
-
-            <div id="add-image-box" class="pixel-panel" style="display:none; padding:15px; margin-bottom:15px; background:#ddd;">
-                <div id="p-area-q" style="width:100%; height:150px; background:#222; display:flex; align-items:center; justify-content:center; border:2px dashed #777; margin-bottom:10px;">
-                    <img id="preview-q-img" style="display:none; max-width:100%; max-height:100%">
-                    <span style="color:#666">NO IMAGE</span>
-                </div>
-                <button class="pixel-btn btn-blue" onclick="triggerCamera('question')" style="width:100%; margin-bottom:10px">📷 CAMERA / GALLERY</button>
-                <input id="img-a" placeholder="정답" style="width:100%; padding:10px; margin-bottom:5px; border:2px solid #000;">
-                <input id="img-desc" placeholder="해설" style="width:100%; padding:10px; margin-bottom:10px; border:2px solid #000;">
-                <button class="pixel-btn btn-green" style="width:100%" onclick="addImageWord()">SAVE</button>
             </div>
-
-            <div style="background:#333; color:#fff; padding:10px; display:flex; justify-content:space-between; align-items:center;">
-                <span>SAVED DATA</span>
-                <button class="pixel-btn btn-red" style="font-size:0.7rem; padding:4px;" onclick="deleteSelected()">DELETE</button>
-            </div>
-            <div id="word-list" style="background:#fff; color:#000; min-height:200px; padding:5px;"></div>
-        </div>
-        <input type="file" id="camera-input" style="display:none" accept="image/*" onchange="handleImageFile(event)">
     </div>
 
-    <div id="modal-crop">
-        <div style="flex:1; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; touch-action:none" id="crop-container">
-            <canvas id="crop-canvas"></canvas>
+    <div id="area-stat">
+        <div class="stat-box">
+            <div class="stat-label">공격력</div>
+            <div id="stat-atk" class="stat-val">10</div>
         </div>
-        <div style="height:80px; background:#222; display:flex; justify-content:space-around; align-items:center; border-top:4px solid #fff;">
-            <button class="pixel-btn" onclick="rotateImage()">🔄 ROTATE</button>
-            <button class="pixel-btn btn-red" onclick="closeCrop()">CANCEL</button>
-            <button class="pixel-btn btn-green" onclick="applyCrop()">✂️ CROP</button>
+        <div class="stat-box">
+            <div class="stat-label">치명타</div>
+            <div id="stat-crit" class="stat-val">0%</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">치명피해</div>
+            <div id="stat-cdmg" class="stat-val">150%</div>
+        </div>
+        <div class="stat-box" style="position:relative">
+            <div class="buff-badge" id="buff-badge">FAST!</div>
+            <div class="stat-label">공격속도</div>
+            <div id="stat-aspd" class="stat-val">1.0</div>
         </div>
     </div>
 
-    <div id="toast"></div>
+    <div id="area-quiz">
+        <img id="q-image" onclick="viewImage(this.src)">
+        <div id="q-text">문제를 불러오는 중...</div>
+        <div class="input-group">
+            <input type="text" id="q-input" placeholder="정답 입력" autocomplete="off">
+            <button id="btn-submit" onclick="submitAnswer()">제출</button>
+        </div>
+        <div id="q-feedback" style="height:20px; margin-top:5px; font-size:0.8rem; font-weight:bold;"></div>
+    </div>
+
+    <div id="area-menu">
+        <button class="small-btn" onclick="stopGame()">🏠 홈으로</button>
+        <span style="font-size:0.8rem; color:#888;">자동 공격 중...</span>
+        <button class="small-btn" onclick="toggleSound()">🔊 소리</button>
+    </div>
+</div>
+
+<div id="screen-manage" class="screen" style="padding:15px; overflow-y:auto;">
+    <h2 style="margin-bottom:15px; color:var(--text);">문제 관리</h2>
+    <div style="display:flex; gap:10px; margin-bottom:10px;">
+        <button class="menu-btn btn-game" style="flex:1; margin:0; padding:10px;" onclick="toggleAddMode('text')">텍스트 문제</button>
+        <button class="menu-btn btn-blue" style="flex:1; margin:0; padding:10px;" onclick="toggleAddMode('image')">이미지 문제</button>
+    </div>
+    
+    <div id="add-text-box" class="add-box" style="display:none; background:#fff; padding:15px; border-radius:10px; margin-bottom:10px; border:1px solid #ddd;">
+        <textarea id="new-q" placeholder="문제" style="width:100%; height:50px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; padding:5px;"></textarea>
+        <textarea id="new-a" placeholder="정답 (O/X 가능)" style="width:100%; height:40px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; padding:5px;"></textarea>
+        <button onclick="addTextWord()" class="menu-btn btn-game" style="padding:10px;">등록</button>
+    </div>
+
+    <div id="add-image-box" class="add-box" style="display:none; background:#fff; padding:15px; border-radius:10px; margin-bottom:10px; border:1px solid #ddd;">
+        <button onclick="document.getElementById('camera-input').click()" class="menu-btn btn-blue" style="padding:10px; margin-bottom:5px;">📷 사진 선택</button>
+        <img id="preview-q-img" style="max-width:100%; display:none; margin-bottom:5px;">
+        <textarea id="img-q-text" placeholder="문제 텍스트(옵션)" style="width:100%; height:40px; margin-bottom:5px; padding:5px;"></textarea>
+        <textarea id="img-a" placeholder="정답" style="width:100%; height:40px; margin-bottom:5px; padding:5px;"></textarea>
+        <button onclick="addImageWord()" class="menu-btn btn-game" style="padding:10px;">등록</button>
+    </div>
+
+    <div id="word-list" style="margin-top:20px;"></div>
+    
+    <div style="margin-top:20px; display:flex; gap:5px;">
+        <button class="small-btn" onclick="exportJSON()">백업</button>
+        <button class="small-btn" onclick="document.getElementById('json-input').click()">복구</button>
+        <button class="small-btn" style="color:var(--danger); border-color:var(--danger);" onclick="deleteSelected()">선택삭제</button>
+    </div>
+    <button class="menu-btn" style="background:#8d6e63; margin-top:20px;" onclick="showScreen('home')">돌아가기</button>
+</div>
+
+<input type="file" id="camera-input" style="display:none" accept="image/*" onchange="handleImageFile(event)">
+<input type="file" id="json-input" style="display:none" accept=".json" onchange="handleJsonFile(event)">
+
 <script>
 // ============================================================
-// [1. 시스템 설정 및 데이터베이스]
+// [1. 전역 변수 및 설정]
 // ============================================================
-let db, vocabulary = [], isDBReady = false;
-let rpgData = { stage: 1, subStage: 1, atk: 10, aspd: 1.0, crit: 5, cdmg: 150, combo: 0 };
+const DB_NAME = "HeroQuizDB";
+const DB_VERSION = 1;
+let db;
+let vocabulary = []; // 문제 데이터
 
-// [사용자 파일 설정]
-// GitHub 저장소에 이 이름으로 파일을 업로드하세요.
-const HERO_IDLE_URL = "./hero.gif";     // 대기 모션
-const HERO_ATTACK_URL = "./attack.gif"; // 공격 모션
-
-// 몬스터는 여전히 다양성을 위해 PokeAPI를 사용하지만,
-// 원하신다면 monster.gif 등을 업로드해서 고정할 수도 있습니다.
-const SPRITE_BASE_URL = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/";
-
-const MONSTER_POOLS = {
-    forest: ["1", "10", "13", "16", "19", "29", "32", "43", "69"], 
-    desert: ["4", "27", "37", "50", "74", "95", "104", "111"], 
-    dungeon: ["92", "93", "94", "109", "88", "132", "149", "90"]
+// 플레이어 스탯 (저장 대상)
+let player = {
+    atk: 10,       // 공격력 (정수)
+    crit: 0,       // 치명타율 (%)
+    cdmg: 150,     // 치명타 피해 (%)
+    aspd: 1.0,     // 공격 속도 (초당 공격 횟수)
+    maxStage: 1,   // 최고 도달 스테이지
+    killCount: 0   // 총 처치 수
 };
 
-window.onload = function() { 
-    initDB(); 
-    loadRPGData(); 
-    
-    // 영웅 초기 이미지 로드
-    const heroImg = document.getElementById('hero-img');
-    heroImg.src = HERO_IDLE_URL;
+// 게임 상태 (휘발성)
+let gameRunning = false;
+let lastTime = 0;
+let attackTimer = 0;
+let combo = 0;             // 연속 정답 횟수
+let comboTimer = null;     // 콤보 유지 타이머
+let currentStage = 1;
+let subStage = 0;          // 0:일반, 1:일반, 2:보스 (총 3마리)
+let stageTimeLeft = 30;    // 스테이지 제한 시간 (초)
+let mob = { hp: 100, maxHp: 100, isBoss: false };
 
-    // [중요] 만약 구한 이미지가 '왼쪽'을 보고 있다면 아래 주석(//)을 지우세요.
-    // heroImg.style.transform = "scaleX(-1)"; 
+// 오디오 컨텍스트
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = new AudioCtx();
+let isSoundOn = true;
+
+// ============================================================
+// [2. 데이터베이스 (IndexedDB) 및 저장/로드]
+// ============================================================
+window.onload = function() {
+    initDB();
+    loadPlayerStats();
 };
-
-function showToast(msg) { 
-    const t=document.getElementById('toast'); 
-    t.innerText=msg; t.style.opacity=1; t.style.top="20%";
-    setTimeout(()=>t.style.opacity=0, 2000); 
-}
-function showScreen(id) { 
-    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); 
-    document.getElementById('screen-'+id).classList.add('active'); 
-    if(id==='manage') renderWordList();
-    if(id==='rpg') { updateStatUI(); if(!attackTimer && isDBReady) initBattle(); }
-}
 
 function initDB() {
-    const r = indexedDB.open("RpgRemasterDB", 1);
-    r.onupgradeneeded = e => { if(!e.target.result.objectStoreNames.contains('vocab')) e.target.result.createObjectStore('vocab', {keyPath:'id', autoIncrement:true}); };
-    r.onsuccess = e => { db=e.target.result; loadVocab(); };
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = function(e) {
+        db = e.target.result;
+        if (!db.objectStoreNames.contains('vocab')) {
+            db.createObjectStore('vocab', { keyPath: 'id', autoIncrement: true });
+        }
+    };
+    req.onsuccess = function(e) {
+        db = e.target.result;
+        loadVocabulary();
+    };
 }
-function loadVocab() { db.transaction(['vocab'],'readonly').objectStore('vocab').getAll().onsuccess = e => { vocabulary = e.target.result||[]; isDBReady=true; nextQuiz(); }; }
-function saveToDB(item, cb) { db.transaction(['vocab'],'readwrite').objectStore('vocab').add(item).onsuccess = () => { loadVocab(); if(cb) cb(); }; }
-function deleteFromDB(ids) { const tx=db.transaction(['vocab'],'readwrite'); ids.forEach(id=>tx.objectStore('vocab').delete(id)); tx.oncomplete=()=>{ showToast("데이터 삭제 완료"); loadVocab(); renderWordList(); }; }
+
+function loadVocabulary() {
+    const tx = db.transaction(['vocab'], 'readonly');
+    const store = tx.objectStore('vocab');
+    store.getAll().onsuccess = function(e) {
+        vocabulary = e.target.result || [];
+        document.getElementById('loading-overlay').style.display = 'none';
+        document.getElementById('btn-start').disabled = false;
+        document.getElementById('btn-start').innerText = "게임 시작";
+        updateHomeUI();
+    };
+}
+
+// 스탯 로컬 저장 (간단하게 localStorage 사용)
+function savePlayerStats() {
+    localStorage.setItem('hero_stats_v2', JSON.stringify(player));
+}
+function loadPlayerStats() {
+    const data = localStorage.getItem('hero_stats_v2');
+    if (data) {
+        const parsed = JSON.parse(data);
+        player = { ...player, ...parsed }; // 병합
+    }
+    updateHomeUI();
+}
+
+function updateHomeUI() {
+    document.getElementById('home-best-stage').innerText = `1-${player.maxStage}`;
+    document.getElementById('home-kill-count').innerText = player.killCount;
+}
 
 // ============================================================
-// [2. RPG 엔진 & 비주얼 이펙트]
+// [3. 전투 시스템 (핵심 로직)]
 // ============================================================
-let battleTimer, attackTimer, timeLeft=30, currentMonHP=100, maxMonHP=100, isBoss=false;
-
-function loadRPGData() {
-    const s = localStorage.getItem('rpg_remaster_v10');
-    if(s) rpgData = JSON.parse(s);
-    updateStatUI(); initBattle();
+function startGame() {
+    if (vocabulary.length < 1) return showToast("문제가 최소 1개 있어야 합니다!", 'error');
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    
+    document.getElementById('screen-home').classList.remove('active');
+    document.getElementById('screen-game').classList.add('active');
+    
+    // 초기화
+    currentStage = player.maxStage; 
+    startStage(currentStage);
+    gameRunning = true;
+    lastTime = performance.now();
+    nextQuiz(); // 퀴즈 로드
+    requestAnimationFrame(gameLoop);
 }
-function saveRPGData() { localStorage.setItem('rpg_remaster_v10', JSON.stringify(rpgData)); }
+
+function stopGame() {
+    gameRunning = false;
+    savePlayerStats();
+    document.getElementById('screen-game').classList.remove('active');
+    document.getElementById('screen-home').classList.add('active');
+    updateHomeUI();
+}
+
+function startStage(stg) {
+    currentStage = stg;
+    if(currentStage < 1) currentStage = 1;
+    subStage = 0; // 0, 1, 2 (3마리)
+    stageTimeLeft = 30; // 30초 리셋
+    spawnMob();
+    updateStatUI();
+}
+
+// 몬스터 생성 (밸런싱: 체력 7% 복리 증가)
+function spawnMob() {
+    // subStage: 0(일반), 1(일반), 2(보스)
+    const isBoss = subStage === 2;
+    // 공식: 200 * (1.07)^(스테이지-1)
+    let hp = Math.floor(200 * Math.pow(1.07, currentStage - 1));
+    
+    if (isBoss) hp *= 3; // 보스는 체력 3배
+
+    mob = { hp: hp, maxHp: hp, isBoss: isBoss };
+    
+    // UI 업데이트
+    const sprite = document.getElementById('mob-sprite');
+    sprite.innerText = isBoss ? "👹" : "👾";
+    sprite.style.transform = isBoss ? "scale(1.5)" : "scale(1)";
+    document.getElementById('stage-display').innerText = `STAGE 1-${currentStage} (${subStage+1}/3)`;
+    updateMobHpUI();
+}
+
+// 메인 게임 루프 (초당 60프레임)
+function gameLoop(timestamp) {
+    if (!gameRunning) return;
+    const dt = (timestamp - lastTime) / 1000; // 델타 타임 (초)
+    lastTime = timestamp;
+
+    // 1. 타이머 처리
+    stageTimeLeft -= dt;
+    if (stageTimeLeft <= 0) {
+        handleStageFail();
+    }
+    updateTimeBar();
+
+    // 2. 자동 공격 처리
+    // 공속 버프 적용: 기본(1.0) + (0.1 * 콤보), 최대 2.5
+    let currentAspd = player.aspd + (Math.min(2.5, combo * 0.1));
+    if (combo === 0) currentAspd = player.aspd; // 콤보 없으면 기본 속도
+
+    // UI에 현재 공속 표시
+    document.getElementById('stat-aspd').innerText = currentAspd.toFixed(1);
+
+    attackTimer += dt;
+    if (attackTimer >= (1 / currentAspd)) {
+        attackTimer = 0;
+        heroAttack();
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
+function handleStageFail() {
+    showToast("시간 초과! 스테이지 강등", 'error');
+    playSound('fail');
+    currentStage--;
+    if (currentStage < 1) currentStage = 1;
+    startStage(currentStage);
+}
+
+// 용사 공격 (무한 치명타 로직 적용)
+function heroAttack() {
+    // 공격 애니메이션
+    const hero = document.querySelector('.sprite.hero');
+    hero.classList.remove('attack');
+    void hero.offsetWidth;
+    hero.classList.add('attack');
+    playSound('attack');
+
+    // 데미지 계산 (재귀 함수)
+    const result = calculateInfiniteCrit(player.atk, player.crit, 0);
+    
+    // 몬스터 피격
+    mob.hp -= result.damage;
+    if (mob.hp < 0) mob.hp = 0;
+    
+    // UI 효과
+    createDamageText(result.damage, result.tier);
+    updateMobHpUI();
+    const mobEl = document.getElementById('mob-sprite');
+    mobEl.classList.remove('hit');
+    void mobEl.offsetWidth;
+    mobEl.classList.add('hit');
+
+    // 처치 체크
+    if (mob.hp <= 0) {
+        player.killCount++;
+        subStage++;
+        if (subStage >= 3) {
+            // 스테이지 클리어
+            playSound('clear');
+            player.maxStage = Math.max(player.maxStage, currentStage + 1);
+            startStage(currentStage + 1);
+        } else {
+            spawnMob();
+        }
+    }
+}
+
+// (진) 치명타 계산기
+// tier 0: 일반, tier 1: 진, tier 2: 진2 ...
+function calculateInfiniteCrit(dmg, critRate, tier) {
+    // 현재 단계에서 치명타가 터졌는가?
+    // critRate가 100을 넘으면 100% 확정 + 다음 단계로 넘김이 아니라,
+    // 확률은 100% 캡을 씌우지 않고 그대로 계산 (120%면 무조건 터지고 다음 단계 연산) -> 기획 의도에 맞게 조정
+    // 기획: "치명타율이 100% 달성 시 (진) 해금" => 즉 100% 미만이면 확률 체크, 100% 이상이면 확정 후 남은 수치로 다음 단계?
+    // 가장 직관적인 '워프레임' 식 주황/빨강 크리티컬 로직 채택:
+    // 예: 치명타율 250% -> 1단계(100%) 확정 -> 2단계(100%) 확정 -> 3단계(50%) 확률 체크
+    
+    let currentTierCrit = false;
+    let chance = critRate - (tier * 100); // 현재 티어의 확률 (예: 250% 중 2티어 계산 시 50%)
+    
+    if (chance >= 100) currentTierCrit = true; // 100% 초과면 확정
+    else if (Math.random() * 100 < chance) currentTierCrit = true; // 아니면 확률
+
+    if (currentTierCrit) {
+        // 치명타 발생! 데미지 증가
+        // 치명타 피해량 스탯 적용 (기본 150% = 1.5배)
+        // (진) 단계가 오를 때마다 계수가 중첩됨
+        let multiplier = player.cdmg / 100; 
+        
+        // 다음 단계 계산 (재귀)
+        // chance가 100을 넘었다면 다음 티어도 도전 가능
+        if (chance >= 100) {
+            return calculateInfiniteCrit(Math.floor(dmg * multiplier), critRate, tier + 1);
+        } else {
+            return { damage: Math.floor(dmg * multiplier), tier: tier + 1 }; // 여기서 끝
+        }
+    } else {
+        // 치명타 실패 (현재 티어에서 멈춤)
+        return { damage: dmg, tier: tier };
+    }
+}
+
+// 데미지 텍스트 띄우기
+function createDamageText(dmg, tier) {
+    const field = document.querySelector('.battle-field');
+    const el = document.createElement('div');
+    el.className = 'dmg-text';
+    el.innerText = dmg.toLocaleString();
+    
+    // 티어별 색상/크기
+    if (tier === 0) { el.style.color = "#fff"; el.style.fontSize = "1.2rem"; } // 노멀
+    else if (tier === 1) { el.classList.add('crit-text'); el.innerText += "!"; } // 크리
+    else { el.classList.add('jin-crit-text'); el.innerText += ` (진${tier-1})!`; } // (진)크리
+
+    // 위치 랜덤
+    const x = 50 + (Math.random() * 40 - 20);
+    const y = 40 + (Math.random() * 20 - 10);
+    el.style.left = x + "%";
+    el.style.top = y + "%";
+    
+    field.appendChild(el);
+    setTimeout(() => el.remove(), 800);
+}
+
+function updateMobHpUI() {
+    const pct = (mob.hp / mob.maxHp) * 100;
+    document.getElementById('mob-hp').style.width = pct + "%";
+}
+
+function updateTimeBar() {
+    const pct = (stageTimeLeft / 30) * 100;
+    const bar = document.getElementById('time-bar');
+    bar.style.width = pct + "%";
+    if(stageTimeLeft < 5) bar.style.background = "#e53935"; // 경고
+    else bar.style.background = "#fff";
+}
 
 function updateStatUI() {
-    document.getElementById('stat-atk').innerText = rpgData.atk;
-    document.getElementById('stat-aspd').innerText = rpgData.aspd.toFixed(2);
-    document.getElementById('stat-crit').innerText = rpgData.crit.toFixed(1) + "%";
-    document.getElementById('stat-cdmg').innerText = rpgData.cdmg + "%";
-    document.getElementById('stat-combo').innerText = rpgData.combo;
-    document.getElementById('ui-stage').innerText = `STAGE ${rpgData.stage}-${rpgData.subStage}`;
-}
-
-function initBattle() {
-    clearInterval(battleTimer); clearInterval(attackTimer);
-    if(rpgData.subStage === 1) timeLeft = 30;
+    document.getElementById('stat-atk').innerText = player.atk;
+    document.getElementById('stat-crit').innerText = player.crit.toFixed(1) + "%";
+    document.getElementById('stat-cdmg').innerText = player.cdmg + "%";
     
-    spawnMonster();
-    attackTimer = setInterval(heroAttack, Math.max(300, 1000/rpgData.aspd)); 
-    updateTimerUI();
-    
-    battleTimer = setInterval(() => {
-        timeLeft -= 0.1; 
-        if(timeLeft < 0) timeLeft = 0;
-        updateTimerUI();
-        
-        if(timeLeft <= 0) { 
-            clearInterval(battleTimer); clearInterval(attackTimer);
-            showDamageText("TIME OVER!", true);
-            showToast("시간 초과! 스테이지 초기화");
-            setTimeout(() => {
-                rpgData.subStage = 1; 
-                timeLeft = 30;
-                updateStatUI(); 
-                saveRPGData(); 
-                initBattle(); 
-            }, 1500);
-        }
-    }, 100);
-}
-
-function spawnMonster() {
-    isBoss = (rpgData.subStage === 5); 
-    const themes = ['forest', 'desert', 'dungeon'];
-    const th = themes[Math.floor((rpgData.stage-1)/5)%3];
-    
-    const vp = document.getElementById('battle-viewport');
-    vp.className = ""; vp.classList.add('bg-'+th);
-
-    const pool = MONSTER_POOLS[th];
-    const id = pool[Math.floor(Math.random()*pool.length)];
-    const targetId = isBoss ? "150" : id;
-    const monSrc = SPRITE_BASE_URL + targetId + ".gif";
-    
-    const monImg = document.getElementById('mon-img');
-    monImg.style.opacity = 0;
-    
-    monImg.onerror = function() { 
-        this.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${targetId}.png`; 
-    };
-    
-    setTimeout(()=>{ monImg.src = monSrc; monImg.style.opacity = 1; }, 200);
-
-    let hp = 100 * Math.pow(1.1, rpgData.stage-1) * (1 + rpgData.subStage * 0.2);
-    if(isBoss) hp *= 3;
-    maxMonHP = Math.floor(hp); currentMonHP = maxMonHP;
-    updateHPUI(true);
-}
-
-function heroAttack() {
-    const hImg = document.getElementById('hero-img');
-    const hPos = document.getElementById('hero-pos');
-
-    // 공격 모션으로 교체
-    hImg.src = HERO_ATTACK_URL;
-    hPos.style.zIndex = 20; 
-    
-    // [애니메이션 조정]
-    // 본인이 구한 이미지 크기에 맞춰 scale(1.0) 숫자를 조절하세요.
-    // translateX(20px)는 오른쪽으로 20px만큼 돌진하는 효과입니다.
-    hImg.style.transform = "scale(1.0) translateX(20px)"; 
-
-    // 데미지 타이밍
-    setTimeout(() => {
-        let dmg = rpgData.atk;
-        let isCrit = Math.random()*100 < rpgData.crit;
-        if(isCrit) dmg *= (rpgData.cdmg/100);
-        hitMonster(Math.floor(dmg), isCrit);
-    }, 200);
-
-    // 복귀 (0.6초 후 대기 모션)
-    setTimeout(() => {
-         hImg.src = HERO_IDLE_URL;
-         hPos.style.zIndex = 10;
-         // 복귀 시 transform 초기화
-         hImg.style.transform = "scale(1.0) translateX(0)"; 
-    }, 600);
-}
-
-function hitMonster(dmg, isCrit) {
-    currentMonHP = Math.max(0, currentMonHP - dmg);
-    updateHPUI(); 
-
-    const m = document.getElementById('mon-img');
-    m.style.filter = "brightness(5) sepia(1) hue-rotate(-50deg)"; 
-    m.style.transform = "translateX(8px)";
-    setTimeout(() => {
-        m.style.filter = "drop-shadow(4px 4px 0 rgba(0,0,0,0.5))"; 
-        m.style.transform = "translateX(0)";
-    }, 100);
-
-    if(isCrit) shakeScreen();
-    showDamageText(dmg, isCrit);
-    
-    if(currentMonHP <= 0) {
-        monsterDeath();
-    }
-}
-
-function monsterDeath() {
-    clearInterval(battleTimer); clearInterval(attackTimer);
-    const m = document.getElementById('mon-img');
-    m.style.transition = "opacity 0.5s, transform 0.5s";
-    m.style.opacity = 0; m.style.transform = "scale(0.5)";
-    
-    showDamageText(isBoss ? "STAGE CLEAR!" : "NEXT!", true);
-    
-    rpgData.subStage++;
-    if(rpgData.subStage > 5) {
-        rpgData.subStage = 1;
-        rpgData.stage++;
-        timeLeft = 30; 
-    }
-    
-    saveRPGData(); updateStatUI();
-    setTimeout(() => {
-        m.style.transition = "none"; m.style.transform = "scale(1)";
-        initBattle();
-    }, 1000);
-}
-
-// [핵심] 비주얼 업데이트 함수들
-function updateHPUI(instant = false) {
-    const pct = (currentMonHP / maxMonHP) * 100;
-    const fill = document.getElementById('mon-hp-fill');
-    const delay = document.getElementById('mon-hp-delay');
-    
-    fill.style.width = pct + '%';
-    
-    if(instant) {
-        delay.style.transition = 'none';
-        delay.style.width = pct + '%';
-    } else {
-        delay.style.transition = 'width 0.5s ease-out 0.2s'; 
-        delay.style.width = pct + '%';
-    }
-}
-
-function updateTimerUI() {
-    document.getElementById('ui-timer-text').innerText = timeLeft.toFixed(1) + 's';
-    document.getElementById('ui-timer-bar').style.width = (timeLeft/30*100) + '%';
-}
-
-function showDamageText(dmg, isCrit) {
-    const el = document.createElement('div');
-    el.className = isCrit ? 'dmg-text dmg-crit' : 'dmg-text';
-    el.innerText = dmg;
-    const left = 50 + (Math.random()*20 - 10);
-    const top = 30 + (Math.random()*20 - 10);
-    el.style.left = left+'%'; el.style.top = top+'%';
-    
-    document.getElementById('fx-layer').appendChild(el);
-    setTimeout(()=>el.remove(), 800);
-}
-
-function shakeScreen() {
-    const vp = document.getElementById('battle-viewport');
-    vp.classList.remove('shake-effect');
-    void vp.offsetWidth; 
-    vp.classList.add('shake-effect');
-}
-
-// ============================================================
-// [3. 퀴즈 및 성장 시스템]
-// ============================================================
-let currentQuiz = null;
-
-function nextQuiz() {
-    if (vocabulary.length < 1) {
-        document.getElementById('quiz-text').innerText = "데이터가 없습니다.\n관리 메뉴에서 추가하세요.";
-        return;
-    }
-    
-    let wrongOnes = vocabulary.filter(v => (v.wrongCount || 0) > 0);
-    currentQuiz = (wrongOnes.length > 0 && Math.random() < 0.5) 
-        ? wrongOnes[Math.floor(Math.random() * wrongOnes.length)]
-        : vocabulary[Math.floor(Math.random() * vocabulary.length)];
-    
-    const imgView = document.getElementById('quiz-img');
-    const textView = document.getElementById('quiz-text');
-    
-    if (currentQuiz.type === 'image') {
-        imgView.src = currentQuiz.q; imgView.style.display = 'block';
-        textView.innerText = currentQuiz.qText || "";
-    } else {
-        imgView.style.display = 'none'; textView.innerText = currentQuiz.q;
-    }
-    
-    document.getElementById('game-input').value = "";
-    document.getElementById('game-input').focus();
-}
-
-function checkAnswer() {
-    if (!currentQuiz) return nextQuiz();
-    const input = document.getElementById('game-input').value.trim();
-    if (!input) return;
-
-    const userAns = input.replace(/\s/g, "").toUpperCase();
-    const realAns = currentQuiz.a.replace(/\s/g, "").toUpperCase();
-    const isCorrect = (userAns === 'O' || userAns === 'X') ? (realAns.charAt(0) === userAns) : (userAns === realAns);
-    const fb = document.getElementById('quiz-feedback');
-
-    if (isCorrect) {
-        rpgData.combo++;
-        let mult = 1;
-        if(rpgData.combo % 5 === 0) { mult = 3; showDamageText("COMBO BONUS!", true); }
-        
-        applyStatGrowth(mult);
-        
-        if (currentQuiz.wrongCount > 0) { currentQuiz.wrongCount--; saveToDB(currentQuiz); }
-        
-        // 정답 시 즉시 강력한 공격
-        heroAttack(); setTimeout(heroAttack, 300); 
-        
-        fb.innerText = "EXCELLENT!"; fb.style.color = "var(--success)";
-        setTimeout(nextQuiz, 200);
-    } else {
-        rpgData.combo = 0;
-        fb.innerHTML = `답: ${currentQuiz.a} <small>(${currentQuiz.desc||''})</small>`;
-        fb.style.color = "var(--danger)";
-        shakeScreen(); 
-        
-        currentQuiz.wrongCount = (currentQuiz.wrongCount || 0) + 1;
-        saveToDB(currentQuiz);
-        setTimeout(nextQuiz, 2500);
-    }
-    saveRPGData(); updateStatUI();
-}
-
-function applyStatGrowth(mult) {
-    document.querySelectorAll('.pop-stat').forEach(el => {
-        el.style.animation = 'none'; void el.offsetWidth; el.style.animation = 'popUp 0.8s forwards';
-    });
-
-    for(let i=0; i<mult; i++) {
-        const r = Math.random();
-        if(r < 0.4) { rpgData.atk += 2; setPop('atk', 2); }
-        else if(r < 0.6) { rpgData.aspd = Math.min(5.0, rpgData.aspd + 0.005); setPop('aspd', 0.01); }
-        else if(r < 0.8) { rpgData.crit = Math.min(100, rpgData.crit + 0.05); setPop('crit', 0.1); }
-        else { rpgData.cdmg += 2; setPop('cdmg', 2); }
-    }
-}
-function setPop(type, val) { document.getElementById('pop-'+type).innerText = "+"+val; }
-
-// ============================================================
-// [4. 유틸리티 (이미지 처리 등)]
-// ============================================================
-let cropImg=new Image(), cropCanvas=document.getElementById('crop-canvas'), cropCtx=cropCanvas.getContext('2d');
-let cropRect={x:0,y:0,w:100,h:100}, dragMode=null, startPos={x:0,y:0}, baseRect={x:0,y:0,w:0,h:0}, currentCropTarget=null;
-
-function handleImageFile(e) { const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ cropImg.src=ev.target.result; cropImg.onload=()=>startCropping(); }; r.readAsDataURL(f); }
-function startCropping() { document.getElementById('modal-crop').style.display='flex'; const cw=Math.min(window.innerWidth*0.9, cropImg.width); cropRect={x:10,y:10,w:cw,h:cw*0.6}; drawCrop(); }
-function drawCrop() {
-    const maxW=window.innerWidth, maxH=window.innerHeight*0.7; const scale=Math.min(maxW/cropImg.width, maxH/cropImg.height);
-    cropCanvas.width=cropImg.width*scale; cropCanvas.height=cropImg.height*scale;
-    cropCtx.clearRect(0,0,cropCanvas.width,cropCanvas.height); 
-    cropCtx.drawImage(cropImg,0,0,cropCanvas.width,cropCanvas.height); 
-    cropCtx.fillStyle='rgba(0,0,0,0.6)'; cropCtx.fillRect(0,0,cropCanvas.width,cropCanvas.height);
-    const sX=cropRect.x*scale, sY=cropRect.y*scale, sW=cropRect.w*scale, sH=cropRect.h*scale;
-    cropCtx.clearRect(sX,sY,sW,sH); cropCtx.drawImage(cropImg,cropRect.x,cropRect.y,cropRect.w,cropRect.h,sX,sY,sW,sH); 
-    cropCtx.strokeStyle='#fff'; cropCtx.lineWidth=2; cropCtx.strokeRect(sX,sY,sW,sH);
-}
-cropCanvas.addEventListener('pointerdown', e=>{ 
-    const rect=cropCanvas.getBoundingClientRect(), scale=cropImg.width/cropCanvas.width;
-    const cx=e.clientX-rect.left, cy=e.clientY-rect.top; 
-    const sX=cropRect.x/scale, sY=cropRect.y/scale, sW=cropRect.w/scale, sH=cropRect.h/scale;
-    if(cx>sX && cx<sX+sW && cy>sY && cy<sY+sH) { dragMode='move'; startPos={x:e.clientX, y:e.clientY}; baseRect={...cropRect}; cropCanvas.setPointerCapture(e.pointerId); }
-});
-cropCanvas.addEventListener('pointermove', e=>{ 
-    if(!dragMode) return; 
-    const scale=cropImg.width/cropCanvas.width;
-    const dx=(e.clientX-startPos.x)*scale, dy=(e.clientY-startPos.y)*scale;
-    if(dragMode==='move') { cropRect.x=Math.max(0, Math.min(cropImg.width-cropRect.w, baseRect.x+dx)); cropRect.y=Math.max(0, Math.min(cropImg.height-cropRect.h, baseRect.y+dy)); drawCrop(); }
-});
-cropCanvas.addEventListener('pointerup', ()=>dragMode=null);
-
-function closeCrop() { document.getElementById('modal-crop').style.display='none'; document.getElementById('camera-input').value=""; }
-function applyCrop() { 
-    const c=document.createElement('canvas'); c.width=cropRect.w; c.height=cropRect.h; 
-    c.getContext('2d').drawImage(cropImg,cropRect.x,cropRect.y,cropRect.w,cropRect.h,0,0,cropRect.w,cropRect.h); 
-    const res=c.toDataURL('image/jpeg',0.8); 
-    if(currentCropTarget==='question') { document.getElementById('preview-q-img').src=res; document.getElementById('preview-q-img').style.display='block'; }
-    closeCrop(); 
-}
-function rotateImage() { showToast("회전: 추후 지원"); }
-
-function toggleAddMode(mode) { 
-    document.getElementById('add-text-box').style.display = mode==='text'?'block':'none'; 
-    document.getElementById('add-image-box').style.display = mode==='image'?'block':'none'; 
-}
-function toggleExcel() { const e=document.getElementById('excel-area'); e.style.display = e.style.display==='none'?'block':'none'; }
-function addTextWord() { 
-    const q=document.getElementById('new-q').value.trim(), a=document.getElementById('new-a').value.trim(), d=document.getElementById('new-desc').value.trim();
-    if(q&&a) saveToDB({type:'text',q,a,desc:d,wrongCount:0}, ()=>{ showToast("등록됨!"); document.getElementById('new-q').value=""; document.getElementById('new-a').value=""; }); 
-}
-function addImageWord() {
-    const src=document.getElementById('preview-q-img').src, a=document.getElementById('img-a').value.trim(), d=document.getElementById('img-desc').value.trim();
-    if(src && src.length>100 && a) saveToDB({type:'image',q:src,qText:'',a,desc:d,wrongCount:0}, ()=>{ showToast("이미지 등록됨!"); closeCrop(); });
-}
-function renderWordList() { 
-    const l=document.getElementById('word-list'); 
-    l.innerHTML = vocabulary.length===0 ? "<div style='padding:20px; text-align:center; color:#888;'>데이터가 없습니다.</div>" 
-    : vocabulary.slice().reverse().map(v=>`<div class="list-item" style="border-bottom:1px solid #ddd; padding:10px; display:flex; align-items:center;">
-    <input type="checkbox" class="chk-del" value="${v.id}" style="margin-right:10px; transform:scale(1.5);">
-    <div>${v.type==='image'?'<span style="color:blue">[IMAGE]</span>':v.q}<br><small style="color:#666">${v.a}</small></div>
-    </div>`).join(''); 
-}
-function deleteSelected() { 
-    const c=document.querySelectorAll('.chk-del:checked'); 
-    if(c.length>0 && confirm(c.length+"개 삭제하시겠습니까?")) deleteFromDB(Array.from(c).map(e=>Number(e.value))); 
-}
-function triggerCamera(target) { currentCropTarget=target; document.getElementById('camera-input').click(); }
-function parseExcel() {
-    const val = document.getElementById('excel-input').value;
-    if(!val) return;
-    const lines = val.split('\n');
-    let cnt = 0;
-    lines.forEach(line => {
-        const p = line.split('\t');
-        if(p.length >= 2) {
-            saveToDB({type:'text', q:p[0].trim(), a:p[1].trim(), wrongCount:0});
-            cnt++;
-        }
-    });
-    showToast(cnt + "개 일괄 등록 완료");
-    document.getElementById('excel-input').value = "";
+    // (진) 스탯 해금 UI 처리
+    // 예: 치명타가 100% 넘으면 UI 색상을 바꿔서 티어 구분
+    if(player.crit >= 100) document.getElementById('stat-crit').style.color = "#e040fb"; // 보라색
+    else document.getElementById('stat-crit').style.color = "#66bb6a";
 }
 </script>
+// ============================================================
+// [4. 퀴즈 시스템 (성장 및 버프)]
+// ============================================================
+let currentQuizData = null;
+
+function nextQuiz() {
+    if (vocabulary.length === 0) {
+        document.getElementById('q-text').innerText = "문제 관리 메뉴에서\n문제를 등록해주세요!";
+        return;
+    }
+
+    // 랜덤 문제 선택
+    const idx = Math.floor(Math.random() * vocabulary.length);
+    currentQuizData = vocabulary[idx];
+
+    // UI 표시
+    const qText = document.getElementById('q-text');
+    const qImg = document.getElementById('q-image');
+    
+    // 초기화
+    document.getElementById('q-input').value = "";
+    document.getElementById('q-input').focus();
+    document.getElementById('q-feedback').innerText = "";
+
+    if (currentQuizData.type === 'image') {
+        qImg.style.display = 'block';
+        qImg.src = currentQuizData.q;
+        qText.innerText = currentQuizData.qText || ""; 
+    } else {
+        qImg.style.display = 'none';
+        qText.innerText = currentQuizData.q;
+    }
+}
+
+function submitAnswer() {
+    if (!currentQuizData) return;
+    const input = document.getElementById('q-input').value.trim();
+    if (!input) return;
+
+    // 정답 체크 (대소문자/공백 무시)
+    const userAns = input.replace(/\s/g, "").toUpperCase();
+    const realAns = currentQuizData.a.replace(/\s/g, "").toUpperCase();
+    
+    // O, X 처리 혹은 텍스트 일치
+    let isCorrect = (userAns === realAns);
+    // 한글 'ㅇ', 'x' 등도 유연하게 처리하려면 추가 로직 가능
+
+    if (isCorrect) {
+        handleCorrect();
+    } else {
+        handleWrong();
+    }
+}
+
+// 엔터키 제출 지원
+document.getElementById('q-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') submitAnswer();
+});
+
+function handleCorrect() {
+    playSound('correct');
+    
+    // 1. 콤보 및 버프 적용
+    combo++;
+    updateBuffUI();
+    resetComboTimer(); // 5초 타이머 리셋
+
+    // 2. 스탯 보상 (랜덤 성장)
+    // 확률: 공격력(40%), 치명타(30%), 치명피해(30%)
+    const rand = Math.random();
+    let msg = "";
+    
+    if (rand < 0.4) {
+        player.atk += 2;
+        msg = "⚔️공격력 +2";
+    } else if (rand < 0.7) {
+        player.crit += 0.1;
+        msg = "⚡치명타 +0.1%";
+    } else {
+        player.cdmg += 1;
+        msg = "💪치명피해 +1%";
+    }
+    updateStatUI();
+    savePlayerStats(); // 성장은 즉시 저장
+
+    // 3. 즉시 추가 공격 (보너스 타격)
+    heroAttack(); 
+
+    // 피드백 및 다음 문제
+    const fb = document.getElementById('q-feedback');
+    fb.style.color = "var(--p)";
+    fb.innerText = `정답! (${msg})`;
+    
+    setTimeout(nextQuiz, 600); // 0.6초 뒤 다음 문제
+}
+
+function handleWrong() {
+    playSound('wrong');
+    
+    // 콤보 초기화 (버프 해제)
+    combo = 0;
+    updateBuffUI();
+    if (comboTimer) clearTimeout(comboTimer);
+
+    // 피드백
+    const fb = document.getElementById('q-feedback');
+    fb.style.color = "var(--danger)";
+    fb.innerText = `오답! 정답은: ${currentQuizData.a}`;
+    
+    // 틀렸을 때는 바로 넘어가지 않고 정답 볼 시간을 줌
+    // 입력창만 비움
+    document.getElementById('q-input').value = "";
+}
+
+// 버프 타이머 및 UI
+function updateBuffUI() {
+    const badge = document.getElementById('buff-badge');
+    if (combo > 0) {
+        badge.style.display = 'block';
+        // 최대 2.5배 (기본1 + 1.5) -> 콤보 15회에서 Max
+        const bonus = Math.min(1.5, combo * 0.1);
+        const totalSpd = (player.aspd + bonus).toFixed(1);
+        badge.innerText = `${combo}콤보! (공속 ${totalSpd})`;
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+function resetComboTimer() {
+    if (comboTimer) clearTimeout(comboTimer);
+    comboTimer = setTimeout(() => {
+        if (combo > 0) {
+            showToast("콤보 시간이 끝났습니다.", 'info');
+            combo = 0;
+            updateBuffUI();
+        }
+    }, 5000); // 5초 유지
+}
+
+function viewImage(src) {
+    if (!src) return;
+    document.getElementById('img-modal-target').src = src;
+    document.getElementById('img-modal').style.display = "flex";
+}
+
+// ============================================================
+// [5. 오디오 시스템 (Web Audio API)]
+// ============================================================
+function toggleSound() {
+    isSoundOn = !isSoundOn;
+    showToast(isSoundOn ? "사운드 ON" : "사운드 OFF");
+}
+
+const snd = {
+    attack: (t) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.frequency.setValueAtTime(150, t);
+        o.frequency.exponentialRampToValueAtTime(0.01, t + 0.1);
+        g.gain.setValueAtTime(0.1, t);
+        g.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(t); o.stop(t + 0.1);
+    },
+    correct: (t) => {
+        const g = audioCtx.createGain();
+        g.gain.value = 0.1;
+        g.connect(audioCtx.destination);
+        [523.25, 659.25, 783.99].forEach((f, i) => { // 도미솔
+            const o = audioCtx.createOscillator();
+            o.type = 'sine';
+            o.frequency.value = f;
+            o.connect(g);
+            o.start(t + i * 0.05);
+            o.stop(t + i * 0.05 + 0.1);
+        });
+    },
+    wrong: (t) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sawtooth';
+        o.frequency.setValueAtTime(100, t);
+        o.frequency.linearRampToValueAtTime(50, t + 0.3);
+        g.gain.setValueAtTime(0.1, t);
+        g.gain.linearRampToValueAtTime(0, t + 0.3);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(t); o.stop(t + 0.3);
+    },
+    fail: (t) => {
+        // 띠로리~ (하강음)
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(300, t);
+        o.frequency.linearRampToValueAtTime(100, t + 1);
+        g.gain.value = 0.1;
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(t); o.stop(t + 1);
+    },
+    clear: (t) => {
+        // 승리 팡파레
+        const g = audioCtx.createGain();
+        g.gain.value = 0.1;
+        g.connect(audioCtx.destination);
+        [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
+            const o = audioCtx.createOscillator();
+            o.type = 'square';
+            o.frequency.value = f;
+            o.connect(g);
+            o.start(t + i * 0.1);
+            o.stop(t + i * 0.1 + 0.3);
+        });
+    }
+};
+
+function playSound(type) {
+    if (!isSoundOn || !audioCtx) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const t = audioCtx.currentTime;
+    if (snd[type]) snd[type](t);
+}
+
+// ============================================================
+// [6. 관리자 기능 (기존 로직 이식)]
+// ============================================================
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + id).classList.add('active');
+    if (id === 'manage') renderWordList();
+}
+
+function toggleAddMode(mode) {
+    document.getElementById('add-text-box').style.display = mode === 'text' ? 'block' : 'none';
+    document.getElementById('add-image-box').style.display = mode === 'image' ? 'block' : 'none';
+}
+
+function escapeHtml(text) {
+    if (!text) return text;
+    return text.replace(/[&<>"']/g, function(m) {
+        return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'}[m];
+    });
+}
+
+// 텍스트 문제 추가
+function addTextWord() {
+    const q = document.getElementById('new-q').value.trim();
+    const a = document.getElementById('new-a').value.trim();
+    if (!q || !a) return showToast("내용을 입력하세요", 'error');
+    
+    saveToDB({ type: 'text', q: escapeHtml(q), a: escapeHtml(a) });
+    document.getElementById('new-q').value = "";
+    document.getElementById('new-a').value = "";
+}
+
+// 이미지 문제 추가 관련 변수
+let cropImgBase64 = null;
+
+function handleImageFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        // 간단화를 위해 크롭 없이 바로 리사이징해서 사용 (기존 크롭 코드는 너무 길어서 생략, 필요시 추가 가능)
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const MAX_SIZE = 600; 
+            let w = img.width, h = img.height;
+            if (w > h) { if (w > MAX_SIZE) { h *= MAX_SIZE/w; w = MAX_SIZE; } }
+            else { if (h > MAX_SIZE) { w *= MAX_SIZE/h; h = MAX_SIZE; } }
+            
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            cropImgBase64 = canvas.toDataURL('image/jpeg', 0.8);
+            
+            const preview = document.getElementById('preview-q-img');
+            preview.src = cropImgBase64;
+            preview.style.display = 'block';
+        }
+        img.src = ev.target.result;
+    }
+    reader.readAsDataURL(file);
+}
+
+function addImageWord() {
+    if (!cropImgBase64) return showToast("이미지를 선택하세요", 'error');
+    const qText = document.getElementById('img-q-text').value.trim();
+    const a = document.getElementById('img-a').value.trim();
+    if (!a) return showToast("정답을 입력하세요", 'error');
+
+    saveToDB({ 
+        type: 'image', 
+        q: cropImgBase64, 
+        qText: escapeHtml(qText), 
+        a: escapeHtml(a) 
+    });
+    
+    // 초기화
+    cropImgBase64 = null;
+    document.getElementById('preview-q-img').style.display = 'none';
+    document.getElementById('img-q-text').value = "";
+    document.getElementById('img-a').value = "";
+}
+
+function saveToDB(item) {
+    const tx = db.transaction(['vocab'], 'readwrite');
+    tx.objectStore('vocab').add(item);
+    tx.oncomplete = function() {
+        showToast("추가되었습니다.", 'success');
+        loadVocabulary(); // 메모리 갱신
+        renderWordList(); // 리스트 갱신
+    }
+}
+// ============================================================
+// [7. 리스트 관리 및 기타 유틸리티]
+// ============================================================
+function renderWordList() {
+    const listEl = document.getElementById('word-list');
+    listEl.innerHTML = "";
+
+    if (vocabulary.length === 0) {
+        listEl.innerHTML = "<div style='text-align:center; color:#999; padding:20px;'>등록된 문제가 없습니다.</div>";
+        return;
+    }
+
+    // 최신순 정렬
+    const sorted = [...vocabulary].reverse();
+
+    sorted.forEach(item => {
+        const div = document.createElement('div');
+        div.style.background = "#fff";
+        div.style.borderBottom = "1px solid #eee";
+        div.style.padding = "10px";
+        div.style.display = "flex";
+        div.style.alignItems = "center";
+        
+        let content = "";
+        if (item.type === 'image') {
+            content = `<div style="flex:1;">
+                <span style="font-size:0.8rem; color:#1976d2;">[이미지]</span>
+                <span style="font-weight:bold;">${item.qText ? item.qText : '(이미지 문제)'}</span>
+                <div style="font-size:0.8rem; color:#555;">답: ${item.a}</div>
+            </div>`;
+        } else {
+            content = `<div style="flex:1;">
+                <div style="font-weight:bold;">${item.q}</div>
+                <div style="font-size:0.8rem; color:#555;">답: ${item.a}</div>
+            </div>`;
+        }
+
+        div.innerHTML = `
+            <input type="checkbox" class="del-chk" value="${item.id}" style="margin-right:10px; transform:scale(1.2);">
+            ${content}
+        `;
+        listEl.appendChild(div);
+    });
+}
+
+function deleteSelected() {
+    const chks = document.querySelectorAll('.del-chk:checked');
+    if (chks.length === 0) return showToast("선택된 항목이 없습니다.", 'error');
+    
+    if (!confirm(`${chks.length}개를 삭제하시겠습니까?`)) return;
+
+    const tx = db.transaction(['vocab'], 'readwrite');
+    const store = tx.objectStore('vocab');
+    
+    chks.forEach(chk => {
+        store.delete(Number(chk.value));
+    });
+
+    tx.oncomplete = function() {
+        showToast("삭제되었습니다.", 'success');
+        loadVocabulary(); // 다시 로드 및 렌더링
+    };
+}
+
+// JSON 내보내기 (백업)
+function exportJSON() {
+    if (vocabulary.length === 0) return showToast("데이터가 없습니다.", 'error');
+    
+    const dataStr = JSON.stringify(vocabulary, null, 2);
+    const blob = new Blob([dataStr], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `quiz_backup_${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// JSON 가져오기 (복구)
+function handleJsonFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        try {
+            const data = JSON.parse(ev.target.result);
+            if (!Array.isArray(data)) throw new Error("배열 형식이 아닙니다.");
+            
+            if (!confirm(`총 ${data.length}개의 문제를 추가하시겠습니까? (기존 데이터 유지)`)) return;
+
+            const tx = db.transaction(['vocab'], 'readwrite');
+            const store = tx.objectStore('vocab');
+            let count = 0;
+            
+            data.forEach(item => {
+                // ID 충돌 방지를 위해 ID 제거 후 추가
+                delete item.id;
+                store.add(item);
+                count++;
+            });
+            
+            tx.oncomplete = function() {
+                showToast(`${count}개 복구 완료!`, 'success');
+                loadVocabulary();
+            };
+        } catch (err) {
+            alert("파일 형식이 올바르지 않습니다.");
+        }
+    };
+    reader.readAsText(file);
+    // 인풋 초기화 (같은 파일 다시 선택 가능하게)
+    e.target.value = "";
+}
+
+// 토스트 메시지 유틸
+function showToast(msg, type='normal') {
+    const container = document.getElementById('toast-container');
+    const el = document.createElement('div');
+    el.className = 'toast show';
+    el.innerText = msg;
+    
+    if (type === 'error') el.style.background = "rgba(229, 57, 53, 0.9)";
+    else if (type === 'success') el.style.background = "rgba(67, 160, 71, 0.9)";
+    
+    container.appendChild(el);
+    
+    setTimeout(() => {
+        el.classList.remove('show');
+        setTimeout(() => el.remove(), 300);
+    }, 2000);
+}
+</script>
+</body>
+</html>
