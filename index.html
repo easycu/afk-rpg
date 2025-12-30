@@ -6,7 +6,7 @@
 <title>암기 용사: 무한 타임어택</title>
 <style>
 /* --- [1. 기본 설정] --- */
-:root { --p: #2e7d32; --s: #66bb6a; --bg: #f1f8e9; --text: #1b5e20; --danger: #e53935; --gold: #fdd835; --boss: #5e35b1; }
+:root { --p: #2e7d32; --s: #66bb6a; --bg: #f1f8e9; --text: #1b5e20; --danger: #e53935; --gold: #fdd835; --excel: #1b5e20; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; user-select: none; touch-action: manipulation; }
 body { font-family: -apple-system, 'Pretendard', sans-serif; background: var(--bg); color: var(--text); width: 100vw; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
 button { cursor: pointer; font-family: inherit; }
@@ -23,18 +23,16 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 .toast { position: fixed; bottom: 20%; left: 50%; transform: translate(-50%, 20px); background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px; border-radius: 20px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 9999; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-/* --- [3. 게임 화면 (RPG 레이아웃)] --- */
+/* --- [3. 게임 화면 UI] --- */
 #area-battle { height: 40%; position: relative; background: linear-gradient(to bottom, #81c784, #a5d6a7); overflow: hidden; display: flex; flex-direction: column; align-items: center; border-bottom: 4px solid var(--text); }
 .stage-info-bar { width: 100%; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.1); color: #fff; font-weight: bold; font-size: 1.1rem; z-index: 10; }
 .time-bar-bg { width: 60%; height: 10px; background: rgba(255,255,255,0.3); border-radius: 5px; overflow: hidden; }
 .time-bar-fill { height: 100%; width: 100%; background: #fff; transition: width 0.1s linear; }
-
 .battle-field { flex: 1; width: 100%; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 10% 20px 10%; position: relative; }
 .sprite { font-size: 4rem; position: relative; transition: transform 0.1s; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2)); }
 .sprite.hero { transform: scaleX(-1); }
 .sprite.hit { animation: shake 0.2s; filter: brightness(2) sepia(1) hue-rotate(-50deg); }
 .sprite.attack { animation: lunge 0.15s; }
-
 .hp-bar-box { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 80px; height: 8px; background: #333; border-radius: 4px; overflow: hidden; }
 .hp-fill { height: 100%; background: var(--danger); width: 100%; transition: width 0.2s; }
 .dmg-text { position: absolute; font-weight: 900; color: #fff; font-size: 1.5rem; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; pointer-events: none; animation: floatUp 0.8s forwards; z-index: 20; white-space: nowrap;}
@@ -58,6 +56,11 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 #area-menu { height: 10%; background: #f5f5f5; border-top: 1px solid #ddd; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; }
 .small-btn { padding: 8px 12px; background: #fff; border: 1px solid #ccc; border-radius: 8px; font-size: 0.8rem; color: #555; }
 
+/* --- [4. 관리 및 자르기 UI] --- */
+#crop-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:#222; display:none; flex-direction:column; justify-content:center; align-items:center; z-index:9500; }
+#crop-canvas-container { position:relative; width:100%; max-height:60vh; overflow:hidden; background:#333; margin-bottom:10px; touch-action:none; }
+#excel-area { display:none; width:100%; background:#f9f9f9; padding:10px; border:2px dashed var(--excel); border-radius:10px; margin-bottom:10px; }
+
 @keyframes shake { 0%{transform:translateX(0)} 25%{transform:translateX(-5px)} 50%{transform:translateX(5px)} 75%{transform:translateX(-5px)} 100%{transform:translateX(0)} }
 @keyframes lunge { 0%{transform:scaleX(-1) translateX(0)} 50%{transform:scaleX(-1) translateX(15px)} 100%{transform:scaleX(-1) translateX(0)} }
 @keyframes floatUp { 0%{opacity:1; transform:translate(-50%,0) scale(1)} 100%{opacity:0; transform:translate(-50%,-50px) scale(1.2)} }
@@ -72,6 +75,16 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 <div id="toast-container"></div>
 <div id="img-modal" onclick="this.style.display='none'" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9000;justify-content:center;align-items:center;">
     <img id="img-modal-target" style="max-width:95%;max-height:95%;object-fit:contain;">
+</div>
+
+<div id="crop-modal">
+    <h3 style="color:#fff; margin-bottom:10px;">이미지 자르기</h3>
+    <div id="crop-canvas-container"><canvas id="crop-canvas"></canvas></div>
+    <div style="display:flex; gap:10px;">
+        <button class="menu-btn" style="background:#555; padding:10px; width:auto;" onclick="rotateImage()">🔄 회전</button>
+        <button class="menu-btn btn-manage" style="padding:10px; width:auto;" onclick="closeCrop()">취소</button>
+        <button class="menu-btn btn-game" style="padding:10px; width:auto;" onclick="applyCrop()">완료</button>
+    </div>
 </div>
 
 <div id="screen-home" class="screen active">
@@ -121,18 +134,28 @@ input, textarea { user-select: text; -webkit-user-select: text; }
         <button class="menu-btn btn-game" style="flex:1; margin:0; padding:10px;" onclick="toggleAddMode('text')">텍스트 문제</button>
         <button class="menu-btn btn-blue" style="flex:1; margin:0; padding:10px;" onclick="toggleAddMode('image')">이미지 문제</button>
     </div>
+    
     <div id="add-text-box" class="add-box" style="display:none; background:#fff; padding:15px; border-radius:10px; margin-bottom:10px; border:1px solid #ddd;">
         <textarea id="new-q" placeholder="문제" style="width:100%; height:50px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; padding:5px;"></textarea>
         <textarea id="new-a" placeholder="정답 (O/X 가능)" style="width:100%; height:40px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; padding:5px;"></textarea>
         <button onclick="addTextWord()" class="menu-btn btn-game" style="padding:10px;">등록</button>
+        
+        <button class="menu-btn" style="background:var(--excel); margin-top:10px; padding:10px; font-size:0.9rem;" onclick="toggleExcel()">📋 엑셀 붙여넣기</button>
+        <div id="excel-area">
+            <p style="font-size:0.8rem; color:#555; margin-bottom:5px;">엑셀에서 <b>[문제] [정답]</b> 열을 복사해서 붙여넣으세요.</p>
+            <textarea id="excel-input" placeholder="Apple   사과" style="width:100%; height:80px; padding:5px;"></textarea>
+            <button class="menu-btn btn-game" style="margin-top:5px; padding:8px; font-size:0.9rem;" onclick="parseExcel()">일괄 등록</button>
+        </div>
     </div>
+
     <div id="add-image-box" class="add-box" style="display:none; background:#fff; padding:15px; border-radius:10px; margin-bottom:10px; border:1px solid #ddd;">
-        <button onclick="document.getElementById('camera-input').click()" class="menu-btn btn-blue" style="padding:10px; margin-bottom:5px;">📷 사진 선택</button>
-        <img id="preview-q-img" style="max-width:100%; display:none; margin-bottom:5px;">
+        <button onclick="document.getElementById('camera-input').click()" class="menu-btn btn-blue" style="padding:10px; margin-bottom:5px;">📷 사진 선택/촬영</button>
+        <img id="preview-q-img" style="max-width:100%; display:none; margin-bottom:5px; border:2px solid var(--p);">
         <textarea id="img-q-text" placeholder="문제 텍스트(옵션)" style="width:100%; height:40px; margin-bottom:5px; padding:5px;"></textarea>
         <textarea id="img-a" placeholder="정답" style="width:100%; height:40px; margin-bottom:5px; padding:5px;"></textarea>
         <button onclick="addImageWord()" class="menu-btn btn-game" style="padding:10px;">등록</button>
     </div>
+
     <div id="word-list" style="margin-top:20px;"></div>
     <div style="margin-top:20px; display:flex; gap:5px;">
         <button class="small-btn" onclick="exportJSON()">백업</button>
@@ -152,7 +175,7 @@ const DB_VERSION = 1;
 let db;
 let vocabulary = [];
 
-// 플레이어 스탯 (기본값)
+// 플레이어 스탯
 let player = {
     atk: 10,       // 공격력
     crit: 0,       // 치명타율 (%)
@@ -162,18 +185,25 @@ let player = {
     killCount: 0   // 총 처치 수
 };
 
-// 게임 상태 변수
+// 게임 상태
 let gameRunning = false;
 let lastTime = 0;
 let attackTimer = 0;
 let combo = 0;
 let comboTimer = null;
 let currentStage = 1;
-let subStage = 0; // 0, 1, 2 (3마리 잡으면 클리어)
+let subStage = 0; 
 let stageTimeLeft = 30;
 let mob = { hp: 100, maxHp: 100, isBoss: false };
 
-// 오디오 컨텍스트
+// 자르기 및 이미지 관련 변수 (복구됨)
+let cropImg = new Image();
+let cropCtx = null;
+let cropRect = { x: 0, y: 0, w: 100, h: 100 };
+let currentCropBlob = null;
+let rotationAngle = 0;
+
+// 오디오
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let audioCtx = new AudioCtx();
 let isSoundOn = true;
@@ -184,6 +214,9 @@ let isSoundOn = true;
 window.onload = function() {
     initDB();
     loadPlayerStats();
+    // 자르기 캔버스 초기화
+    const cvs = document.getElementById('crop-canvas');
+    if(cvs) cropCtx = cvs.getContext('2d');
 };
 
 function initDB() {
@@ -213,10 +246,10 @@ function loadVocabulary() {
 }
 
 function savePlayerStats() {
-    localStorage.setItem('hero_stats_v3', JSON.stringify(player));
+    localStorage.setItem('hero_stats_v4', JSON.stringify(player));
 }
 function loadPlayerStats() {
-    const data = localStorage.getItem('hero_stats_v3');
+    const data = localStorage.getItem('hero_stats_v4');
     if (data) player = { ...player, ...JSON.parse(data) };
     updateHomeUI();
 }
@@ -263,7 +296,6 @@ function startStage(stg) {
 
 function spawnMob() {
     const isBoss = subStage === 2;
-    // 체력 7% 복리 증가 공식
     let hp = Math.floor(200 * Math.pow(1.07, currentStage - 1));
     if (isBoss) hp *= 3; 
 
@@ -289,7 +321,6 @@ function gameLoop(timestamp) {
     bar.style.width = pct + "%";
     bar.style.background = stageTimeLeft < 5 ? "#e53935" : "#fff";
 
-    // 공속 계산: 기본 + (0.1 * 콤보) (최대 2.5배)
     let currentAspd = player.aspd + (Math.min(2.5, combo * 0.1));
     if (combo === 0) currentAspd = player.aspd;
     document.getElementById('stat-aspd').innerText = currentAspd.toFixed(1);
@@ -387,8 +418,7 @@ function updateStatUI() {
     if(player.crit >= 100) document.getElementById('stat-crit').style.color = "#e040fb"; 
     else document.getElementById('stat-crit').style.color = "#66bb6a";
 }
-
-/* [파트 2 끝] 여기서는 script를 닫지 않습니다! */
+/* [파트 2 끝] */
 // ============================================================
 // [4. 퀴즈 시스템 (성장 및 버프)]
 // ============================================================
@@ -591,10 +621,9 @@ function playSound(type) {
     const t = audioCtx.currentTime;
     if (snd[type]) snd[type](t);
 }
-
-/* [파트 3 끝] script 태그는 여전히 열려있습니다. */
+/* [파트 3 끝] */
 // ============================================================
-// [6. 관리자 기능 및 유틸리티]
+// [6. 관리자 기능: 메뉴 및 엑셀]
 // ============================================================
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -605,6 +634,11 @@ function showScreen(id) {
 function toggleAddMode(mode) {
     document.getElementById('add-text-box').style.display = mode === 'text' ? 'block' : 'none';
     document.getElementById('add-image-box').style.display = mode === 'image' ? 'block' : 'none';
+}
+
+function toggleExcel() {
+    const el = document.getElementById('excel-area');
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
 function escapeHtml(text) {
@@ -622,59 +656,228 @@ function addTextWord() {
     saveToDB({ type: 'text', q: escapeHtml(q), a: escapeHtml(a) });
     document.getElementById('new-q').value = "";
     document.getElementById('new-a').value = "";
+    showToast("등록되었습니다.", 'success');
 }
 
-let cropImgBase64 = null;
+function parseExcel() {
+    const val = document.getElementById('excel-input').value.trim();
+    if (!val) return showToast("내용이 없습니다.", 'error');
+    
+    const lines = val.split('\n');
+    let count = 0;
+    
+    const tx = db.transaction(['vocab'], 'readwrite');
+    const store = tx.objectStore('vocab');
+
+    lines.forEach(line => {
+        // 탭(tab)으로 구분
+        const parts = line.split('\t');
+        if (parts.length >= 2) {
+            const q = parts[0].trim();
+            const a = parts[1].trim();
+            if (q && a) {
+                store.add({ type: 'text', q: escapeHtml(q), a: escapeHtml(a) });
+                count++;
+            }
+        }
+    });
+
+    tx.oncomplete = function() {
+        showToast(`${count}개 일괄 등록 완료!`, 'success');
+        document.getElementById('excel-input').value = "";
+        toggleExcel();
+        renderWordList();
+    };
+}
+
+// ============================================================
+// [7. 이미지 자르기(Crop) 시스템]
+// ============================================================
 function handleImageFile(e) {
     const file = e.target.files[0];
     if (!file) return;
+    
+    // 아이폰 사진 회전 문제 방지 및 로딩
     const reader = new FileReader();
     reader.onload = function(ev) {
-        const img = new Image();
-        img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const MAX_SIZE = 600; 
-            let w = img.width, h = img.height;
-            if (w > h) { if (w > MAX_SIZE) { h *= MAX_SIZE/w; w = MAX_SIZE; } }
-            else { if (h > MAX_SIZE) { w *= MAX_SIZE/h; h = MAX_SIZE; } }
-            
-            canvas.width = w; canvas.height = h;
-            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-            cropImgBase64 = canvas.toDataURL('image/jpeg', 0.8);
-            
-            const preview = document.getElementById('preview-q-img');
-            preview.src = cropImgBase64;
-            preview.style.display = 'block';
-        }
-        img.src = ev.target.result;
-    }
+        cropImg.src = ev.target.result;
+        currentCropBlob = file;
+    };
     reader.readAsDataURL(file);
+
+    cropImg.onload = function() {
+        startCropping();
+    };
+}
+
+function startCropping() {
+    document.getElementById('crop-modal').style.display = 'flex';
+    rotationAngle = 0;
+    
+    // 초기 자르기 영역 설정 (중앙)
+    const cw = document.getElementById('crop-canvas-container').clientWidth;
+    const ch = window.innerHeight * 0.5;
+    const size = Math.min(cw, ch) * 0.6;
+    cropRect = { x: (cw - size)/2, y: (ch - size)/2, w: size, h: size };
+    
+    drawCropCanvas();
+}
+
+function drawCropCanvas() {
+    const container = document.getElementById('crop-canvas-container');
+    const canvas = document.getElementById('crop-canvas');
+    const cw = container.clientWidth;
+    const ch = window.innerHeight * 0.6; // 화면의 60% 높이
+
+    canvas.width = cw;
+    canvas.height = ch;
+    
+    // 배경 (어둡게)
+    cropCtx.fillStyle = "#333";
+    cropCtx.fillRect(0, 0, cw, ch);
+
+    // 이미지 그리기 (회전 적용)
+    cropCtx.save();
+    cropCtx.translate(cw/2, ch/2);
+    cropCtx.rotate(rotationAngle * Math.PI / 180);
+    
+    // 이미지 비율 유지하며 캔버스에 맞춤
+    const scale = Math.min(cw / cropImg.width, ch / cropImg.height) * 0.8; 
+    const dw = cropImg.width * scale;
+    const dh = cropImg.height * scale;
+    
+    cropCtx.drawImage(cropImg, -dw/2, -dh/2, dw, dh);
+    cropCtx.restore();
+
+    // 자르기 사각형 그리기 (현재 cropRect 좌표에)
+    cropCtx.strokeStyle = "#fff";
+    cropCtx.lineWidth = 2;
+    cropCtx.strokeRect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
+
+    // 어두운 오버레이 (선택 영역 밖)
+    cropCtx.fillStyle = "rgba(0,0,0,0.5)";
+    // 상
+    cropCtx.fillRect(0, 0, cw, cropRect.y);
+    // 하
+    cropCtx.fillRect(0, cropRect.y + cropRect.h, cw, ch - (cropRect.y + cropRect.h));
+    // 좌
+    cropCtx.fillRect(0, cropRect.y, cropRect.x, cropRect.h);
+    // 우
+    cropCtx.fillRect(cropRect.x + cropRect.w, cropRect.y, cw - (cropRect.x + cropRect.w), cropRect.h);
+}
+
+// 터치/드래그로 영역 이동 구현
+let isDragging = false;
+let lastX = 0, lastY = 0;
+
+const cropContainer = document.getElementById('crop-canvas-container');
+cropContainer.addEventListener('touchstart', dragStart, {passive: false});
+cropContainer.addEventListener('touchmove', dragMove, {passive: false});
+cropContainer.addEventListener('touchend', dragEnd);
+// PC 마우스 지원
+cropContainer.addEventListener('mousedown', dragStart);
+cropContainer.addEventListener('mousemove', dragMove);
+cropContainer.addEventListener('mouseup', dragEnd);
+
+function dragStart(e) {
+    e.preventDefault();
+    isDragging = true;
+    const pt = e.touches ? e.touches[0] : e;
+    lastX = pt.clientX;
+    lastY = pt.clientY;
+}
+
+function dragMove(e) {
+    if (!isDragging) return;
+    e.preventDefault();
+    const pt = e.touches ? e.touches[0] : e;
+    const dx = pt.clientX - lastX;
+    const dy = pt.clientY - lastY;
+    
+    cropRect.x += dx;
+    cropRect.y += dy;
+    lastX = pt.clientX;
+    lastY = pt.clientY;
+    
+    drawCropCanvas();
+}
+
+function dragEnd() {
+    isDragging = false;
+}
+
+function rotateImage() {
+    rotationAngle = (rotationAngle + 90) % 360;
+    drawCropCanvas();
+}
+
+function closeCrop() {
+    document.getElementById('crop-modal').style.display = 'none';
+}
+
+function applyCrop() {
+    // 현재 화면에 보이는 캔버스를 그대로 이미지로 저장 (WYSIWYG)
+    // 실제 정밀 좌표 계산 대신 화면 캡처 방식을 사용하여 간편 구현
+    const canvas = document.getElementById('crop-canvas');
+    
+    // 임시 캔버스를 만들어 선택 영역만 추출
+    const tempCvs = document.createElement('canvas');
+    tempCvs.width = cropRect.w;
+    tempCvs.height = cropRect.h;
+    const tCtx = tempCvs.getContext('2d');
+    
+    tCtx.drawImage(canvas, 
+        cropRect.x, cropRect.y, cropRect.w, cropRect.h, 
+        0, 0, cropRect.w, cropRect.h
+    );
+    
+    // 결과물 저장
+    const finalBase64 = tempCvs.toDataURL('image/jpeg', 0.8);
+    
+    // 미리보기 및 데이터 설정
+    const preview = document.getElementById('preview-q-img');
+    preview.src = finalBase64;
+    preview.style.display = 'block';
+    preview.dataset.base64 = finalBase64; // 데이터 속성에 저장
+    
+    closeCrop();
 }
 
 function addImageWord() {
-    if (!cropImgBase64) return showToast("이미지를 선택하세요", 'error');
+    const preview = document.getElementById('preview-q-img');
+    const base64 = preview.dataset.base64;
+    
+    if (!base64) return showToast("이미지를 선택/촬영하세요", 'error');
     const qText = document.getElementById('img-q-text').value.trim();
     const a = document.getElementById('img-a').value.trim();
     if (!a) return showToast("정답을 입력하세요", 'error');
 
     saveToDB({ 
         type: 'image', 
-        q: cropImgBase64, 
+        q: base64, 
         qText: escapeHtml(qText), 
         a: escapeHtml(a) 
     });
     
-    cropImgBase64 = null;
-    document.getElementById('preview-q-img').style.display = 'none';
+    // 초기화
+    preview.src = "";
+    preview.style.display = "none";
+    delete preview.dataset.base64;
     document.getElementById('img-q-text').value = "";
     document.getElementById('img-a').value = "";
+    showToast("이미지 문제 등록 완료!", 'success');
 }
-
+/* [파트 4 끝] */
+// ============================================================
+// [8. 데이터베이스 보조 및 유틸리티]
+// ============================================================
 function saveToDB(item) {
     const tx = db.transaction(['vocab'], 'readwrite');
     tx.objectStore('vocab').add(item);
     tx.oncomplete = function() {
-        showToast("추가되었습니다.", 'success');
+        // 이미 엑셀/이미지 등록 함수에서 토스트를 띄우므로 여기선 생략 가능하지만
+        // 단일 텍스트 등록 시 확실한 피드백을 위해 남겨둠
+        if(item.type === 'text') showToast("추가되었습니다.", 'success');
         loadVocabulary(); 
         renderWordList(); 
     }
@@ -702,9 +905,10 @@ function renderWordList() {
         if (item.type === 'image') {
             content = `<div style="flex:1;">
                 <span style="font-size:0.8rem; color:#1976d2;">[이미지]</span>
-                <span style="font-weight:bold;">${item.qText ? item.qText : ''}</span>
+                <span style="font-weight:bold;">${item.qText ? item.qText : '(이미지 문제)'}</span>
                 <div style="font-size:0.8rem; color:#555;">답: ${item.a}</div>
-            </div>`;
+            </div>
+            <img src="${item.q}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; margin-right:10px;">`;
         } else {
             content = `<div style="flex:1;">
                 <div style="font-weight:bold;">${item.q}</div>
@@ -768,7 +972,7 @@ function handleJsonFile(e) {
                 showToast(`${count}개 복구 완료!`, 'success');
                 loadVocabulary();
             };
-        } catch (err) { alert("파일 오류"); }
+        } catch (err) { alert("파일 오류: " + err); }
     };
     reader.readAsText(file);
     e.target.value = "";
