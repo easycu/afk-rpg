@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>암기 용사: 무한 타임어택</title>
+<title>암기 용사: 타임어택 RPG</title>
 <style>
-/* --- [1. 기본 설정] --- */
-:root { --p: #2e7d32; --s: #66bb6a; --bg: #f1f8e9; --text: #1b5e20; --danger: #e53935; --gold: #fdd835; --excel: #1b5e20; }
+/* --- [1. 기본 스타일] --- */
+:root { --p: #2e7d32; --s: #66bb6a; --bg: #f1f8e9; --text: #1b5e20; --danger: #e53935; --gold: #fdd835; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; user-select: none; touch-action: manipulation; }
 body { font-family: -apple-system, 'Pretendard', sans-serif; background: var(--bg); color: var(--text); width: 100vw; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
 button { cursor: pointer; font-family: inherit; }
@@ -20,70 +20,99 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 .btn-game { background: var(--p); }
 .btn-manage { background: #795548; }
 .btn-blue { background: #1976d2; }
+.small-btn { padding: 6px 12px; background: #fff; border: 1px solid #ccc; border-radius: 6px; font-size: 0.8rem; color: #555; font-weight: bold; }
+
+/* 모달/팝업 */
 .toast { position: fixed; bottom: 20%; left: 50%; transform: translate(-50%, 20px); background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px; border-radius: 20px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 9999; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
+#img-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9000; overflow:auto; }
+#img-modal img { margin: auto; display: block; max-width: 100%; transition: transform 0.2s; transform-origin: center center; }
 
-/* --- [3. 게임 화면 UI] --- */
-#area-battle { height: 40%; position: relative; background: linear-gradient(to bottom, #81c784, #a5d6a7); overflow: hidden; display: flex; flex-direction: column; align-items: center; border-bottom: 4px solid var(--text); }
-.stage-info-bar { width: 100%; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.1); color: #fff; font-weight: bold; font-size: 1.1rem; z-index: 10; }
-.time-bar-bg { width: 60%; height: 10px; background: rgba(255,255,255,0.3); border-radius: 5px; overflow: hidden; }
+/* 자르기 모달 */
+#crop-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:#000; display:none; flex-direction:column; z-index:9500; }
+#crop-area { flex:1; position:relative; overflow:hidden; background:#222; touch-action:none; display:flex; justify-content:center; align-items:center; }
+#crop-canvas { max-width:100%; max-height:100%; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+
+/* --- [3. 게임 화면: 채팅앱 레이아웃] --- */
+#area-battle { height: 25%; flex-shrink: 0; position: relative; background: linear-gradient(to bottom, #81c784, #a5d6a7); overflow: hidden; display: flex; flex-direction: column; align-items: center; border-bottom: 4px solid var(--text); }
+
+.stage-info-bar { width: 100%; padding: 5px 10px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.1); color: #fff; font-weight: bold; font-size: 0.9rem; z-index: 10; }
+.time-bar-bg { width: 50%; height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px; overflow: hidden; }
 .time-bar-fill { height: 100%; width: 100%; background: #fff; transition: width 0.1s linear; }
-.battle-field { flex: 1; width: 100%; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 10% 20px 10%; position: relative; }
-.sprite { font-size: 4rem; position: relative; transition: transform 0.1s; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2)); }
+
+.battle-field { flex: 1; width: 100%; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 15% 10px 15%; position: relative; }
+.sprite { font-size: 3rem; position: relative; transition: transform 0.1s; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2)); }
 .sprite.hero { transform: scaleX(-1); }
 .sprite.hit { animation: shake 0.2s; filter: brightness(2) sepia(1) hue-rotate(-50deg); }
 .sprite.attack { animation: lunge 0.15s; }
-.hp-bar-box { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 80px; height: 8px; background: #333; border-radius: 4px; overflow: hidden; }
+
+.hp-bar-box { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 50px; height: 5px; background: #333; border-radius: 3px; overflow: hidden; }
 .hp-fill { height: 100%; background: var(--danger); width: 100%; transition: width 0.2s; }
-.dmg-text { position: absolute; font-weight: 900; color: #fff; font-size: 1.5rem; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; pointer-events: none; animation: floatUp 0.8s forwards; z-index: 20; white-space: nowrap;}
-.crit-text { color: var(--gold) !important; font-size: 2rem !important; }
-.jin-crit-text { color: #e040fb !important; font-size: 2.2rem !important; }
+.dmg-text { position: absolute; font-weight: 900; color: #fff; font-size: 1.2rem; pointer-events: none; animation: floatUp 0.8s forwards; z-index: 20; white-space: nowrap; text-shadow: -1px -1px 0 #000; }
 
-#area-stat { height: 10%; background: #263238; color: #fff; display: flex; align-items: center; justify-content: space-around; padding: 0 10px; font-size: 0.85rem; border-bottom: 1px solid #444; }
-.stat-box { text-align: center; }
-.stat-label { color: #cfd8dc; font-size: 0.7rem; margin-bottom: 2px; }
-.stat-val { font-weight: bold; font-family: monospace; font-size: 1rem; color: var(--s); }
-.buff-badge { background: var(--danger); color: #fff; border-radius: 4px; padding: 2px 6px; font-size: 0.7rem; animation: pulse 1s infinite; display: none; }
+#area-stat { height: 30px; flex-shrink: 0; background: #263238; color: #fff; display: flex; align-items: center; justify-content: center; gap: 15px; font-size: 0.8rem; border-bottom: 1px solid #444; }
+.stat-val { font-weight: bold; font-family: monospace; color: var(--s); }
+.buff-badge { background: var(--danger); color: #fff; border-radius: 4px; padding: 1px 4px; font-size: 0.6rem; animation: pulse 1s infinite; display: none; }
 
-#area-quiz { height: 40%; padding: 15px; background: #fff; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
-#q-image { max-height: 120px; max-width: 100%; object-fit: contain; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd; display: none; cursor: zoom-in; }
-#q-text { font-size: 1.1rem; font-weight: bold; text-align: center; margin-bottom: 15px; line-height: 1.4; width: 100%; }
-.input-group { display: flex; width: 100%; gap: 10px; margin-top: auto; }
-#q-input { flex: 1; padding: 12px; font-size: 1.1rem; border: 2px solid #ccc; border-radius: 10px; outline: none; transition: 0.2s; }
-#q-input:focus { border-color: var(--p); }
-#btn-submit { padding: 0 20px; background: var(--p); color: #fff; border: none; border-radius: 10px; font-weight: bold; font-size: 1.1rem; }
+#area-quiz { flex: 1; display: flex; flex-direction: column; background: #fff; overflow: hidden; position: relative; }
+#quiz-content { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+#q-image-container { width: 100%; margin-bottom: 10px; display: none; text-align: center; }
+#q-image { max-width: 100%; max-height: 250px; border-radius: 8px; border: 1px solid #ddd; cursor: zoom-in; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+#q-text { font-size: 1.1rem; font-weight: bold; text-align: center; margin-bottom: 10px; line-height: 1.5; width: 100%; white-space: pre-wrap; color: #333; }
+#q-feedback { font-weight: bold; margin: 10px 0; min-height: 20px; text-align: center; }
 
-#area-menu { height: 10%; background: #f5f5f5; border-top: 1px solid #ddd; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; }
-.small-btn { padding: 8px 12px; background: #fff; border: 1px solid #ccc; border-radius: 8px; font-size: 0.8rem; color: #555; }
+#explanation-area { width: 100%; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; padding: 10px; margin-top: 10px; display: none; text-align: left; font-size: 0.95rem; line-height: 1.4; }
+#ex-img-view { max-width: 100%; border-radius: 5px; margin-top: 5px; cursor: zoom-in; }
 
-/* --- [4. 관리 및 자르기 UI] --- */
-#crop-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:#222; display:none; flex-direction:column; justify-content:center; align-items:center; z-index:9500; }
-#crop-canvas-container { position:relative; width:100%; max-height:60vh; overflow:hidden; background:#333; margin-bottom:10px; touch-action:none; }
-#excel-area { display:none; width:100%; background:#f9f9f9; padding:10px; border:2px dashed var(--excel); border-radius:10px; margin-bottom:10px; }
+#quiz-input-bar { flex-shrink: 0; padding: 10px; background: #f9f9f9; border-top: 1px solid #ddd; display: flex; gap: 8px; align-items: center; }
+#q-input { flex: 1; padding: 12px; font-size: 1.1rem; border: 2px solid #ccc; border-radius: 20px; outline: none; transition: 0.2s; }
+#q-input:focus { border-color: var(--p); background: #fff; }
+#btn-submit { padding: 0 20px; height: 48px; background: var(--p); color: #fff; border: none; border-radius: 20px; font-weight: bold; font-size: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+#btn-submit:active { transform: scale(0.95); }
 
-@keyframes shake { 0%{transform:translateX(0)} 25%{transform:translateX(-5px)} 50%{transform:translateX(5px)} 75%{transform:translateX(-5px)} 100%{transform:translateX(0)} }
-@keyframes lunge { 0%{transform:scaleX(-1) translateX(0)} 50%{transform:scaleX(-1) translateX(15px)} 100%{transform:scaleX(-1) translateX(0)} }
-@keyframes floatUp { 0%{opacity:1; transform:translate(-50%,0) scale(1)} 100%{opacity:0; transform:translate(-50%,-50px) scale(1.2)} }
+#area-menu { height: 50px; flex-shrink: 0; background: #f5f5f5; border-top: 1px solid #ddd; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; }
+
+/* --- [4. 관리 화면] --- */
+#screen-manage { padding: 15px; overflow-y: auto; }
+.add-box { display:none; background:#fff; padding:15px; border-radius:10px; margin-bottom:10px; border:1px solid #ddd; }
+textarea { width:100%; border-radius:5px; border:1px solid #ccc; padding:8px; margin-bottom:5px; font-family:inherit; resize:none; }
+.ex-box { border-top: 1px dashed #ccc; margin-top: 10px; padding-top: 10px; }
+
+/* 애니메이션 */
+@keyframes shake { 0%{transform:translateX(0)} 25%{transform:translateX(-3px)} 50%{transform:translateX(3px)} 75%{transform:translateX(-3px)} 100%{transform:translateX(0)} }
+@keyframes lunge { 0%{transform:scaleX(-1) translateX(0)} 50%{transform:scaleX(-1) translateX(10px)} 100%{transform:scaleX(-1) translateX(0)} }
+@keyframes floatUp { 0%{opacity:1; transform:translate(-50%,0) scale(1)} 100%{opacity:0; transform:translate(-50%,-30px) scale(1.2)} }
 @keyframes pulse { 0%{opacity:1} 50%{opacity:0.6} 100%{opacity:1} }
 </style>
 </head>
 <body>
+
 <div id="loading-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;justify-content:center;align-items:center;color:#fff;font-weight:bold;flex-direction:column;">
     <div style="font-size:2rem;margin-bottom:10px;">⚔️</div>
     <div>데이터 로딩 중...</div>
 </div>
 <div id="toast-container"></div>
-<div id="img-modal" onclick="this.style.display='none'" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9000;justify-content:center;align-items:center;">
-    <img id="img-modal-target" style="max-width:95%;max-height:95%;object-fit:contain;">
+
+<div id="img-modal" onclick="closeImgModal()">
+    <div style="position:absolute; top:20px; right:20px; color:#fff; font-size:2rem; cursor:pointer;">&times;</div>
+    <img id="img-modal-target" onclick="event.stopPropagation(); toggleZoom(this)">
+    <div style="position:absolute; bottom:20px; width:100%; text-align:center; color:#fff; font-size:0.9rem;">클릭하여 확대/축소</div>
 </div>
 
 <div id="crop-modal">
-    <h3 style="color:#fff; margin-bottom:10px;">이미지 자르기</h3>
-    <div id="crop-canvas-container"><canvas id="crop-canvas"></canvas></div>
-    <div style="display:flex; gap:10px;">
-        <button class="menu-btn" style="background:#555; padding:10px; width:auto;" onclick="rotateImage()">🔄 회전</button>
-        <button class="menu-btn btn-manage" style="padding:10px; width:auto;" onclick="closeCrop()">취소</button>
-        <button class="menu-btn btn-game" style="padding:10px; width:auto;" onclick="applyCrop()">완료</button>
+    <div style="padding:10px 15px; display:flex; justify-content:space-between; align-items:center; background:#111; color:#fff;">
+        <h3 style="margin:0; font-size:1rem;">이미지 자르기</h3>
+        <div>
+            <button class="small-btn" style="background:#333; color:#fff; border:none;" onclick="rotateImage()">🔄 회전</button>
+            <button class="small-btn" style="background:#d32f2f; color:#fff; border:none;" onclick="closeCrop()">취소</button>
+            <button class="small-btn" style="background:#388e3c; color:#fff; border:none; font-weight:bold;" onclick="applyCrop()">완료</button>
+        </div>
+    </div>
+    <div id="crop-area">
+        <canvas id="crop-canvas"></canvas>
+    </div>
+    <div style="padding:10px; background:#111; text-align:center; color:#aaa; font-size:0.8rem;">
+        영역 드래그로 이동 / 우측 하단 핸들(⬜)로 크기 조절
     </div>
 </div>
 
@@ -91,7 +120,7 @@ input, textarea { user-select: text; -webkit-user-select: text; }
     <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;">
         <div style="font-size:5rem;margin-bottom:10px;">🛡️</div>
         <h1 style="color:var(--text);margin-bottom:5px;">암기 용사</h1>
-        <p style="color:#666;font-size:0.9rem;">무한 타임어택 RPG</p>
+        <p style="color:#666;font-size:0.9rem;">타임어택 RPG</p>
         <div style="background:#fff;padding:15px;border-radius:15px;margin:30px 0;width:80%;box-shadow:0 2px 10px rgba(0,0,0,0.05);">
             <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span>최고 스테이지</span><b style="color:var(--p)" id="home-best-stage">1-1</b></div>
             <div style="display:flex;justify-content:space-between;"><span>총 처치</span><b id="home-kill-count">0</b></div>
@@ -112,66 +141,96 @@ input, textarea { user-select: text; -webkit-user-select: text; }
         </div>
     </div>
     <div id="area-stat">
-        <div class="stat-box"><div class="stat-label">공격력</div><div id="stat-atk" class="stat-val">10</div></div>
-        <div class="stat-box"><div class="stat-label">치명타</div><div id="stat-crit" class="stat-val">0%</div></div>
-        <div class="stat-box"><div class="stat-label">치명피해</div><div id="stat-cdmg" class="stat-val">150%</div></div>
-        <div class="stat-box" style="position:relative"><div class="buff-badge" id="buff-badge">FAST!</div><div class="stat-label">공격속도</div><div id="stat-aspd" class="stat-val">1.0</div></div>
+        <div class="stat-box">ATK <span id="stat-atk" class="stat-val">10</span></div>
+        <div class="stat-box">CRIT <span id="stat-crit" class="stat-val">0%</span></div>
+        <div class="stat-box">CDMG <span id="stat-cdmg" class="stat-val">150%</span></div>
+        <div class="stat-box" style="position:relative">ASPD <span id="stat-aspd" class="stat-val">1.0</span><div class="buff-badge" id="buff-badge">FAST!</div></div>
     </div>
     <div id="area-quiz">
-        <img id="q-image" onclick="viewImage(this.src)">
-        <div id="q-text">문제를 불러오는 중...</div>
-        <div class="input-group"><input type="text" id="q-input" placeholder="정답 입력" autocomplete="off"><button id="btn-submit" onclick="submitAnswer()">제출</button></div>
-        <div id="q-feedback" style="height:20px; margin-top:5px; font-size:0.8rem; font-weight:bold;"></div>
+        <div id="quiz-content">
+            <div id="q-image-container"><img id="q-image" onclick="openImgModal(this.src)"></div>
+            <div id="q-text">문제를 불러오는 중...</div>
+            <div id="q-feedback"></div>
+            <div id="explanation-area">
+                <div style="font-weight:bold; color:#2e7d32; margin-bottom:5px;">💡 해설</div>
+                <div id="ex-text-view"></div>
+                <img id="ex-img-view" onclick="openImgModal(this.src)">
+            </div>
+            <div style="height:20px;"></div>
+        </div>
+        <div id="quiz-input-bar">
+            <input type="text" id="q-input" placeholder="정답 입력" autocomplete="off">
+            <button id="btn-submit" onclick="submitAnswer()">입력</button>
+        </div>
     </div>
     <div id="area-menu">
-        <button class="small-btn" onclick="stopGame()">🏠 홈으로</button><span style="font-size:0.8rem; color:#888;">자동 공격 중...</span><button class="small-btn" onclick="toggleSound()">🔊 소리</button>
+        <button class="small-btn" onclick="stopGame()">🏠 홈</button>
+        <span style="font-size:0.8rem; color:#888;">자동 전투 중</span>
+        <button class="small-btn" onclick="toggleSound()">🔊 소리</button>
     </div>
 </div>
 
-<div id="screen-manage" class="screen" style="padding:15px; overflow-y:auto;">
+<div id="screen-manage" class="screen">
     <h2 style="margin-bottom:15px; color:var(--text);">문제 관리</h2>
     <div style="display:flex; gap:10px; margin-bottom:10px;">
         <button class="menu-btn btn-game" style="flex:1; margin:0; padding:10px;" onclick="toggleAddMode('text')">텍스트 문제</button>
         <button class="menu-btn btn-blue" style="flex:1; margin:0; padding:10px;" onclick="toggleAddMode('image')">이미지 문제</button>
     </div>
     
-    <div id="add-text-box" class="add-box" style="display:none; background:#fff; padding:15px; border-radius:10px; margin-bottom:10px; border:1px solid #ddd;">
-        <textarea id="new-q" placeholder="문제" style="width:100%; height:50px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; padding:5px;"></textarea>
-        <textarea id="new-a" placeholder="정답 (O/X 가능)" style="width:100%; height:40px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; padding:5px;"></textarea>
-        <button onclick="addTextWord()" class="menu-btn btn-game" style="padding:10px;">등록</button>
+    <div id="add-text-box" class="add-box">
+        <textarea id="new-q" placeholder="문제 내용" style="height:60px;"></textarea>
+        <textarea id="new-a" placeholder="정답 (O/X 등)" style="height:40px;"></textarea>
+        <div class="ex-box">
+            <textarea id="new-ex-text" placeholder="(선택) 해설/설명 입력" style="height:50px; background:#f9f9f9;"></textarea>
+        </div>
+        <button onclick="addTextWord()" class="menu-btn btn-game" style="padding:10px; margin-top:5px;">등록</button>
         
         <button class="menu-btn" style="background:var(--excel); margin-top:10px; padding:10px; font-size:0.9rem;" onclick="toggleExcel()">📋 엑셀 붙여넣기</button>
-        <div id="excel-area">
-            <p style="font-size:0.8rem; color:#555; margin-bottom:5px;">엑셀에서 <b>[문제] [정답]</b> 열을 복사해서 붙여넣으세요.</p>
-            <textarea id="excel-input" placeholder="Apple   사과" style="width:100%; height:80px; padding:5px;"></textarea>
+        <div id="excel-area" style="display:none; margin-top:5px; padding:10px; background:#f1f8e9; border-radius:5px;">
+            <p style="font-size:0.8rem; color:#555; margin-bottom:5px;">복사 형식: <b>[문제] [정답] [해설]</b> (탭으로 구분)</p>
+            <textarea id="excel-input" placeholder="사과    Apple    사과는 맛있다" style="height:80px;"></textarea>
             <button class="menu-btn btn-game" style="margin-top:5px; padding:8px; font-size:0.9rem;" onclick="parseExcel()">일괄 등록</button>
         </div>
     </div>
 
-    <div id="add-image-box" class="add-box" style="display:none; background:#fff; padding:15px; border-radius:10px; margin-bottom:10px; border:1px solid #ddd;">
-        <button onclick="document.getElementById('camera-input').click()" class="menu-btn btn-blue" style="padding:10px; margin-bottom:5px;">📷 사진 선택/촬영</button>
+    <div id="add-image-box" class="add-box">
+        <button onclick="document.getElementById('camera-input').click()" class="menu-btn btn-blue" style="padding:10px; margin-bottom:5px;">📷 사진 촬영/선택</button>
         <img id="preview-q-img" style="max-width:100%; display:none; margin-bottom:5px; border:2px solid var(--p);">
-        <textarea id="img-q-text" placeholder="문제 텍스트(옵션)" style="width:100%; height:40px; margin-bottom:5px; padding:5px;"></textarea>
-        <textarea id="img-a" placeholder="정답" style="width:100%; height:40px; margin-bottom:5px; padding:5px;"></textarea>
-        <button onclick="addImageWord()" class="menu-btn btn-game" style="padding:10px;">등록</button>
+        
+        <textarea id="img-q-text" placeholder="(선택) 문제 텍스트" style="height:40px;"></textarea>
+        <textarea id="img-a" placeholder="정답" style="height:40px;"></textarea>
+        
+        <div class="ex-box">
+            <button onclick="document.getElementById('ex-img-input').click()" class="small-btn" style="margin-bottom:5px;">📷 해설 이미지 추가</button>
+            <img id="preview-ex-img" style="max-width:100%; max-height:100px; display:none; margin-bottom:5px;">
+            <textarea id="img-ex-text" placeholder="(선택) 해설 텍스트" style="height:50px; background:#f9f9f9;"></textarea>
+        </div>
+
+        <button onclick="addImageWord()" class="menu-btn btn-game" style="padding:10px; margin-top:5px;">등록</button>
     </div>
 
-    <div id="word-list" style="margin-top:20px;"></div>
-    <div style="margin-top:20px; display:flex; gap:5px;">
-        <button class="small-btn" onclick="exportJSON()">백업</button>
-        <button class="small-btn" onclick="document.getElementById('json-input').click()">복구</button>
-        <button class="small-btn" style="color:var(--danger); border-color:var(--danger);" onclick="deleteSelected()">선택삭제</button>
+    <div style="margin-top:20px; display:flex; gap:5px; flex-wrap:wrap;">
+        <button class="small-btn" style="flex:1; background:#eee;" onclick="toggleSelectAll()">전체 선택</button>
+        <button class="small-btn" style="flex:1; color:var(--danger); border-color:var(--danger);" onclick="deleteSelected()">선택 삭제</button>
     </div>
-    <button class="menu-btn" style="background:#8d6e63; margin-top:20px;" onclick="showScreen('home')">돌아가기</button>
+    <div style="margin-top:5px; display:flex; gap:5px;">
+        <button class="small-btn" style="flex:1;" onclick="exportJSON()">백업</button>
+        <button class="small-btn" style="flex:1;" onclick="document.getElementById('json-input').click()">복구</button>
+    </div>
+
+    <div id="word-list" style="margin-top:15px; border-top:1px solid #eee;"></div>
+    <div style="height:50px;"></div> <button class="menu-btn" style="background:#8d6e63; margin-top:10px;" onclick="showScreen('home')">돌아가기</button>
 </div>
-<input type="file" id="camera-input" style="display:none" accept="image/*" onchange="handleImageFile(event)">
+
+<input type="file" id="camera-input" style="display:none" accept="image/*" onchange="handleImageFile(event, 'q')">
+<input type="file" id="ex-img-input" style="display:none" accept="image/*" onchange="handleImageFile(event, 'ex')">
 <input type="file" id="json-input" style="display:none" accept=".json" onchange="handleJsonFile(event)">
 <script>
 // ============================================================
 // [1. 전역 변수 및 설정]
 // ============================================================
 const DB_NAME = "HeroQuizDB";
-const DB_VERSION = 1;
+const DB_VERSION = 2; // DB 구조 변경(해설 추가)을 위해 버전 업
 let db;
 let vocabulary = [];
 
@@ -196,12 +255,18 @@ let subStage = 0;
 let stageTimeLeft = 30;
 let mob = { hp: 100, maxHp: 100, isBoss: false };
 
-// 자르기 및 이미지 관련 변수 (복구됨)
+// 이미지 자르기 관련 변수
 let cropImg = new Image();
 let cropCtx = null;
-let cropRect = { x: 0, y: 0, w: 100, h: 100 };
-let currentCropBlob = null;
+// 자르기 영역 (x,y,w,h) + 드래그 상태
+let cropRect = { x: 0, y: 0, w: 200, h: 200 };
+let isDragging = false;
+let dragMode = null; // 'move' 또는 'resize'
+let lastX = 0, lastY = 0;
 let rotationAngle = 0;
+
+// 이미지 처리용 임시 변수
+let currentTargetType = 'q'; // 'q'(문제) 또는 'ex'(해설)
 
 // 오디오
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -214,6 +279,7 @@ let isSoundOn = true;
 window.onload = function() {
     initDB();
     loadPlayerStats();
+    
     // 자르기 캔버스 초기화
     const cvs = document.getElementById('crop-canvas');
     if(cvs) cropCtx = cvs.getContext('2d');
@@ -221,15 +287,23 @@ window.onload = function() {
 
 function initDB() {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
+    
     req.onupgradeneeded = function(e) {
         db = e.target.result;
+        // 기존 사용자 데이터 보존하면서 구조 업그레이드
         if (!db.objectStoreNames.contains('vocab')) {
             db.createObjectStore('vocab', { keyPath: 'id', autoIncrement: true });
         }
     };
+    
     req.onsuccess = function(e) {
         db = e.target.result;
         loadVocabulary();
+    };
+    
+    req.onerror = function(e) {
+        console.error("DB Error", e);
+        alert("데이터베이스 오류가 발생했습니다.");
     };
 }
 
@@ -242,14 +316,19 @@ function loadVocabulary() {
         document.getElementById('btn-start').disabled = false;
         document.getElementById('btn-start').innerText = "게임 시작";
         updateHomeUI();
+        
+        // 관리 화면이면 목록 즉시 갱신
+        if(document.getElementById('screen-manage').classList.contains('active')) {
+            renderWordList();
+        }
     };
 }
 
 function savePlayerStats() {
-    localStorage.setItem('hero_stats_v4', JSON.stringify(player));
+    localStorage.setItem('hero_stats_v5', JSON.stringify(player));
 }
 function loadPlayerStats() {
-    const data = localStorage.getItem('hero_stats_v4');
+    const data = localStorage.getItem('hero_stats_v5');
     if (data) player = { ...player, ...JSON.parse(data) };
     updateHomeUI();
 }
@@ -420,7 +499,7 @@ function updateStatUI() {
 }
 /* [파트 2 끝] */
 // ============================================================
-// [4. 퀴즈 시스템 (성장 및 버프)]
+// [4. 퀴즈 시스템 (문제 표시 및 정답 처리)]
 // ============================================================
 let currentQuizData = null;
 
@@ -434,21 +513,26 @@ function nextQuiz() {
     const idx = Math.floor(Math.random() * vocabulary.length);
     currentQuizData = vocabulary[idx];
 
-    // UI 표시
+    // UI 초기화
     const qText = document.getElementById('q-text');
+    const qImgContainer = document.getElementById('q-image-container');
     const qImg = document.getElementById('q-image');
     
-    // 입력창 초기화
+    // 이전 해설/피드백 숨기기
+    document.getElementById('q-feedback').innerText = "";
+    document.getElementById('explanation-area').style.display = 'none';
+    
+    // 입력창 초기화 및 포커스
     document.getElementById('q-input').value = "";
     document.getElementById('q-input').focus();
-    document.getElementById('q-feedback').innerText = "";
 
+    // 문제 타입에 따른 표시
     if (currentQuizData.type === 'image') {
-        qImg.style.display = 'block';
+        qImgContainer.style.display = 'block';
         qImg.src = currentQuizData.q;
         qText.innerText = currentQuizData.qText || ""; 
     } else {
-        qImg.style.display = 'none';
+        qImgContainer.style.display = 'none';
         qText.innerText = currentQuizData.q;
     }
 }
@@ -476,61 +560,92 @@ document.getElementById('q-input').addEventListener('keypress', function(e) {
 function handleCorrect() {
     playSound('correct');
     
-    // 1. 콤보 및 버프 적용
+    // 1. 콤보 및 버프
     combo++;
     updateBuffUI();
     resetComboTimer();
 
-    // 2. 스탯 보상 (랜덤 성장)
+    // 2. 스탯 보상
     const rand = Math.random();
     let msg = "";
+    if (rand < 0.4) { player.atk += 2; msg = "⚔️ATK +2"; }
+    else if (rand < 0.7) { player.crit += 0.1; msg = "⚡CRIT +0.1%"; }
+    else { player.cdmg += 1; msg = "💪CDMG +1%"; }
     
-    if (rand < 0.4) {
-        player.atk += 2;
-        msg = "⚔️공격력 +2";
-    } else if (rand < 0.7) {
-        player.crit += 0.1;
-        msg = "⚡치명타 +0.1%";
-    } else {
-        player.cdmg += 1;
-        msg = "💪치명피해 +1%";
-    }
     updateStatUI();
     savePlayerStats();
-
-    // 3. 보너스 공격
     heroAttack(); 
 
-    // 피드백
+    // 3. 피드백 및 해설 표시
     const fb = document.getElementById('q-feedback');
     fb.style.color = "var(--p)";
     fb.innerText = `정답! (${msg})`;
     
-    setTimeout(nextQuiz, 600); 
+    showExplanation();
+
+    // 해설이 있으면 조금 더 길게 보여줌 (1.5초), 없으면 0.6초 뒤 넘어감
+    const delay = (currentQuizData.exText || currentQuizData.exImg) ? 1500 : 600;
+    setTimeout(nextQuiz, delay); 
 }
 
 function handleWrong() {
     playSound('wrong');
     
-    // 콤보 초기화
     combo = 0;
     updateBuffUI();
     if (comboTimer) clearTimeout(comboTimer);
 
     const fb = document.getElementById('q-feedback');
     fb.style.color = "var(--danger)";
-    fb.innerText = `오답! 정답은: ${currentQuizData.a}`;
+    fb.innerText = `오답! 정답: ${currentQuizData.a}`;
     
     document.getElementById('q-input').value = "";
+    
+    showExplanation();
+    
+    // 틀렸을 땐 해설 읽을 시간 3초 부여 (해설 없으면 1.5초)
+    const delay = (currentQuizData.exText || currentQuizData.exImg) ? 3000 : 1500;
+    setTimeout(nextQuiz, delay);
+}
+
+function showExplanation() {
+    // 해설 데이터가 없으면 함수 종료
+    if (!currentQuizData.exText && !currentQuizData.exImg) return;
+
+    const exArea = document.getElementById('explanation-area');
+    const exText = document.getElementById('ex-text-view');
+    const exImg = document.getElementById('ex-img-view');
+
+    exArea.style.display = 'block';
+    
+    // 텍스트 해설
+    if (currentQuizData.exText) {
+        exText.style.display = 'block';
+        exText.innerText = currentQuizData.exText;
+    } else {
+        exText.style.display = 'none';
+    }
+
+    // 이미지 해설
+    if (currentQuizData.exImg) {
+        exImg.style.display = 'block';
+        exImg.src = currentQuizData.exImg;
+    } else {
+        exImg.style.display = 'none';
+    }
+    
+    // 해설이 보일 때 스크롤을 맨 아래로 내려줌
+    const content = document.getElementById('quiz-content');
+    content.scrollTop = content.scrollHeight;
 }
 
 function updateBuffUI() {
     const badge = document.getElementById('buff-badge');
     if (combo > 0) {
-        badge.style.display = 'block';
-        const bonus = Math.min(1.5, combo * 0.1); // 최대 +1.5 (총 2.5배)
+        badge.style.display = 'inline-block';
+        const bonus = Math.min(1.5, combo * 0.1); 
         const totalSpd = (player.aspd + bonus).toFixed(1);
-        badge.innerText = `${combo}콤보! (공속 ${totalSpd})`;
+        badge.innerText = `${combo}콤보 (${totalSpd})`;
     } else {
         badge.style.display = 'none';
     }
@@ -540,17 +655,11 @@ function resetComboTimer() {
     if (comboTimer) clearTimeout(comboTimer);
     comboTimer = setTimeout(() => {
         if (combo > 0) {
-            showToast("콤보 지속시간 종료", 'info');
+            showToast("콤보 종료", 'info');
             combo = 0;
             updateBuffUI();
         }
-    }, 5000); // 5초 유지
-}
-
-function viewImage(src) {
-    if (!src) return;
-    document.getElementById('img-modal-target').src = src;
-    document.getElementById('img-modal').style.display = "flex";
+    }, 5000); 
 }
 
 // ============================================================
@@ -602,16 +711,6 @@ const snd = {
         g.gain.value = 0.1;
         o.connect(g); g.connect(audioCtx.destination);
         o.start(t); o.stop(t + 1);
-    },
-    clear: (t) => {
-        const g = audioCtx.createGain();
-        g.gain.value = 0.1;
-        g.connect(audioCtx.destination);
-        [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
-            const o = audioCtx.createOscillator();
-            o.type = 'square'; o.frequency.value = f;
-            o.connect(g); o.start(t + i * 0.1); o.stop(t + i * 0.1 + 0.3);
-        });
     }
 };
 
@@ -628,6 +727,8 @@ function playSound(type) {
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById('screen-' + id).classList.add('active');
+    
+    // 관리 화면 진입 시 목록 새로고침
     if (id === 'manage') renderWordList();
 }
 
@@ -651,12 +752,16 @@ function escapeHtml(text) {
 function addTextWord() {
     const q = document.getElementById('new-q').value.trim();
     const a = document.getElementById('new-a').value.trim();
-    if (!q || !a) return showToast("내용을 입력하세요", 'error');
+    const exText = document.getElementById('new-ex-text').value.trim(); // 해설
     
-    saveToDB({ type: 'text', q: escapeHtml(q), a: escapeHtml(a) });
+    if (!q || !a) return showToast("문제와 정답을 입력하세요", 'error');
+    
+    // 해설(exText)도 같이 저장
+    saveToDB({ type: 'text', q: escapeHtml(q), a: escapeHtml(a), exText: escapeHtml(exText) });
+    
     document.getElementById('new-q').value = "";
     document.getElementById('new-a').value = "";
-    showToast("등록되었습니다.", 'success');
+    document.getElementById('new-ex-text').value = "";
 }
 
 function parseExcel() {
@@ -670,13 +775,20 @@ function parseExcel() {
     const store = tx.objectStore('vocab');
 
     lines.forEach(line => {
-        // 탭(tab)으로 구분
+        // [문제] [정답] [해설(옵션)]
         const parts = line.split('\t');
         if (parts.length >= 2) {
             const q = parts[0].trim();
             const a = parts[1].trim();
+            const ex = parts[2] ? parts[2].trim() : "";
+            
             if (q && a) {
-                store.add({ type: 'text', q: escapeHtml(q), a: escapeHtml(a) });
+                store.add({ 
+                    type: 'text', 
+                    q: escapeHtml(q), 
+                    a: escapeHtml(a),
+                    exText: escapeHtml(ex) // 해설 저장
+                });
                 count++;
             }
         }
@@ -686,54 +798,62 @@ function parseExcel() {
         showToast(`${count}개 일괄 등록 완료!`, 'success');
         document.getElementById('excel-input').value = "";
         toggleExcel();
-        renderWordList();
+        renderWordList(); // 즉시 목록 갱신
     };
 }
 
 // ============================================================
-// [7. 이미지 자르기(Crop) 시스템]
+// [7. 이미지 자르기 시스템 (크기 조절 포함)]
 // ============================================================
-function handleImageFile(e) {
+function handleImageFile(e, type) {
     const file = e.target.files[0];
     if (!file) return;
     
-    // 아이폰 사진 회전 문제 방지 및 로딩
+    currentTargetType = type; // 'q' 또는 'ex'
+    
     const reader = new FileReader();
     reader.onload = function(ev) {
         cropImg.src = ev.target.result;
-        currentCropBlob = file;
     };
     reader.readAsDataURL(file);
 
     cropImg.onload = function() {
         startCropping();
     };
+    e.target.value = ""; // 같은 파일 다시 선택 가능하게
 }
 
 function startCropping() {
     document.getElementById('crop-modal').style.display = 'flex';
     rotationAngle = 0;
     
-    // 초기 자르기 영역 설정 (중앙)
-    const cw = document.getElementById('crop-canvas-container').clientWidth;
-    const ch = window.innerHeight * 0.5;
-    const size = Math.min(cw, ch) * 0.6;
-    cropRect = { x: (cw - size)/2, y: (ch - size)/2, w: size, h: size };
+    // 캔버스 크기 설정
+    const container = document.getElementById('crop-area');
+    const canvas = document.getElementById('crop-canvas');
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+
+    // 초기 자르기 영역 (중앙, 200x200)
+    const cw = canvas.width;
+    const ch = canvas.height;
+    cropRect = { 
+        x: (cw - 200) / 2, 
+        y: (ch - 200) / 2, 
+        w: 200, 
+        h: 200 
+    };
     
     drawCropCanvas();
 }
 
 function drawCropCanvas() {
-    const container = document.getElementById('crop-canvas-container');
+    if (!cropCtx) return;
     const canvas = document.getElementById('crop-canvas');
-    const cw = container.clientWidth;
-    const ch = window.innerHeight * 0.6; // 화면의 60% 높이
-
-    canvas.width = cw;
-    canvas.height = ch;
+    const cw = canvas.width;
+    const ch = canvas.height;
     
     // 배경 (어둡게)
-    cropCtx.fillStyle = "#333";
+    cropCtx.fillStyle = "#222";
     cropCtx.fillRect(0, 0, cw, ch);
 
     // 이미지 그리기 (회전 적용)
@@ -741,69 +861,98 @@ function drawCropCanvas() {
     cropCtx.translate(cw/2, ch/2);
     cropCtx.rotate(rotationAngle * Math.PI / 180);
     
-    // 이미지 비율 유지하며 캔버스에 맞춤
-    const scale = Math.min(cw / cropImg.width, ch / cropImg.height) * 0.8; 
+    // 이미지 비율 유지하며 캔버스에 맞춤 (여백 남김)
+    const scale = Math.min(cw / cropImg.width, ch / cropImg.height) * 0.9; 
     const dw = cropImg.width * scale;
     const dh = cropImg.height * scale;
     
     cropCtx.drawImage(cropImg, -dw/2, -dh/2, dw, dh);
     cropCtx.restore();
 
-    // 자르기 사각형 그리기 (현재 cropRect 좌표에)
+    // 자르기 사각형 그리기
     cropCtx.strokeStyle = "#fff";
     cropCtx.lineWidth = 2;
     cropCtx.strokeRect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
 
+    // 크기 조절 핸들 그리기 (우측 하단)
+    const handleSize = 20;
+    cropCtx.fillStyle = "#fff";
+    cropCtx.fillRect(cropRect.x + cropRect.w - handleSize/2, cropRect.y + cropRect.h - handleSize/2, handleSize, handleSize);
+
     // 어두운 오버레이 (선택 영역 밖)
-    cropCtx.fillStyle = "rgba(0,0,0,0.5)";
-    // 상
+    cropCtx.fillStyle = "rgba(0,0,0,0.6)";
+    // 상, 하, 좌, 우
     cropCtx.fillRect(0, 0, cw, cropRect.y);
-    // 하
     cropCtx.fillRect(0, cropRect.y + cropRect.h, cw, ch - (cropRect.y + cropRect.h));
-    // 좌
     cropCtx.fillRect(0, cropRect.y, cropRect.x, cropRect.h);
-    // 우
     cropCtx.fillRect(cropRect.x + cropRect.w, cropRect.y, cw - (cropRect.x + cropRect.w), cropRect.h);
 }
 
-// 터치/드래그로 영역 이동 구현
-let isDragging = false;
-let lastX = 0, lastY = 0;
-
-const cropContainer = document.getElementById('crop-canvas-container');
-cropContainer.addEventListener('touchstart', dragStart, {passive: false});
-cropContainer.addEventListener('touchmove', dragMove, {passive: false});
-cropContainer.addEventListener('touchend', dragEnd);
-// PC 마우스 지원
-cropContainer.addEventListener('mousedown', dragStart);
-cropContainer.addEventListener('mousemove', dragMove);
-cropContainer.addEventListener('mouseup', dragEnd);
+// 터치/마우스 이벤트 (이동 및 크기 조절)
+const cropCanvas = document.getElementById('crop-canvas');
+cropCanvas.addEventListener('touchstart', dragStart, {passive: false});
+cropCanvas.addEventListener('touchmove', dragMove, {passive: false});
+cropCanvas.addEventListener('touchend', dragEnd);
+cropCanvas.addEventListener('mousedown', dragStart);
+cropCanvas.addEventListener('mousemove', dragMove);
+cropCanvas.addEventListener('mouseup', dragEnd);
 
 function dragStart(e) {
     e.preventDefault();
     isDragging = true;
-    const pt = e.touches ? e.touches[0] : e;
-    lastX = pt.clientX;
-    lastY = pt.clientY;
+    const pt = getPoint(e);
+    lastX = pt.x;
+    lastY = pt.y;
+    
+    // 핸들 터치 판정 (우측 하단)
+    const hx = cropRect.x + cropRect.w;
+    const hy = cropRect.y + cropRect.h;
+    const dist = Math.sqrt(Math.pow(pt.x - hx, 2) + Math.pow(pt.y - hy, 2));
+
+    if (dist < 30) {
+        dragMode = 'resize';
+    } else if (pt.x > cropRect.x && pt.x < hx && pt.y > cropRect.y && pt.y < hy) {
+        dragMode = 'move';
+    } else {
+        isDragging = false;
+        dragMode = null;
+    }
 }
 
 function dragMove(e) {
     if (!isDragging) return;
     e.preventDefault();
-    const pt = e.touches ? e.touches[0] : e;
-    const dx = pt.clientX - lastX;
-    const dy = pt.clientY - lastY;
+    const pt = getPoint(e);
+    const dx = pt.x - lastX;
+    const dy = pt.y - lastY;
     
-    cropRect.x += dx;
-    cropRect.y += dy;
-    lastX = pt.clientX;
-    lastY = pt.clientY;
+    if (dragMode === 'move') {
+        cropRect.x += dx;
+        cropRect.y += dy;
+    } else if (dragMode === 'resize') {
+        cropRect.w += dx;
+        cropRect.h += dy;
+        // 최소 크기 제한 (50px)
+        if (cropRect.w < 50) cropRect.w = 50;
+        if (cropRect.h < 50) cropRect.h = 50;
+    }
     
+    lastX = pt.x;
+    lastY = pt.y;
     drawCropCanvas();
 }
 
 function dragEnd() {
     isDragging = false;
+    dragMode = null;
+}
+
+function getPoint(e) {
+    if (e.touches) {
+        const rect = e.target.getBoundingClientRect();
+        return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+    }
+    return { x: e.offsetX, y: e.offsetY };
 }
 
 function rotateImage() {
@@ -816,11 +965,8 @@ function closeCrop() {
 }
 
 function applyCrop() {
-    // 현재 화면에 보이는 캔버스를 그대로 이미지로 저장 (WYSIWYG)
-    // 실제 정밀 좌표 계산 대신 화면 캡처 방식을 사용하여 간편 구현
+    // 현재 캔버스 화면 그대로 캡처 (WYSIWYG)
     const canvas = document.getElementById('crop-canvas');
-    
-    // 임시 캔버스를 만들어 선택 영역만 추출
     const tempCvs = document.createElement('canvas');
     tempCvs.width = cropRect.w;
     tempCvs.height = cropRect.h;
@@ -831,41 +977,74 @@ function applyCrop() {
         0, 0, cropRect.w, cropRect.h
     );
     
-    // 결과물 저장
-    const finalBase64 = tempCvs.toDataURL('image/jpeg', 0.8);
+    // 고화질 저장을 위해 0.9 품질 사용
+    const finalBase64 = tempCvs.toDataURL('image/jpeg', 0.9);
     
-    // 미리보기 및 데이터 설정
-    const preview = document.getElementById('preview-q-img');
+    // 미리보기 설정
+    let previewId = currentTargetType === 'q' ? 'preview-q-img' : 'preview-ex-img';
+    const preview = document.getElementById(previewId);
     preview.src = finalBase64;
     preview.style.display = 'block';
-    preview.dataset.base64 = finalBase64; // 데이터 속성에 저장
+    preview.dataset.base64 = finalBase64;
     
     closeCrop();
 }
 
 function addImageWord() {
-    const preview = document.getElementById('preview-q-img');
-    const base64 = preview.dataset.base64;
+    const qPreview = document.getElementById('preview-q-img');
+    const qBase64 = qPreview.dataset.base64;
     
-    if (!base64) return showToast("이미지를 선택/촬영하세요", 'error');
+    // 이미지가 없으면 경고
+    if (!qBase64) return showToast("메인 이미지(문제)가 필요합니다", 'error');
+    
     const qText = document.getElementById('img-q-text').value.trim();
     const a = document.getElementById('img-a').value.trim();
+    const exText = document.getElementById('img-ex-text').value.trim();
+    
+    // 해설 이미지 (선택)
+    const exPreview = document.getElementById('preview-ex-img');
+    const exBase64 = exPreview.dataset.base64 || null;
+
     if (!a) return showToast("정답을 입력하세요", 'error');
 
     saveToDB({ 
         type: 'image', 
-        q: base64, 
+        q: qBase64, 
         qText: escapeHtml(qText), 
-        a: escapeHtml(a) 
+        a: escapeHtml(a),
+        exText: escapeHtml(exText),
+        exImg: exBase64
     });
     
     // 초기화
-    preview.src = "";
-    preview.style.display = "none";
-    delete preview.dataset.base64;
+    qPreview.src = ""; qPreview.style.display = "none"; delete qPreview.dataset.base64;
+    exPreview.src = ""; exPreview.style.display = "none"; delete exPreview.dataset.base64;
+    
     document.getElementById('img-q-text').value = "";
     document.getElementById('img-a').value = "";
-    showToast("이미지 문제 등록 완료!", 'success');
+    document.getElementById('img-ex-text').value = "";
+}
+
+// 줌 모달 관련
+function openImgModal(src) {
+    if (!src) return;
+    const modal = document.getElementById('img-modal');
+    const img = document.getElementById('img-modal-target');
+    img.src = src;
+    img.style.transform = "scale(1)"; // 줌 초기화
+    modal.style.display = "flex";
+}
+function closeImgModal() {
+    document.getElementById('img-modal').style.display = "none";
+}
+function toggleZoom(img) {
+    if (img.style.transform === "scale(2)") {
+        img.style.transform = "scale(1)";
+        img.style.cursor = "zoom-in";
+    } else {
+        img.style.transform = "scale(2)";
+        img.style.cursor = "zoom-out";
+    }
 }
 /* [파트 4 끝] */
 // ============================================================
@@ -875,11 +1054,12 @@ function saveToDB(item) {
     const tx = db.transaction(['vocab'], 'readwrite');
     tx.objectStore('vocab').add(item);
     tx.oncomplete = function() {
-        // 이미 엑셀/이미지 등록 함수에서 토스트를 띄우므로 여기선 생략 가능하지만
-        // 단일 텍스트 등록 시 확실한 피드백을 위해 남겨둠
+        // 텍스트 문제 등록 시엔 토스트 메시지
         if(item.type === 'text') showToast("추가되었습니다.", 'success');
-        loadVocabulary(); 
-        renderWordList(); 
+        else if(item.type === 'image') showToast("이미지 문제 등록 완료!", 'success');
+        
+        loadVocabulary(); // 데이터 다시 로드
+        // (주의) loadVocabulary 안에서 renderWordList를 호출하므로 중복 호출 방지
     }
 }
 
@@ -892,7 +1072,9 @@ function renderWordList() {
         return;
     }
 
+    // 최신순 정렬
     const sorted = [...vocabulary].reverse();
+    
     sorted.forEach(item => {
         const div = document.createElement('div');
         div.style.background = "#fff";
@@ -902,22 +1084,43 @@ function renderWordList() {
         div.style.alignItems = "center";
         
         let content = "";
+        let badge = "";
+        
+        // 해설 여부 표시
+        if (item.exText || item.exImg) {
+            badge = `<span style="font-size:0.7rem; background:#e8f5e9; color:#2e7d32; padding:2px 4px; border-radius:4px; margin-left:5px;">해설보유</span>`;
+        }
+
         if (item.type === 'image') {
             content = `<div style="flex:1;">
-                <span style="font-size:0.8rem; color:#1976d2;">[이미지]</span>
-                <span style="font-weight:bold;">${item.qText ? item.qText : '(이미지 문제)'}</span>
+                <span style="font-size:0.8rem; color:#1976d2;">[이미지]</span>${badge}
+                <div style="font-weight:bold; margin-top:2px;">${item.qText ? item.qText : '(이미지 문제)'}</div>
                 <div style="font-size:0.8rem; color:#555;">답: ${item.a}</div>
             </div>
-            <img src="${item.q}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; margin-right:10px;">`;
+            <img src="${item.q}" style="width:50px; height:50px; object-fit:cover; border-radius:4px; margin-right:10px; border:1px solid #eee;">`;
         } else {
             content = `<div style="flex:1;">
-                <div style="font-weight:bold;">${item.q}</div>
+                <div style="font-weight:bold;">${item.q} ${badge}</div>
                 <div style="font-size:0.8rem; color:#555;">답: ${item.a}</div>
             </div>`;
         }
 
-        div.innerHTML = `<input type="checkbox" class="del-chk" value="${item.id}" style="margin-right:10px; transform:scale(1.2);">${content}`;
+        div.innerHTML = `<input type="checkbox" class="del-chk" value="${item.id}" style="margin-right:15px; transform:scale(1.3);">${content}`;
         listEl.appendChild(div);
+    });
+}
+
+// 전체 선택 / 해제 토글 기능
+function toggleSelectAll() {
+    const chks = document.querySelectorAll('.del-chk');
+    if (chks.length === 0) return;
+    
+    // 하나라도 체크 안 된 게 있으면 -> 모두 체크
+    // 모두 체크되어 있으면 -> 모두 해제
+    const allChecked = Array.from(chks).every(c => c.checked);
+    
+    chks.forEach(chk => {
+        chk.checked = !allChecked;
     });
 }
 
@@ -928,22 +1131,26 @@ function deleteSelected() {
 
     const tx = db.transaction(['vocab'], 'readwrite');
     const store = tx.objectStore('vocab');
+    
     chks.forEach(chk => store.delete(Number(chk.value)));
 
     tx.oncomplete = function() {
         showToast("삭제되었습니다.", 'success');
-        loadVocabulary();
+        loadVocabulary(); // 목록 갱신 포함됨
     };
 }
 
 function exportJSON() {
     if (vocabulary.length === 0) return showToast("데이터가 없습니다.", 'error');
+    
+    // 데이터 용량이 클 수 있으므로 압축 대신 그대로 내보냄 (Base64 이미지 포함)
     const dataStr = JSON.stringify(vocabulary, null, 2);
     const blob = new Blob([dataStr], {type: "application/json"});
     const url = URL.createObjectURL(blob);
+    
     const a = document.createElement('a');
     a.href = url;
-    a.download = `quiz_backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.download = `quiz_backup_v5_${new Date().toISOString().slice(0,10)}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -953,26 +1160,33 @@ function exportJSON() {
 function handleJsonFile(e) {
     const file = e.target.files[0];
     if (!file) return;
+    
     const reader = new FileReader();
     reader.onload = function(ev) {
         try {
             const data = JSON.parse(ev.target.result);
             if (!Array.isArray(data)) throw new Error("배열 형식이 아닙니다.");
-            if (!confirm(`총 ${data.length}개의 문제를 추가하시겠습니까?`)) return;
+            
+            if (!confirm(`총 ${data.length}개의 문제를 추가하시겠습니까?\n(기존 데이터 뒤에 추가됩니다)`)) return;
 
             const tx = db.transaction(['vocab'], 'readwrite');
             const store = tx.objectStore('vocab');
             let count = 0;
+            
             data.forEach(item => {
-                delete item.id;
+                // 기존 ID 충돌 방지를 위해 ID 삭제 후 재등록
+                delete item.id; 
                 store.add(item);
                 count++;
             });
+            
             tx.oncomplete = function() {
                 showToast(`${count}개 복구 완료!`, 'success');
                 loadVocabulary();
             };
-        } catch (err) { alert("파일 오류: " + err); }
+        } catch (err) { 
+            alert("파일 오류: " + err); 
+        }
     };
     reader.readAsText(file);
     e.target.value = "";
@@ -986,7 +1200,10 @@ function showToast(msg, type='normal') {
     if (type === 'error') el.style.background = "rgba(229, 57, 53, 0.9)";
     else if (type === 'success') el.style.background = "rgba(67, 160, 71, 0.9)";
     container.appendChild(el);
-    setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 2000);
+    setTimeout(() => { 
+        el.classList.remove('show'); 
+        setTimeout(() => el.remove(), 300); 
+    }, 2000);
 }
 </script>
 </body>
