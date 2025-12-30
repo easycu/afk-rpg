@@ -24,7 +24,6 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
 /* --- [3. 게임 화면 (RPG 레이아웃)] --- */
-/* (1) 상단 40%: 전투 영역 */
 #area-battle { height: 40%; position: relative; background: linear-gradient(to bottom, #81c784, #a5d6a7); overflow: hidden; display: flex; flex-direction: column; align-items: center; border-bottom: 4px solid var(--text); }
 .stage-info-bar { width: 100%; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.1); color: #fff; font-weight: bold; font-size: 1.1rem; z-index: 10; }
 .time-bar-bg { width: 60%; height: 10px; background: rgba(255,255,255,0.3); border-radius: 5px; overflow: hidden; }
@@ -32,7 +31,7 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 
 .battle-field { flex: 1; width: 100%; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 10% 20px 10%; position: relative; }
 .sprite { font-size: 4rem; position: relative; transition: transform 0.1s; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2)); }
-.sprite.hero { transform: scaleX(-1); } /* 용사는 오른쪽을 봄 */
+.sprite.hero { transform: scaleX(-1); }
 .sprite.hit { animation: shake 0.2s; filter: brightness(2) sepia(1) hue-rotate(-50deg); }
 .sprite.attack { animation: lunge 0.15s; }
 
@@ -42,14 +41,12 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 .crit-text { color: var(--gold) !important; font-size: 2rem !important; }
 .jin-crit-text { color: #e040fb !important; font-size: 2.2rem !important; }
 
-/* (2) 중단 10%: 스탯 영역 */
 #area-stat { height: 10%; background: #263238; color: #fff; display: flex; align-items: center; justify-content: space-around; padding: 0 10px; font-size: 0.85rem; border-bottom: 1px solid #444; }
 .stat-box { text-align: center; }
 .stat-label { color: #cfd8dc; font-size: 0.7rem; margin-bottom: 2px; }
 .stat-val { font-weight: bold; font-family: monospace; font-size: 1rem; color: var(--s); }
 .buff-badge { background: var(--danger); color: #fff; border-radius: 4px; padding: 2px 6px; font-size: 0.7rem; animation: pulse 1s infinite; display: none; }
 
-/* (3) 하단 40%: 퀴즈 영역 */
 #area-quiz { height: 40%; padding: 15px; background: #fff; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
 #q-image { max-height: 120px; max-width: 100%; object-fit: contain; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd; display: none; cursor: zoom-in; }
 #q-text { font-size: 1.1rem; font-weight: bold; text-align: center; margin-bottom: 15px; line-height: 1.4; width: 100%; }
@@ -58,11 +55,9 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 #q-input:focus { border-color: var(--p); }
 #btn-submit { padding: 0 20px; background: var(--p); color: #fff; border: none; border-radius: 10px; font-weight: bold; font-size: 1.1rem; }
 
-/* (4) 최하단 10%: 메뉴 영역 */
 #area-menu { height: 10%; background: #f5f5f5; border-top: 1px solid #ddd; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; }
 .small-btn { padding: 8px 12px; background: #fff; border: 1px solid #ccc; border-radius: 8px; font-size: 0.8rem; color: #555; }
 
-/* --- [4. 애니메이션] --- */
 @keyframes shake { 0%{transform:translateX(0)} 25%{transform:translateX(-5px)} 50%{transform:translateX(5px)} 75%{transform:translateX(-5px)} 100%{transform:translateX(0)} }
 @keyframes lunge { 0%{transform:scaleX(-1) translateX(0)} 50%{transform:scaleX(-1) translateX(15px)} 100%{transform:scaleX(-1) translateX(0)} }
 @keyframes floatUp { 0%{opacity:1; transform:translate(-50%,0) scale(1)} 100%{opacity:0; transform:translate(-50%,-50px) scale(1.2)} }
@@ -70,14 +65,11 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 </style>
 </head>
 <body>
-
 <div id="loading-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;justify-content:center;align-items:center;color:#fff;font-weight:bold;flex-direction:column;">
     <div style="font-size:2rem;margin-bottom:10px;">⚔️</div>
     <div>데이터 로딩 중...</div>
 </div>
-
 <div id="toast-container"></div>
-
 <div id="img-modal" onclick="this.style.display='none'" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9000;justify-content:center;align-items:center;">
     <img id="img-modal-target" style="max-width:95%;max-height:95%;object-fit:contain;">
 </div>
@@ -87,16 +79,9 @@ input, textarea { user-select: text; -webkit-user-select: text; }
         <div style="font-size:5rem;margin-bottom:10px;">🛡️</div>
         <h1 style="color:var(--text);margin-bottom:5px;">암기 용사</h1>
         <p style="color:#666;font-size:0.9rem;">무한 타임어택 RPG</p>
-        
         <div style="background:#fff;padding:15px;border-radius:15px;margin:30px 0;width:80%;box-shadow:0 2px 10px rgba(0,0,0,0.05);">
-            <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
-                <span>최고 스테이지</span>
-                <b style="color:var(--p)" id="home-best-stage">1-1</b>
-            </div>
-            <div style="display:flex;justify-content:space-between;">
-                <span>총 처치</span>
-                <b id="home-kill-count">0</b>
-            </div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span>최고 스테이지</span><b style="color:var(--p)" id="home-best-stage">1-1</b></div>
+            <div style="display:flex;justify-content:space-between;"><span>총 처치</span><b id="home-kill-count">0</b></div>
         </div>
     </div>
     <div style="padding:20px;">
@@ -107,56 +92,26 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 
 <div id="screen-game" class="screen">
     <div id="area-battle">
-        <div class="stage-info-bar">
-            <span id="stage-display">STAGE 1-1</span>
-            <div class="time-bar-bg"><div id="time-bar" class="time-bar-fill"></div></div>
-        </div>
+        <div class="stage-info-bar"><span id="stage-display">STAGE 1-1</span><div class="time-bar-bg"><div id="time-bar" class="time-bar-fill"></div></div></div>
         <div class="battle-field">
-            <div style="position:relative; text-align:center;">
-                <div class="hp-bar-box"><div id="hero-hp" class="hp-fill"></div></div>
-                <div class="sprite hero">⚔️</div>
-            </div>
-            <div style="position:relative; text-align:center;">
-                <div class="hp-bar-box"><div id="mob-hp" class="hp-fill"></div></div>
-                <div id="mob-sprite" class="sprite">👾</div>
-            </div>
-            </div>
+            <div style="position:relative; text-align:center;"><div class="hp-bar-box"><div id="hero-hp" class="hp-fill"></div></div><div class="sprite hero">⚔️</div></div>
+            <div style="position:relative; text-align:center;"><div class="hp-bar-box"><div id="mob-hp" class="hp-fill"></div></div><div id="mob-sprite" class="sprite">👾</div></div>
+        </div>
     </div>
-
     <div id="area-stat">
-        <div class="stat-box">
-            <div class="stat-label">공격력</div>
-            <div id="stat-atk" class="stat-val">10</div>
-        </div>
-        <div class="stat-box">
-            <div class="stat-label">치명타</div>
-            <div id="stat-crit" class="stat-val">0%</div>
-        </div>
-        <div class="stat-box">
-            <div class="stat-label">치명피해</div>
-            <div id="stat-cdmg" class="stat-val">150%</div>
-        </div>
-        <div class="stat-box" style="position:relative">
-            <div class="buff-badge" id="buff-badge">FAST!</div>
-            <div class="stat-label">공격속도</div>
-            <div id="stat-aspd" class="stat-val">1.0</div>
-        </div>
+        <div class="stat-box"><div class="stat-label">공격력</div><div id="stat-atk" class="stat-val">10</div></div>
+        <div class="stat-box"><div class="stat-label">치명타</div><div id="stat-crit" class="stat-val">0%</div></div>
+        <div class="stat-box"><div class="stat-label">치명피해</div><div id="stat-cdmg" class="stat-val">150%</div></div>
+        <div class="stat-box" style="position:relative"><div class="buff-badge" id="buff-badge">FAST!</div><div class="stat-label">공격속도</div><div id="stat-aspd" class="stat-val">1.0</div></div>
     </div>
-
     <div id="area-quiz">
         <img id="q-image" onclick="viewImage(this.src)">
         <div id="q-text">문제를 불러오는 중...</div>
-        <div class="input-group">
-            <input type="text" id="q-input" placeholder="정답 입력" autocomplete="off">
-            <button id="btn-submit" onclick="submitAnswer()">제출</button>
-        </div>
+        <div class="input-group"><input type="text" id="q-input" placeholder="정답 입력" autocomplete="off"><button id="btn-submit" onclick="submitAnswer()">제출</button></div>
         <div id="q-feedback" style="height:20px; margin-top:5px; font-size:0.8rem; font-weight:bold;"></div>
     </div>
-
     <div id="area-menu">
-        <button class="small-btn" onclick="stopGame()">🏠 홈으로</button>
-        <span style="font-size:0.8rem; color:#888;">자동 공격 중...</span>
-        <button class="small-btn" onclick="toggleSound()">🔊 소리</button>
+        <button class="small-btn" onclick="stopGame()">🏠 홈으로</button><span style="font-size:0.8rem; color:#888;">자동 공격 중...</span><button class="small-btn" onclick="toggleSound()">🔊 소리</button>
     </div>
 </div>
 
@@ -166,13 +121,11 @@ input, textarea { user-select: text; -webkit-user-select: text; }
         <button class="menu-btn btn-game" style="flex:1; margin:0; padding:10px;" onclick="toggleAddMode('text')">텍스트 문제</button>
         <button class="menu-btn btn-blue" style="flex:1; margin:0; padding:10px;" onclick="toggleAddMode('image')">이미지 문제</button>
     </div>
-    
     <div id="add-text-box" class="add-box" style="display:none; background:#fff; padding:15px; border-radius:10px; margin-bottom:10px; border:1px solid #ddd;">
         <textarea id="new-q" placeholder="문제" style="width:100%; height:50px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; padding:5px;"></textarea>
         <textarea id="new-a" placeholder="정답 (O/X 가능)" style="width:100%; height:40px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; padding:5px;"></textarea>
         <button onclick="addTextWord()" class="menu-btn btn-game" style="padding:10px;">등록</button>
     </div>
-
     <div id="add-image-box" class="add-box" style="display:none; background:#fff; padding:15px; border-radius:10px; margin-bottom:10px; border:1px solid #ddd;">
         <button onclick="document.getElementById('camera-input').click()" class="menu-btn btn-blue" style="padding:10px; margin-bottom:5px;">📷 사진 선택</button>
         <img id="preview-q-img" style="max-width:100%; display:none; margin-bottom:5px;">
@@ -180,9 +133,7 @@ input, textarea { user-select: text; -webkit-user-select: text; }
         <textarea id="img-a" placeholder="정답" style="width:100%; height:40px; margin-bottom:5px; padding:5px;"></textarea>
         <button onclick="addImageWord()" class="menu-btn btn-game" style="padding:10px;">등록</button>
     </div>
-
     <div id="word-list" style="margin-top:20px;"></div>
-    
     <div style="margin-top:20px; display:flex; gap:5px;">
         <button class="small-btn" onclick="exportJSON()">백업</button>
         <button class="small-btn" onclick="document.getElementById('json-input').click()">복구</button>
@@ -190,7 +141,6 @@ input, textarea { user-select: text; -webkit-user-select: text; }
     </div>
     <button class="menu-btn" style="background:#8d6e63; margin-top:20px;" onclick="showScreen('home')">돌아가기</button>
 </div>
-
 <input type="file" id="camera-input" style="display:none" accept="image/*" onchange="handleImageFile(event)">
 <input type="file" id="json-input" style="display:none" accept=".json" onchange="handleJsonFile(event)">
 
@@ -201,27 +151,27 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 const DB_NAME = "HeroQuizDB";
 const DB_VERSION = 1;
 let db;
-let vocabulary = []; // 문제 데이터
+let vocabulary = [];
 
-// 플레이어 스탯 (저장 대상)
+// 플레이어 스탯 (기본값)
 let player = {
-    atk: 10,       // 공격력 (정수)
+    atk: 10,       // 공격력
     crit: 0,       // 치명타율 (%)
     cdmg: 150,     // 치명타 피해 (%)
-    aspd: 1.0,     // 공격 속도 (초당 공격 횟수)
-    maxStage: 1,   // 최고 도달 스테이지
+    aspd: 1.0,     // 공격 속도
+    maxStage: 1,   // 최고 스테이지
     killCount: 0   // 총 처치 수
 };
 
-// 게임 상태 (휘발성)
+// 게임 상태 변수
 let gameRunning = false;
 let lastTime = 0;
 let attackTimer = 0;
-let combo = 0;             // 연속 정답 횟수
-let comboTimer = null;     // 콤보 유지 타이머
+let combo = 0;
+let comboTimer = null;
 let currentStage = 1;
-let subStage = 0;          // 0:일반, 1:일반, 2:보스 (총 3마리)
-let stageTimeLeft = 30;    // 스테이지 제한 시간 (초)
+let subStage = 0; // 0, 1, 2 (3마리 잡으면 클리어)
+let stageTimeLeft = 30;
 let mob = { hp: 100, maxHp: 100, isBoss: false };
 
 // 오디오 컨텍스트
@@ -230,7 +180,7 @@ let audioCtx = new AudioCtx();
 let isSoundOn = true;
 
 // ============================================================
-// [2. 데이터베이스 (IndexedDB) 및 저장/로드]
+// [2. 데이터베이스 & 저장소]
 // ============================================================
 window.onload = function() {
     initDB();
@@ -263,16 +213,12 @@ function loadVocabulary() {
     };
 }
 
-// 스탯 로컬 저장 (간단하게 localStorage 사용)
 function savePlayerStats() {
-    localStorage.setItem('hero_stats_v2', JSON.stringify(player));
+    localStorage.setItem('hero_stats_v3', JSON.stringify(player));
 }
 function loadPlayerStats() {
-    const data = localStorage.getItem('hero_stats_v2');
-    if (data) {
-        const parsed = JSON.parse(data);
-        player = { ...player, ...parsed }; // 병합
-    }
+    const data = localStorage.getItem('hero_stats_v3');
+    if (data) player = { ...player, ...JSON.parse(data) };
     updateHomeUI();
 }
 
@@ -282,7 +228,7 @@ function updateHomeUI() {
 }
 
 // ============================================================
-// [3. 전투 시스템 (핵심 로직)]
+// [3. 전투 메인 로직]
 // ============================================================
 function startGame() {
     if (vocabulary.length < 1) return showToast("문제가 최소 1개 있어야 합니다!", 'error');
@@ -291,12 +237,11 @@ function startGame() {
     document.getElementById('screen-home').classList.remove('active');
     document.getElementById('screen-game').classList.add('active');
     
-    // 초기화
     currentStage = player.maxStage; 
     startStage(currentStage);
     gameRunning = true;
     lastTime = performance.now();
-    nextQuiz(); // 퀴즈 로드
+    nextQuiz(); 
     requestAnimationFrame(gameLoop);
 }
 
@@ -311,24 +256,20 @@ function stopGame() {
 function startStage(stg) {
     currentStage = stg;
     if(currentStage < 1) currentStage = 1;
-    subStage = 0; // 0, 1, 2 (3마리)
-    stageTimeLeft = 30; // 30초 리셋
+    subStage = 0;
+    stageTimeLeft = 30;
     spawnMob();
     updateStatUI();
 }
 
-// 몬스터 생성 (밸런싱: 체력 7% 복리 증가)
 function spawnMob() {
-    // subStage: 0(일반), 1(일반), 2(보스)
     const isBoss = subStage === 2;
-    // 공식: 200 * (1.07)^(스테이지-1)
+    // 체력 7% 복리 증가 공식
     let hp = Math.floor(200 * Math.pow(1.07, currentStage - 1));
-    
-    if (isBoss) hp *= 3; // 보스는 체력 3배
+    if (isBoss) hp *= 3; 
 
     mob = { hp: hp, maxHp: hp, isBoss: isBoss };
     
-    // UI 업데이트
     const sprite = document.getElementById('mob-sprite');
     sprite.innerText = isBoss ? "👹" : "👾";
     sprite.style.transform = isBoss ? "scale(1.5)" : "scale(1)";
@@ -336,25 +277,22 @@ function spawnMob() {
     updateMobHpUI();
 }
 
-// 메인 게임 루프 (초당 60프레임)
 function gameLoop(timestamp) {
     if (!gameRunning) return;
-    const dt = (timestamp - lastTime) / 1000; // 델타 타임 (초)
+    const dt = (timestamp - lastTime) / 1000;
     lastTime = timestamp;
 
-    // 1. 타이머 처리
     stageTimeLeft -= dt;
-    if (stageTimeLeft <= 0) {
-        handleStageFail();
-    }
-    updateTimeBar();
+    if (stageTimeLeft <= 0) handleStageFail();
+    
+    const pct = (stageTimeLeft / 30) * 100;
+    const bar = document.getElementById('time-bar');
+    bar.style.width = pct + "%";
+    bar.style.background = stageTimeLeft < 5 ? "#e53935" : "#fff";
 
-    // 2. 자동 공격 처리
-    // 공속 버프 적용: 기본(1.0) + (0.1 * 콤보), 최대 2.5
+    // 공속 계산: 기본 + (0.1 * 콤보) (최대 2.5배)
     let currentAspd = player.aspd + (Math.min(2.5, combo * 0.1));
-    if (combo === 0) currentAspd = player.aspd; // 콤보 없으면 기본 속도
-
-    // UI에 현재 공속 표시
+    if (combo === 0) currentAspd = player.aspd;
     document.getElementById('stat-aspd').innerText = currentAspd.toFixed(1);
 
     attackTimer += dt;
@@ -362,7 +300,6 @@ function gameLoop(timestamp) {
         attackTimer = 0;
         heroAttack();
     }
-
     requestAnimationFrame(gameLoop);
 }
 
@@ -374,36 +311,30 @@ function handleStageFail() {
     startStage(currentStage);
 }
 
-// 용사 공격 (무한 치명타 로직 적용)
 function heroAttack() {
-    // 공격 애니메이션
     const hero = document.querySelector('.sprite.hero');
     hero.classList.remove('attack');
     void hero.offsetWidth;
     hero.classList.add('attack');
     playSound('attack');
 
-    // 데미지 계산 (재귀 함수)
     const result = calculateInfiniteCrit(player.atk, player.crit, 0);
     
-    // 몬스터 피격
     mob.hp -= result.damage;
     if (mob.hp < 0) mob.hp = 0;
     
-    // UI 효과
     createDamageText(result.damage, result.tier);
     updateMobHpUI();
+    
     const mobEl = document.getElementById('mob-sprite');
     mobEl.classList.remove('hit');
     void mobEl.offsetWidth;
     mobEl.classList.add('hit');
 
-    // 처치 체크
     if (mob.hp <= 0) {
         player.killCount++;
         subStage++;
         if (subStage >= 3) {
-            // 스테이지 클리어
             playSound('clear');
             player.maxStage = Math.max(player.maxStage, currentStage + 1);
             startStage(currentStage + 1);
@@ -413,86 +344,52 @@ function heroAttack() {
     }
 }
 
-// (진) 치명타 계산기
-// tier 0: 일반, tier 1: 진, tier 2: 진2 ...
 function calculateInfiniteCrit(dmg, critRate, tier) {
-    // 현재 단계에서 치명타가 터졌는가?
-    // critRate가 100을 넘으면 100% 확정 + 다음 단계로 넘김이 아니라,
-    // 확률은 100% 캡을 씌우지 않고 그대로 계산 (120%면 무조건 터지고 다음 단계 연산) -> 기획 의도에 맞게 조정
-    // 기획: "치명타율이 100% 달성 시 (진) 해금" => 즉 100% 미만이면 확률 체크, 100% 이상이면 확정 후 남은 수치로 다음 단계?
-    // 가장 직관적인 '워프레임' 식 주황/빨강 크리티컬 로직 채택:
-    // 예: 치명타율 250% -> 1단계(100%) 확정 -> 2단계(100%) 확정 -> 3단계(50%) 확률 체크
-    
     let currentTierCrit = false;
-    let chance = critRate - (tier * 100); // 현재 티어의 확률 (예: 250% 중 2티어 계산 시 50%)
+    let chance = critRate - (tier * 100);
     
-    if (chance >= 100) currentTierCrit = true; // 100% 초과면 확정
-    else if (Math.random() * 100 < chance) currentTierCrit = true; // 아니면 확률
+    if (chance >= 100) currentTierCrit = true; 
+    else if (Math.random() * 100 < chance) currentTierCrit = true;
 
     if (currentTierCrit) {
-        // 치명타 발생! 데미지 증가
-        // 치명타 피해량 스탯 적용 (기본 150% = 1.5배)
-        // (진) 단계가 오를 때마다 계수가 중첩됨
         let multiplier = player.cdmg / 100; 
-        
-        // 다음 단계 계산 (재귀)
-        // chance가 100을 넘었다면 다음 티어도 도전 가능
-        if (chance >= 100) {
-            return calculateInfiniteCrit(Math.floor(dmg * multiplier), critRate, tier + 1);
-        } else {
-            return { damage: Math.floor(dmg * multiplier), tier: tier + 1 }; // 여기서 끝
-        }
+        if (chance >= 100) return calculateInfiniteCrit(Math.floor(dmg * multiplier), critRate, tier + 1);
+        else return { damage: Math.floor(dmg * multiplier), tier: tier + 1 };
     } else {
-        // 치명타 실패 (현재 티어에서 멈춤)
         return { damage: dmg, tier: tier };
     }
 }
 
-// 데미지 텍스트 띄우기
 function createDamageText(dmg, tier) {
     const field = document.querySelector('.battle-field');
     const el = document.createElement('div');
     el.className = 'dmg-text';
     el.innerText = dmg.toLocaleString();
-    
-    // 티어별 색상/크기
-    if (tier === 0) { el.style.color = "#fff"; el.style.fontSize = "1.2rem"; } // 노멀
-    else if (tier === 1) { el.classList.add('crit-text'); el.innerText += "!"; } // 크리
-    else { el.classList.add('jin-crit-text'); el.innerText += ` (진${tier-1})!`; } // (진)크리
+    if (tier === 0) { el.style.color = "#fff"; el.style.fontSize = "1.2rem"; } 
+    else if (tier === 1) { el.classList.add('crit-text'); el.innerText += "!"; } 
+    else { el.classList.add('jin-crit-text'); el.innerText += ` (진${tier-1})!`; }
 
-    // 위치 랜덤
     const x = 50 + (Math.random() * 40 - 20);
     const y = 40 + (Math.random() * 20 - 10);
     el.style.left = x + "%";
     el.style.top = y + "%";
-    
     field.appendChild(el);
     setTimeout(() => el.remove(), 800);
 }
 
 function updateMobHpUI() {
-    const pct = (mob.hp / mob.maxHp) * 100;
-    document.getElementById('mob-hp').style.width = pct + "%";
-}
-
-function updateTimeBar() {
-    const pct = (stageTimeLeft / 30) * 100;
-    const bar = document.getElementById('time-bar');
-    bar.style.width = pct + "%";
-    if(stageTimeLeft < 5) bar.style.background = "#e53935"; // 경고
-    else bar.style.background = "#fff";
+    document.getElementById('mob-hp').style.width = ((mob.hp / mob.maxHp) * 100) + "%";
 }
 
 function updateStatUI() {
     document.getElementById('stat-atk').innerText = player.atk;
     document.getElementById('stat-crit').innerText = player.crit.toFixed(1) + "%";
     document.getElementById('stat-cdmg').innerText = player.cdmg + "%";
-    
-    // (진) 스탯 해금 UI 처리
-    // 예: 치명타가 100% 넘으면 UI 색상을 바꿔서 티어 구분
-    if(player.crit >= 100) document.getElementById('stat-crit').style.color = "#e040fb"; // 보라색
+    if(player.crit >= 100) document.getElementById('stat-crit').style.color = "#e040fb"; 
     else document.getElementById('stat-crit').style.color = "#66bb6a";
 }
+
+/* [파트 2 끝] 여기서는 script를 닫지 않습니다! */
 // ============================================================
 // [4. 퀴즈 시스템 (성장 및 버프)]
 // ============================================================
@@ -512,7 +409,7 @@ function nextQuiz() {
     const qText = document.getElementById('q-text');
     const qImg = document.getElementById('q-image');
     
-    // 초기화
+    // 입력창 초기화
     document.getElementById('q-input').value = "";
     document.getElementById('q-input').focus();
     document.getElementById('q-feedback').innerText = "";
@@ -532,22 +429,17 @@ function submitAnswer() {
     const input = document.getElementById('q-input').value.trim();
     if (!input) return;
 
-    // 정답 체크 (대소문자/공백 무시)
+    // 정답 체크 (공백제거, 대소문자 무시)
     const userAns = input.replace(/\s/g, "").toUpperCase();
     const realAns = currentQuizData.a.replace(/\s/g, "").toUpperCase();
     
-    // O, X 처리 혹은 텍스트 일치
     let isCorrect = (userAns === realAns);
-    // 한글 'ㅇ', 'x' 등도 유연하게 처리하려면 추가 로직 가능
 
-    if (isCorrect) {
-        handleCorrect();
-    } else {
-        handleWrong();
-    }
+    if (isCorrect) handleCorrect();
+    else handleWrong();
 }
 
-// 엔터키 제출 지원
+// 엔터키 입력 지원
 document.getElementById('q-input').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') submitAnswer();
 });
@@ -558,10 +450,9 @@ function handleCorrect() {
     // 1. 콤보 및 버프 적용
     combo++;
     updateBuffUI();
-    resetComboTimer(); // 5초 타이머 리셋
+    resetComboTimer();
 
     // 2. 스탯 보상 (랜덤 성장)
-    // 확률: 공격력(40%), 치명타(30%), 치명피해(30%)
     const rand = Math.random();
     let msg = "";
     
@@ -576,44 +467,39 @@ function handleCorrect() {
         msg = "💪치명피해 +1%";
     }
     updateStatUI();
-    savePlayerStats(); // 성장은 즉시 저장
+    savePlayerStats();
 
-    // 3. 즉시 추가 공격 (보너스 타격)
+    // 3. 보너스 공격
     heroAttack(); 
 
-    // 피드백 및 다음 문제
+    // 피드백
     const fb = document.getElementById('q-feedback');
     fb.style.color = "var(--p)";
     fb.innerText = `정답! (${msg})`;
     
-    setTimeout(nextQuiz, 600); // 0.6초 뒤 다음 문제
+    setTimeout(nextQuiz, 600); 
 }
 
 function handleWrong() {
     playSound('wrong');
     
-    // 콤보 초기화 (버프 해제)
+    // 콤보 초기화
     combo = 0;
     updateBuffUI();
     if (comboTimer) clearTimeout(comboTimer);
 
-    // 피드백
     const fb = document.getElementById('q-feedback');
     fb.style.color = "var(--danger)";
     fb.innerText = `오답! 정답은: ${currentQuizData.a}`;
     
-    // 틀렸을 때는 바로 넘어가지 않고 정답 볼 시간을 줌
-    // 입력창만 비움
     document.getElementById('q-input').value = "";
 }
 
-// 버프 타이머 및 UI
 function updateBuffUI() {
     const badge = document.getElementById('buff-badge');
     if (combo > 0) {
         badge.style.display = 'block';
-        // 최대 2.5배 (기본1 + 1.5) -> 콤보 15회에서 Max
-        const bonus = Math.min(1.5, combo * 0.1);
+        const bonus = Math.min(1.5, combo * 0.1); // 최대 +1.5 (총 2.5배)
         const totalSpd = (player.aspd + bonus).toFixed(1);
         badge.innerText = `${combo}콤보! (공속 ${totalSpd})`;
     } else {
@@ -625,7 +511,7 @@ function resetComboTimer() {
     if (comboTimer) clearTimeout(comboTimer);
     comboTimer = setTimeout(() => {
         if (combo > 0) {
-            showToast("콤보 시간이 끝났습니다.", 'info');
+            showToast("콤보 지속시간 종료", 'info');
             combo = 0;
             updateBuffUI();
         }
@@ -639,7 +525,7 @@ function viewImage(src) {
 }
 
 // ============================================================
-// [5. 오디오 시스템 (Web Audio API)]
+// [5. 오디오 시스템]
 // ============================================================
 function toggleSound() {
     isSoundOn = !isSoundOn;
@@ -661,13 +547,10 @@ const snd = {
         const g = audioCtx.createGain();
         g.gain.value = 0.1;
         g.connect(audioCtx.destination);
-        [523.25, 659.25, 783.99].forEach((f, i) => { // 도미솔
+        [523.25, 659.25, 783.99].forEach((f, i) => { 
             const o = audioCtx.createOscillator();
-            o.type = 'sine';
-            o.frequency.value = f;
-            o.connect(g);
-            o.start(t + i * 0.05);
-            o.stop(t + i * 0.05 + 0.1);
+            o.type = 'sine'; o.frequency.value = f;
+            o.connect(g); o.start(t + i * 0.05); o.stop(t + i * 0.05 + 0.1);
         });
     },
     wrong: (t) => {
@@ -682,7 +565,6 @@ const snd = {
         o.start(t); o.stop(t + 0.3);
     },
     fail: (t) => {
-        // 띠로리~ (하강음)
         const o = audioCtx.createOscillator();
         const g = audioCtx.createGain();
         o.type = 'triangle';
@@ -693,17 +575,13 @@ const snd = {
         o.start(t); o.stop(t + 1);
     },
     clear: (t) => {
-        // 승리 팡파레
         const g = audioCtx.createGain();
         g.gain.value = 0.1;
         g.connect(audioCtx.destination);
         [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
             const o = audioCtx.createOscillator();
-            o.type = 'square';
-            o.frequency.value = f;
-            o.connect(g);
-            o.start(t + i * 0.1);
-            o.stop(t + i * 0.1 + 0.3);
+            o.type = 'square'; o.frequency.value = f;
+            o.connect(g); o.start(t + i * 0.1); o.stop(t + i * 0.1 + 0.3);
         });
     }
 };
@@ -715,8 +593,9 @@ function playSound(type) {
     if (snd[type]) snd[type](t);
 }
 
+/* [파트 3 끝] script 태그는 여전히 열려있습니다. */
 // ============================================================
-// [6. 관리자 기능 (기존 로직 이식)]
+// [6. 관리자 기능 및 유틸리티]
 // ============================================================
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -736,7 +615,6 @@ function escapeHtml(text) {
     });
 }
 
-// 텍스트 문제 추가
 function addTextWord() {
     const q = document.getElementById('new-q').value.trim();
     const a = document.getElementById('new-a').value.trim();
@@ -747,15 +625,12 @@ function addTextWord() {
     document.getElementById('new-a').value = "";
 }
 
-// 이미지 문제 추가 관련 변수
 let cropImgBase64 = null;
-
 function handleImageFile(e) {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = function(ev) {
-        // 간단화를 위해 크롭 없이 바로 리사이징해서 사용 (기존 크롭 코드는 너무 길어서 생략, 필요시 추가 가능)
         const img = new Image();
         img.onload = function() {
             const canvas = document.createElement('canvas');
@@ -790,7 +665,6 @@ function addImageWord() {
         a: escapeHtml(a) 
     });
     
-    // 초기화
     cropImgBase64 = null;
     document.getElementById('preview-q-img').style.display = 'none';
     document.getElementById('img-q-text').value = "";
@@ -802,13 +676,11 @@ function saveToDB(item) {
     tx.objectStore('vocab').add(item);
     tx.oncomplete = function() {
         showToast("추가되었습니다.", 'success');
-        loadVocabulary(); // 메모리 갱신
-        renderWordList(); // 리스트 갱신
+        loadVocabulary(); 
+        renderWordList(); 
     }
 }
-// ============================================================
-// [7. 리스트 관리 및 기타 유틸리티]
-// ============================================================
+
 function renderWordList() {
     const listEl = document.getElementById('word-list');
     listEl.innerHTML = "";
@@ -818,9 +690,7 @@ function renderWordList() {
         return;
     }
 
-    // 최신순 정렬
     const sorted = [...vocabulary].reverse();
-
     sorted.forEach(item => {
         const div = document.createElement('div');
         div.style.background = "#fff";
@@ -833,7 +703,7 @@ function renderWordList() {
         if (item.type === 'image') {
             content = `<div style="flex:1;">
                 <span style="font-size:0.8rem; color:#1976d2;">[이미지]</span>
-                <span style="font-weight:bold;">${item.qText ? item.qText : '(이미지 문제)'}</span>
+                <span style="font-weight:bold;">${item.qText ? item.qText : ''}</span>
                 <div style="font-size:0.8rem; color:#555;">답: ${item.a}</div>
             </div>`;
         } else {
@@ -843,10 +713,7 @@ function renderWordList() {
             </div>`;
         }
 
-        div.innerHTML = `
-            <input type="checkbox" class="del-chk" value="${item.id}" style="margin-right:10px; transform:scale(1.2);">
-            ${content}
-        `;
+        div.innerHTML = `<input type="checkbox" class="del-chk" value="${item.id}" style="margin-right:10px; transform:scale(1.2);">${content}`;
         listEl.appendChild(div);
     });
 }
@@ -854,30 +721,23 @@ function renderWordList() {
 function deleteSelected() {
     const chks = document.querySelectorAll('.del-chk:checked');
     if (chks.length === 0) return showToast("선택된 항목이 없습니다.", 'error');
-    
     if (!confirm(`${chks.length}개를 삭제하시겠습니까?`)) return;
 
     const tx = db.transaction(['vocab'], 'readwrite');
     const store = tx.objectStore('vocab');
-    
-    chks.forEach(chk => {
-        store.delete(Number(chk.value));
-    });
+    chks.forEach(chk => store.delete(Number(chk.value)));
 
     tx.oncomplete = function() {
         showToast("삭제되었습니다.", 'success');
-        loadVocabulary(); // 다시 로드 및 렌더링
+        loadVocabulary();
     };
 }
 
-// JSON 내보내기 (백업)
 function exportJSON() {
     if (vocabulary.length === 0) return showToast("데이터가 없습니다.", 'error');
-    
     const dataStr = JSON.stringify(vocabulary, null, 2);
     const blob = new Blob([dataStr], {type: "application/json"});
     const url = URL.createObjectURL(blob);
-    
     const a = document.createElement('a');
     a.href = url;
     a.download = `quiz_backup_${new Date().toISOString().slice(0,10)}.json`;
@@ -887,61 +747,44 @@ function exportJSON() {
     URL.revokeObjectURL(url);
 }
 
-// JSON 가져오기 (복구)
 function handleJsonFile(e) {
     const file = e.target.files[0];
     if (!file) return;
-    
     const reader = new FileReader();
     reader.onload = function(ev) {
         try {
             const data = JSON.parse(ev.target.result);
             if (!Array.isArray(data)) throw new Error("배열 형식이 아닙니다.");
-            
-            if (!confirm(`총 ${data.length}개의 문제를 추가하시겠습니까? (기존 데이터 유지)`)) return;
+            if (!confirm(`총 ${data.length}개의 문제를 추가하시겠습니까?`)) return;
 
             const tx = db.transaction(['vocab'], 'readwrite');
             const store = tx.objectStore('vocab');
             let count = 0;
-            
             data.forEach(item => {
-                // ID 충돌 방지를 위해 ID 제거 후 추가
                 delete item.id;
                 store.add(item);
                 count++;
             });
-            
             tx.oncomplete = function() {
                 showToast(`${count}개 복구 완료!`, 'success');
                 loadVocabulary();
             };
-        } catch (err) {
-            alert("파일 형식이 올바르지 않습니다.");
-        }
+        } catch (err) { alert("파일 오류"); }
     };
     reader.readAsText(file);
-    // 인풋 초기화 (같은 파일 다시 선택 가능하게)
     e.target.value = "";
 }
 
-// 토스트 메시지 유틸
 function showToast(msg, type='normal') {
     const container = document.getElementById('toast-container');
     const el = document.createElement('div');
     el.className = 'toast show';
     el.innerText = msg;
-    
     if (type === 'error') el.style.background = "rgba(229, 57, 53, 0.9)";
     else if (type === 'success') el.style.background = "rgba(67, 160, 71, 0.9)";
-    
     container.appendChild(el);
-    
-    setTimeout(() => {
-        el.classList.remove('show');
-        setTimeout(() => el.remove(), 300);
-    }, 2000);
+    setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 2000);
 }
 </script>
 </body>
 </html>
-
