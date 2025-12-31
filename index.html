@@ -31,17 +31,16 @@ body {
     box-shadow: 0 0 40px rgba(0,0,0,0.6);
 }
 
-/* --- [2. 배틀 필드 (원근감 핵심)] --- */
+/* --- [2. 배틀 필드] --- */
 #area-battle { 
-    flex: 0 0 45%; /* 화면 비율 조정 */
+    flex: 0 0 45%; 
     position: relative; 
-    background: #f8f8f8; /* 깔끔한 배경 */
+    background: #f8f8f8; 
     overflow: hidden; 
     display: flex; flex-direction: column;
     border-bottom: 4px solid #333;
 }
 
-/* 스테이지 바 */
 .stage-info-bar { 
     position: absolute; top: 0; left: 0; width: 100%;
     padding: 8px 15px; 
@@ -51,47 +50,37 @@ body {
     color: #fff; text-shadow: 1px 1px 0 #000;
 }
 
-/* ★ 대각선 구도 배치 (Absolute Positioning) ★ */
 .battle-field { 
     position: relative; 
     width: 100%; height: 100%; 
 }
 
-/* 공통 스프라이트 박스 */
+/* ★ 생동감 애니메이션 (둥둥 떠다니기) ★ */
+@keyframes floating {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+    100% { transform: translateY(0px); }
+}
+
 .sprite-wrapper { 
     position: absolute; 
     display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    /* 애니메이션 적용 */
+    animation: floating 3s ease-in-out infinite;
 }
 
-/* [몬스터 위치]: 오른쪽 상단 (멀리 있음) */
-.mob-zone {
-    top: 15%; 
-    right: 10%;
-    width: 120px; /* 작게 보여서 원근감 부여 */
-    height: 120px;
-    z-index: 5;
-}
+.mob-zone { top: 15%; right: 10%; width: 120px; height: 120px; z-index: 5; }
+.hero-zone { bottom: 5%; left: 5%; width: 180px; height: 180px; z-index: 10; }
 
-/* [플레이어 위치]: 왼쪽 하단 (가까이 있음) */
-.hero-zone {
-    bottom: 5%; 
-    left: 5%;
-    width: 180px; /* 크게 보여서 가까운 느낌 */
-    height: 180px;
-    z-index: 10;
-}
-
-/* 이미지 스타일 (도트 깨짐 방지) */
 .sprite { 
     width: 100%; height: 100%; 
     object-fit: contain; 
     image-rendering: pixelated; 
     image-rendering: crisp-edges;
-    filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2)); /* 캐릭터 자체 그림자 */
+    filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2)); 
     transition: transform 0.1s;
 }
 
-/* 바닥 그림자 (원형) */
 .shadow {
     width: 80%; height: 20px;
     background: rgba(0,0,0,0.15);
@@ -100,7 +89,7 @@ body {
     margin-top: -15px;
 }
 
-/* HP 바 (포켓몬 스타일 위치) */
+/* 몬스터 HP UI (플레이어 HP UI는 제거됨) */
 .hp-ui {
     position: absolute;
     background: #fff;
@@ -110,14 +99,12 @@ body {
     width: 140px;
     box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
 }
-.mob-hp-ui { top: 20px; left: 20px; z-index: 4; } /* 몬스터 HP: 좌측 상단 */
-.hero-hp-ui { bottom: 20px; right: 20px; z-index: 11; } /* 플레이어 HP: 우측 하단 */
+.mob-hp-ui { top: 20px; left: 20px; z-index: 4; }
 
 .hp-bar-bg { width: 100%; height: 8px; background: #ddd; border-radius: 4px; overflow: hidden; margin-top: 3px; border:1px solid #999;}
 .hp-fill { height: 100%; background: #4CAF50; width: 100%; transition: width 0.2s; }
 .hp-fill.low { background: #D32F2F !important; }
 
-/* 데미지 텍스트 */
 .dmg-text { 
     position: absolute; font-weight: 900; color: #fff; font-size: 2.2rem; 
     text-shadow: 2px 2px 0 #000; z-index: 30; 
@@ -125,18 +112,66 @@ body {
 }
 @keyframes floatUp { 0%{opacity:1; transform:translateY(0)} 100%{opacity:0; transform:translateY(-50px)} }
 
-/* --- [3. 하단 UI] --- */
+/* --- [3. 하단 UI & 스크롤 설정] --- */
 #area-stat { background: #37474F; color: #fff; padding: 5px; font-size: 0.8rem; display:flex; justify-content:space-around; border-bottom:2px solid #222; }
-#area-quiz { flex: 1; padding: 15px; background: #fff; display: flex; flex-direction: column; align-items: center; }
-#q-text-container { flex: 1; width: 100%; margin-bottom: 10px; padding: 20px; background: #FAFAFA; border: 3px solid #333; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-#q-text { font-size: 1.3rem; text-align: center; line-height: 1.4; color: #000; font-weight:bold; }
-.ox-btn-group { width: 100%; display: flex; gap: 10px; height: 70px; margin-bottom: 10px; }
+
+/* 퀴즈 영역 레이아웃 고정 */
+#area-quiz { 
+    flex: 1; 
+    padding: 15px; 
+    background: #fff; 
+    display: flex; flex-direction: column; align-items: center; 
+    overflow: hidden; /* 전체 스크롤 방지 */
+}
+
+/* ★ 긴 문제 스크롤 처리 ★ */
+#q-text-container {
+    flex: 1; /* 남은 공간 차지 */
+    width: 100%; 
+    min-height: 0; /* Flex 자식 스크롤 필수 설정 */
+    margin-bottom: 10px; 
+    padding: 15px; 
+    background: #FAFAFA; 
+    border: 3px solid #333; 
+    border-radius: 10px; 
+    display: flex; 
+    flex-direction: column; /* 텍스트 정렬용 */
+    align-items: center; 
+    justify-content: center;
+    overflow-y: auto; /* 세로 스크롤 허용 */
+}
+#q-text { 
+    font-size: 1.3rem; 
+    text-align: center; 
+    line-height: 1.5; 
+    color: #000; 
+    font-weight:bold; 
+    width: 100%;
+}
+
+.ox-btn-group { flex: 0 0 auto; width: 100%; display: flex; gap: 10px; height: 70px; margin-bottom: 10px; }
 .btn-ox { flex: 1; border: 2px solid #000; border-radius: 10px; font-size: 2.5rem; color: #fff; font-family: 'Jua'; box-shadow: 2px 4px 0 rgba(0,0,0,0.3); }
 .btn-ox:active { transform: translateY(4px); box-shadow: none; }
 .btn-o { background: var(--o-color); }
 .btn-x { background: var(--x-color); }
 
-/* --- [4. 기타] --- */
+/* 해설창 스크롤 처리 */
+#q-desc-display {
+    display: none; 
+    flex: 0 0 auto; /* 높이 고정 or 내용물만큼 */
+    max-height: 120px; /* 너무 커지지 않게 제한 */
+    width: 100%; 
+    padding: 10px; 
+    background: #E3F2FD; 
+    border-radius: 10px; 
+    color: #1565C0; 
+    font-size: 0.95rem; 
+    margin-bottom: 10px; 
+    overflow-y: auto; /* 내부 스크롤 */
+    border: 2px solid #2196F3; 
+    line-height: 1.4;
+}
+
 .screen { display: none; width: 100%; height: 100%; flex-direction: column; }
 .active { display: flex; }
 .menu-btn { width: 100%; padding: 12px; margin: 4px 0; border: 2px solid #000; border-radius: 10px; color: #fff; font-size: 1.2rem; font-family: 'Jua'; }
@@ -200,15 +235,6 @@ body {
                     <img id="hero-img" class="sprite hero" src="" alt="Player">
                     <div class="shadow" style="width:100%; bottom:10px;"></div>
                 </div>
-                <div class="hp-ui hero-hp-ui">
-                    <div style="font-size:0.8rem; font-weight:bold; display:flex; justify-content:space-between;">
-                        <span>레드</span> <span style="font-size:0.7rem;">Lv.50</span>
-                    </div>
-                    <div class="hp-bar-bg"><div id="hero-hp" class="hp-fill"></div></div>
-                    <div style="font-size:0.7rem; text-align:right; margin-top:2px;">
-                         <span id="hero-hp-text">100/100</span>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -229,14 +255,14 @@ body {
                 <button class="btn-ox btn-x" onclick="submitAnswer('X')">X</button>
             </div>
 
-            <div id="q-feedback" style="height:25px; font-size:1.1rem; font-weight:bold; margin-bottom:5px; color:#333;"></div>
+            <div id="q-feedback" style="flex: 0 0 auto; height:25px; font-size:1.1rem; font-weight:bold; margin-bottom:5px; color:#333;"></div>
             
-            <div id="q-desc-display" style="display:none; width:100%; padding:15px; background:#E3F2FD; border-radius:10px; color:#1565C0; font-size:0.9rem; margin-bottom:10px; overflow-y:auto; border:2px solid #2196F3; line-height:1.4; max-height:80px;"></div> 
+            <div id="q-desc-display"></div> 
             
             <button id="btn-next-quiz" style="display:none; width:100%; padding:15px; background:#FFD600; color:#000; border:2px solid #000; border-radius:10px; font-size:1.2rem; font-weight:bold;" onclick="manualNextQuiz()">▶ 다음 배틀</button>
         </div>
 
-        <div id="area-menu" style="padding:10px; background:#eee; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #ccc;">
+        <div id="area-menu" style="flex:0 0 auto; padding:10px; background:#eee; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #ccc;">
             <button class="small-btn" onclick="stopGame()" style="padding:8px 15px; border:1px solid #999; border-radius:5px; background:#fff; color:#333;">도망치기</button>
             <button class="small-btn" onclick="toggleSound()" style="padding:8px 15px; border:1px solid #999; border-radius:5px; background:#fff; color:#333;">소리</button>
         </div>
@@ -248,7 +274,7 @@ body {
             <div style="text-align:center; margin-bottom:15px;">
                 <span id="review-badge" style="background:#FF5252; color:#fff; padding:5px 10px; border-radius:5px; font-size:0.9rem; font-weight:bold;">3번 틀림</span>
             </div>
-            <div id="review-q-container" style="flex:1; display:flex; align-items:center; justify-content:center; border:2px dashed #ccc; border-radius:10px; padding:15px; margin-bottom:15px;">
+            <div id="review-q-container" style="flex:1; overflow-y:auto; display:flex; align-items:center; justify-content:center; border:2px dashed #ccc; border-radius:10px; padding:15px; margin-bottom:15px;">
                 <div id="review-q-text" style="font-size:1.2rem; text-align:center; line-height:1.4; color:#333;">문제</div>
             </div>
             <div id="review-ox-btns" class="ox-btn-group">
@@ -270,12 +296,14 @@ body {
                 <label style="font-size:1.2rem;"><input type="radio" name="new-a-radio" value="O" checked> <span style="color:#2979FF; font-weight:bold;">O</span></label>
                 <label style="font-size:1.2rem;"><input type="radio" name="new-a-radio" value="X"> <span style="color:#D32F2F; font-weight:bold;">X</span></label>
             </div>
-            <textarea id="new-desc" placeholder="해설" style="width:100%; height:40px; margin-bottom:10px; padding:10px; border:1px solid #ccc;"></textarea>
+            <textarea id="new-desc" placeholder="해설 (선택사항)" style="width:100%; height:40px; margin-bottom:10px; padding:10px; border:1px solid #ccc;"></textarea>
             <button onclick="addTextWord()" class="menu-btn" style="padding:10px; background:#4CAF50; border-color:#2e7d32;">추가</button>
+            
             <button class="menu-btn" style="background:#388E3C; margin-top:5px; padding:10px; font-size:0.9rem; border-color:#1b5e20;" onclick="toggleExcel()">엑셀 붙여넣기</button>
             <div id="excel-area" style="display:none; margin-top:10px; background:#E8F5E9; padding:10px; border-radius:5px;">
-                <textarea id="excel-input" style="width:100%; height:80px;"></textarea>
-                <button class="menu-btn" style="margin-top:5px; padding:8px; font-size:0.9rem; background:#4CAF50; border-color:#2e7d32;" onclick="parseExcel()">등록</button>
+                <p style="font-size:0.8rem; color:#2E7D32; margin-bottom:5px;">[문제] [탭] [O/X] [탭] [해설]</p>
+                <textarea id="excel-input" style="width:100%; height:80px; padding:5px; border:1px solid #A5D6A7;" placeholder="예: 사과는 과일이다	O	당연한 사실"></textarea>
+                <button class="menu-btn" style="margin-top:5px; padding:8px; font-size:0.9rem; background:#4CAF50; border-color:#2e7d32;" onclick="parseExcel()">일괄 등록</button>
             </div>
         </div>
         <div style="background:#fff; padding:10px; border-radius:10px; border:2px solid #ccc; margin-bottom:10px;">
@@ -297,12 +325,12 @@ body {
 // ============================================================
 // [1. 전역 변수 및 설정]
 // ============================================================
-const DB_NAME = "HeroQuizDB_Legend"; 
+const DB_NAME = "HeroQuizDB_Legend_v2"; 
 const DB_VERSION = 1; 
 let db;
 let vocabulary = [];
 
-// 플레이어 스탯 (기본값)
+// 플레이어 스탯 (체력 관련 제거)
 let player = {
     atk: 10,       
     crit: 0,       
@@ -323,9 +351,8 @@ let currentStage = 1;
 let subStage = 0; 
 let stageTimeLeft = 30;
 
-// 몬스터 & 플레이어 상태
+// 몬스터 상태 (플레이어 HP 제거)
 let mob = { hp: 100, maxHp: 100, level: 1, isBoss: false };
-let hero = { hp: 100, maxHp: 100 }; // 플레이어 체력(장식용)
 
 // 퀴즈 관련
 let currentQuizData = null;
@@ -349,7 +376,8 @@ window.onload = function() {
         if(loader) {
             loader.style.opacity = '0';
             setTimeout(() => { loader.style.display = 'none'; }, 500);
-            document.getElementById('btn-start').disabled = false;
+            const btn = document.getElementById('btn-start');
+            if(btn) btn.disabled = false;
         }
     }, 1500);
 };
@@ -387,10 +415,10 @@ function loadVocabulary() {
 }
 
 function savePlayerStats() {
-    localStorage.setItem('hero_stats_legend', JSON.stringify(player));
+    localStorage.setItem('hero_stats_legend_v2', JSON.stringify(player));
 }
 function loadPlayerStats() {
-    const data = localStorage.getItem('hero_stats_legend');
+    const data = localStorage.getItem('hero_stats_legend_v2');
     if (data) player = { ...player, ...JSON.parse(data) };
     updateHomeUI();
 }
@@ -408,11 +436,9 @@ function startGame() {
     prepareDeck(); 
     showScreen('game');
 
-    // ★ [이미지 로드 핵심] ★
-    // 깃허브 저장소에 있는 파일명을 그대로 사용합니다.
-    // 만약 깃허브 Pages 등이 아니라면 전체 URL(raw.githubusercontent...)을 넣어야 할 수도 있습니다.
+    // ★ [이미지 설정] 깃허브/로컬 파일 ★
     const heroImg = document.getElementById('hero-img');
-    heroImg.src = "player.PNG"; 
+    heroImg.src = "player.PNG"; // 대소문자 정확히 일치해야 함
     
     currentStage = player.maxStage; 
     startStage(currentStage);
@@ -441,17 +467,13 @@ function startStage(stg) {
 }
 
 function spawnMob() {
-    const isBoss = subStage === 2; // 3번째 마다 보스
-    // 체력 공식
+    const isBoss = subStage === 2; 
     let hp = Math.floor(200 * Math.pow(1.08, currentStage - 1));
     if (isBoss) hp *= 4; 
     
-    // 레벨 공식 (장식용)
     const level = (currentStage * 3) + subStage + 1;
-
     mob = { hp: hp, maxHp: hp, level: level, isBoss: isBoss };
     
-    // 몬스터 이미지 (PokeAPI)
     let mobId;
     if (isBoss) mobId = (currentStage * 10) + 100 + Math.floor(Math.random() * 50);
     else mobId = (currentStage * 5) + (subStage * 2) + Math.floor(Math.random() * 20);
@@ -462,11 +484,9 @@ function spawnMob() {
     const mobImg = document.getElementById('mob-img');
     mobImg.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${mobId}.png`;
     
-    // UI 업데이트
     document.getElementById('stage-display').innerText = isBoss ? `BOSS STAGE` : `STAGE ${currentStage}-${subStage + 1}`;
     document.getElementById('mob-lv').innerText = level;
     
-    // 보스 연출
     if (isBoss) {
         mobImg.style.transform = "scale(1.5)";
         mobImg.style.filter = "drop-shadow(0 0 5px #D32F2F)";
@@ -476,10 +496,6 @@ function spawnMob() {
     }
     
     updateMobHpUI();
-    
-    // 플레이어 HP UI 리셋 (장식용)
-    document.getElementById('hero-hp').style.width = "100%";
-    document.getElementById('hero-hp-text').innerText = "100/100";
 }
 
 function gameLoop(timestamp) {
@@ -490,13 +506,11 @@ function gameLoop(timestamp) {
     stageTimeLeft -= dt;
     if (stageTimeLeft <= 0) handleStageFail();
     
-    // 타이머 바
     const pct = (stageTimeLeft / 30) * 100;
     const bar = document.getElementById('time-bar');
     bar.style.width = Math.max(0, pct) + "%";
     bar.style.background = stageTimeLeft < 5 ? "#D32F2F" : "#FFD600";
     
-    // 공격 속도 로직
     let totalAspd = player.aspd + (combo * 0.15);
     let currentAspd = Math.min(3.0, totalAspd);
     document.getElementById('stat-aspd').innerText = currentAspd.toFixed(1);
@@ -519,8 +533,8 @@ function handleStageFail() {
 }
 
 function heroAttack() {
-    // 애니메이션 트리거
     const hero = document.getElementById('hero-img');
+    // 애니메이션 리셋 (강제 리플로우)
     hero.classList.remove('attack');
     void hero.offsetWidth; 
     hero.classList.add('attack');
@@ -533,7 +547,6 @@ function heroAttack() {
     createDamageText(result.damage, result.tier);
     updateMobHpUI();
     
-    // 몬스터 피격 효과
     const mobEl = document.getElementById('mob-img');
     mobEl.classList.remove('hit');
     void mobEl.offsetWidth;
@@ -571,12 +584,11 @@ function createDamageText(dmg, tier) {
     el.className = 'dmg-text';
     el.innerText = dmg.toLocaleString();
     
-    // 몬스터 위치 근처에 데미지 표시 (원근감 고려)
     if (tier >= 1) {
         el.style.color = "#FFD600";
         el.innerText += "!";
     }
-    el.style.right = "10%"; // 몬스터 쪽
+    el.style.right = "10%"; 
     el.style.top = "10%";
     
     field.appendChild(el);
@@ -661,8 +673,10 @@ function updateWordStats(word) {
     tx.objectStore('vocab').put(word);
 }
 
+// ★ 해설 표시 로직 수정 ★
 function showResultUI() {
     const descDisplay = document.getElementById('q-desc-display');
+    // 해설이 있으면 보여줌
     if (currentQuizData.desc && currentQuizData.desc.trim() !== "") {
         descDisplay.style.display = 'block';
         descDisplay.innerText = "💡 " + currentQuizData.desc;
@@ -697,7 +711,7 @@ function handleCorrect() {
     fb.style.color = "#2979FF";
     fb.innerText = `효과가 굉장했다! (${msg})`;
     
-    showResultUI(); 
+    showResultUI(); // 결과 화면 표시 (해설 포함)
 }
 
 function handleWrong() {
@@ -710,7 +724,7 @@ function handleWrong() {
     fb.style.color = "#D32F2F";
     fb.innerText = `공격이 빗나갔다... (정답: ${currentQuizData.a})`;
     
-    showResultUI(); 
+    showResultUI(); // 결과 화면 표시 (해설 포함)
 }
 
 function updateBuffUI() {
@@ -719,7 +733,7 @@ function updateBuffUI() {
 }
 
 // ============================================================
-// [5. 화면 관리 및 유틸 (사운드 포함)]
+// [5. 유틸리티]
 // ============================================================
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => {
@@ -747,56 +761,15 @@ function showToast(msg, type = 'info') {
 }
 
 const snd = {
-    click: (t) => {
-        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-        o.type = 'square'; o.frequency.setValueAtTime(600, t);
-        g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-        o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.05);
-    },
-    attack: (t) => { 
-        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-        o.type = 'sawtooth'; o.frequency.setValueAtTime(150, t); 
-        g.gain.setValueAtTime(0.05, t); g.gain.linearRampToValueAtTime(0, t + 0.1);
-        o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.1);
-    },
-    correct: (t) => { 
-        const g = audioCtx.createGain(); g.gain.value = 0.05; g.connect(audioCtx.destination);
-        [880, 1108].forEach((f, i) => { 
-            const o = audioCtx.createOscillator(); o.type = 'square'; o.frequency.value = f;
-            o.connect(g); o.start(t + i * 0.1); o.stop(t + i * 0.1 + 0.08);
-        });
-    },
-    wrong: (t) => { 
-        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-        o.type = 'sawtooth'; o.frequency.setValueAtTime(150, t); 
-        g.gain.setValueAtTime(0.05, t); g.gain.linearRampToValueAtTime(0, t + 0.1);
-        o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.1);
-    },
-    clear: (t) => { 
-        const g = audioCtx.createGain(); g.gain.value = 0.05; g.connect(audioCtx.destination);
-        [523, 659, 783, 1046, 783, 1046].forEach((f, i) => {
-            const o = audioCtx.createOscillator(); o.type = 'square'; o.frequency.value = f;
-            o.connect(g); o.start(t + i * 0.1); o.stop(t + i * 0.1 + 0.08);
-        });
-    },
-    fail: (t) => {
-        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-        o.type = 'triangle'; o.frequency.setValueAtTime(300, t); o.frequency.linearRampToValueAtTime(100, t + 0.5);
-        g.gain.value = 0.05; o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.5);
-    }
+    click: (t) => { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = 'square'; o.frequency.setValueAtTime(600, t); g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05); o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.05); },
+    attack: (t) => { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(150, t); g.gain.setValueAtTime(0.05, t); g.gain.linearRampToValueAtTime(0, t + 0.1); o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.1); },
+    correct: (t) => { const g = audioCtx.createGain(); g.gain.value = 0.05; g.connect(audioCtx.destination); [880, 1108].forEach((f, i) => { const o = audioCtx.createOscillator(); o.type = 'square'; o.frequency.value = f; o.connect(g); o.start(t + i * 0.1); o.stop(t + i * 0.1 + 0.08); }); },
+    wrong: (t) => { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(150, t); g.gain.setValueAtTime(0.05, t); g.gain.linearRampToValueAtTime(0, t + 0.1); o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.1); },
+    clear: (t) => { const g = audioCtx.createGain(); g.gain.value = 0.05; g.connect(audioCtx.destination); [523, 659, 783, 1046, 783, 1046].forEach((f, i) => { const o = audioCtx.createOscillator(); o.type = 'square'; o.frequency.value = f; o.connect(g); o.start(t + i * 0.1); o.stop(t + i * 0.1 + 0.08); }); },
+    fail: (t) => { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(300, t); o.frequency.linearRampToValueAtTime(100, t + 0.5); g.gain.value = 0.05; o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.5); }
 };
-
-function playSound(type) {
-    if (!isSoundOn || !audioCtx) return;
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    snd[type](audioCtx.currentTime);
-}
-
-function toggleSound() {
-    isSoundOn = !isSoundOn;
-    showToast(isSoundOn ? "사운드 켜짐" : "사운드 꺼짐");
-}
-
+function playSound(type) { if (!isSoundOn || !audioCtx) return; if (audioCtx.state === 'suspended') audioCtx.resume(); snd[type](audioCtx.currentTime); }
+function toggleSound() { isSoundOn = !isSoundOn; showToast(isSoundOn ? "사운드 켜짐" : "사운드 꺼짐"); }
 window.addEventListener('keydown', (e) => {
     if (document.getElementById('screen-game').style.display === 'flex') {
         if (e.key === 'ArrowLeft') submitAnswer('O');
@@ -806,7 +779,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 // ============================================================
-// [6. 오답 노트 & 데이터 관리 (기존 기능 유지)]
+// [6. 관리 및 데이터 (해설 파싱 수정됨)]
 // ============================================================
 function startReview() {
     if (vocabulary.length === 0) return showToast("데이터 없음", 'error');
@@ -831,14 +804,13 @@ function submitReview(choice) {
     if(!currentReviewData) return;
     const realAns = currentReviewData.a.trim().toUpperCase();
     const fb = document.getElementById('review-feedback');
-    if (choice === realAns) {
-        playSound('correct'); fb.style.color = "#2979FF"; fb.innerText = "정답!";
-    } else {
-        playSound('wrong'); fb.style.color = "#D32F2F"; fb.innerText = `땡! 정답: ${realAns}`;
-        currentReviewData.wrongCount++; updateWordStats(currentReviewData);
-    }
+    if (choice === realAns) { playSound('correct'); fb.style.color = "#2979FF"; fb.innerText = "정답!"; } 
+    else { playSound('wrong'); fb.style.color = "#D32F2F"; fb.innerText = `땡! 정답: ${realAns}`; currentReviewData.wrongCount++; updateWordStats(currentReviewData); }
+    
+    // 오답노트에서도 해설 보이기
     if (currentReviewData.desc) {
-        const d = document.getElementById('review-desc'); d.style.display = 'block'; d.innerText = currentReviewData.desc;
+        const d = document.getElementById('review-desc'); 
+        d.style.display = 'block'; d.innerText = "💡 " + currentReviewData.desc;
     }
     document.getElementById('review-ox-btns').style.display = 'none';
     document.getElementById('btn-review-next').style.display = 'block';
@@ -856,23 +828,45 @@ function addTextWord() {
     tx.objectStore('vocab').add({ type:'text', q:escapeHtml(q), a:a, desc:escapeHtml(d), lv:0, nextTurn:0, wrongCount:0 });
     tx.oncomplete=()=>{showToast("등록 완료"); loadVocabulary(); document.getElementById('new-q').value=""; document.getElementById('new-desc').value="";};
 }
+
+// ★ 엑셀 파싱 버그 수정 (해설 3번째 칸 인식) ★
 function parseExcel() {
     const v = document.getElementById('excel-input').value.trim();
     if(!v) return showToast("내용 없음", 'error');
     const lines = v.split(/\r?\n/).filter(l=>l.trim()!=="");
     let c = 0; const tx = db.transaction(['vocab'], 'readwrite'); const s = tx.objectStore('vocab');
+    
     lines.forEach(l => {
-        let p = l.split('\t'); if(p.length<2) p = l.split(/ {2,}/);
-        if(p.length>=2) {
-            let a = p[1].trim().toUpperCase(); if(a==='0')a='X'; if(a==='1')a='O';
-            if(p[0] && (a==='O'||a==='X')) {
-                s.add({ type:'text', q:escapeHtml(p[0].trim()), a:a, desc:escapeHtml(p[2]?p[2].trim():""), lv:0, nextTurn:0, wrongCount:0 });
+        // 1차 시도: 탭으로 분리
+        let p = l.split('\t'); 
+        // 탭이 없으면 2칸 이상 공백으로 분리
+        if(p.length < 2) p = l.split(/ {2,}/);
+        
+        if(p.length >= 2) {
+            // [0]: 문제, [1]: 정답, [2]: 해설(옵션)
+            let q = p[0].trim();
+            let a = p[1].trim().toUpperCase(); 
+            if(a==='0')a='X'; if(a==='1')a='O';
+            
+            // 해설 파싱 강화 (p[2]가 존재하면 가져옴)
+            let d = "";
+            if(p.length >= 3 && p[2]) d = p[2].trim();
+
+            if(q && (a==='O'||a==='X')) {
+                s.add({ 
+                    type:'text', 
+                    q: escapeHtml(q), 
+                    a: a, 
+                    desc: escapeHtml(d), // 해설 저장
+                    lv: 0, nextTurn: 0, wrongCount: 0 
+                });
                 c++;
             }
         }
     });
     tx.oncomplete = () => { showToast(`${c}개 등록됨`, 'success'); document.getElementById('excel-input').value=""; toggleExcel(); loadVocabulary(); };
 }
+
 function renderWordList() {
     const l = document.getElementById('word-list'); l.innerHTML = "";
     if(vocabulary.length===0) { l.innerHTML="<p style='text-align:center;color:#999;padding:10px;'>데이터 없음</p>"; return; }
@@ -882,6 +876,7 @@ function renderWordList() {
         d.innerHTML = `<input type="checkbox" class="word-check" data-id="${v.id}">
             <div style="flex:1; font-size:0.9rem;">
                 <b style="color:${v.a==='O'?'#2979FF':'#D32F2F'}">[${v.a}]</b> ${v.q}
+                ${v.desc ? `<div style='font-size:0.8rem; color:#666;'>└ ${v.desc}</div>` : ''} 
             </div>`;
         l.appendChild(d);
     });
