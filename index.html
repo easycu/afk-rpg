@@ -31,7 +31,7 @@ body {
     box-shadow: 0 0 40px rgba(0,0,0,0.6);
 }
 
-/* --- [2. 배틀 필드 & 구도] --- */
+/* --- [2. 배틀 필드] --- */
 #area-battle { 
     flex: 0 0 45%; 
     position: relative; 
@@ -41,7 +41,6 @@ body {
     border-bottom: 4px solid #333;
 }
 
-/* 스테이지 바 */
 .stage-info-bar { 
     position: absolute; top: 0; left: 0; width: 100%;
     padding: 8px 15px; 
@@ -56,11 +55,19 @@ body {
     width: 100%; height: 100%; 
 }
 
-/* 캐릭터 위치 잡기 (대각선 구도) */
+/* 대기 상태: 둥둥 떠다니기 */
+@keyframes floating {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-5px); }
+    100% { transform: translateY(0px); }
+}
+
 .sprite-wrapper { 
     position: absolute; 
     display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    animation: floating 3s ease-in-out infinite;
 }
+
 .mob-zone { top: 15%; right: 10%; width: 120px; height: 120px; z-index: 5; }
 .hero-zone { bottom: 5%; left: 5%; width: 180px; height: 180px; z-index: 10; }
 
@@ -73,28 +80,30 @@ body {
     transition: transform 0.1s;
 }
 
-/* ★ 1. 플레이어 공격 애니메이션 (돌진) ★ */
-/* 원래 크기 1.4배 유지하면서 대각선(50px, -50px)으로 돌진 */
+/* 기본 크기 설정 (애니메이션에서 이 크기를 유지해야 함) */
+#hero-img { transform: scale(1.4) translateY(-5px); transform-origin: bottom center; }
+#mob-img { transform: scale(1.2) translateY(-5px); transform-origin: bottom center; }
+
+
+/* ★ [수정됨] 1. 플레이어 공격 (돌진) ★ */
+/* 크기는 커지지 않고(scale 1.4 유지), 대각선으로만 30px 이동 */
 @keyframes tackle {
     0% { transform: scale(1.4) translate(0, 0); }
-    50% { transform: scale(1.4) translate(50px, -50px); }
+    50% { transform: scale(1.4) translate(30px, -30px); } /* 대각선 이동 */
     100% { transform: scale(1.4) translate(0, 0); }
 }
 
-/* ★ 2. 몬스터 피격 애니메이션 (넉백 & 섬광) ★ */
-/* 원래 크기 1.2배 유지하면서 뒤로 밀리고 하얗게 번쩍임 */
+/* ★ 2. 몬스터 피격 (넉백 & 섬광) ★ */
 @keyframes damage {
     0% { transform: scale(1.2) translate(0, 0); filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2)); }
-    20% { transform: scale(1.2) translate(15px, -15px); filter: brightness(5) sepia(1) saturate(0); } /* 충격 */
+    20% { transform: scale(1.2) translate(15px, -15px); filter: brightness(5) sepia(1) saturate(0); } /* 밀림 + 번쩍임 */
     50% { filter: brightness(5) sepia(1) saturate(0); }
     100% { transform: scale(1.2) translate(0, 0); filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2)); }
 }
 
-/* 애니메이션 클래스 (JS에서 붙였다 뗌) */
 .sprite.attack { animation: tackle 0.2s ease-out; }
 .sprite.hit { animation: damage 0.3s ease-out; }
 
-/* 그림자 */
 .shadow {
     width: 80%; height: 20px;
     background: rgba(0,0,0,0.15);
@@ -103,7 +112,7 @@ body {
     margin-top: -15px;
 }
 
-/* UI 요소 */
+/* 몬스터 HP UI */
 .hp-ui {
     position: absolute;
     background: #fff;
@@ -134,7 +143,7 @@ body {
     overflow: hidden; 
 }
 
-/* 문제 스크롤 박스 */
+/* 긴 문제 스크롤 박스 */
 #q-text-container {
     flex: 1; width: 100%; min-height: 0; margin-bottom: 10px; padding: 15px; 
     background: #FAFAFA; border: 3px solid #333; border-radius: 10px; 
@@ -143,7 +152,6 @@ body {
 }
 #q-text { font-size: 1.3rem; text-align: center; line-height: 1.5; color: #000; font-weight:bold; width: 100%; }
 
-/* 버튼 그룹 */
 .ox-btn-group { flex: 0 0 auto; width: 100%; display: flex; gap: 10px; height: 70px; margin-bottom: 10px; }
 .btn-ox { flex: 1; border: 2px solid #000; border-radius: 10px; font-size: 2.5rem; color: #fff; font-family: 'Jua'; box-shadow: 2px 4px 0 rgba(0,0,0,0.3); }
 .btn-ox:active { transform: translateY(4px); box-shadow: none; }
@@ -284,6 +292,7 @@ body {
             <textarea id="new-desc" placeholder="해설 (선택사항)" style="width:100%; height:40px; margin-bottom:10px; padding:10px; border:1px solid #ccc;"></textarea>
             <button onclick="addTextWord()" class="menu-btn" style="padding:10px; background:#4CAF50; border-color:#2e7d32;">추가</button>
             <button class="menu-btn" style="background:#388E3C; margin-top:5px; padding:10px; font-size:0.9rem; border-color:#1b5e20;" onclick="toggleExcel()">엑셀 붙여넣기</button>
+            
             <div id="excel-area" style="display:none; margin-top:10px; background:#E8F5E9; padding:10px; border-radius:5px;">
                 <p style="font-size:0.8rem; color:#2E7D32; margin-bottom:5px;">[문제] [탭] [O/X] [탭] [해설]</p>
                 <textarea id="excel-input" style="width:100%; height:80px; padding:5px; border:1px solid #A5D6A7;" placeholder="예: 사과는 과일이다	O	당연하다"></textarea>
@@ -309,12 +318,12 @@ body {
 // ============================================================
 // [1. 전역 변수 및 설정]
 // ============================================================
-const DB_NAME = "HeroQuizDB_Legend_Final"; 
+const DB_NAME = "HeroQuizDB_Legend_Final_v2"; 
 const DB_VERSION = 1; 
 let db;
 let vocabulary = [];
 
-// 플레이어 스탯 (체력 관련 제거)
+// 플레이어 스탯 (무적 모드: 체력 관련 스탯 제거)
 let player = {
     atk: 10,       
     crit: 0,       
@@ -355,6 +364,7 @@ window.onload = function() {
     initDB();
     loadPlayerStats();
     
+    // 로딩 화면 제거
     setTimeout(() => {
         const loader = document.getElementById('loading-overlay');
         if(loader) {
@@ -386,6 +396,7 @@ function loadVocabulary() {
     const store = tx.objectStore('vocab');
     store.getAll().onsuccess = function(e) {
         vocabulary = e.target.result || [];
+        // 데이터 초기화
         vocabulary.forEach(v => {
             if (typeof v.wrongCount === 'undefined') v.wrongCount = 0;
             if (typeof v.lv === 'undefined') v.lv = 0;
@@ -399,10 +410,10 @@ function loadVocabulary() {
 }
 
 function savePlayerStats() {
-    localStorage.setItem('hero_stats_legend_final', JSON.stringify(player));
+    localStorage.setItem('hero_stats_legend_final_v2', JSON.stringify(player));
 }
 function loadPlayerStats() {
-    const data = localStorage.getItem('hero_stats_legend_final');
+    const data = localStorage.getItem('hero_stats_legend_final_v2');
     if (data) player = { ...player, ...JSON.parse(data) };
     updateHomeUI();
 }
@@ -411,7 +422,7 @@ function updateHomeUI() {
 }
 
 // ============================================================
-// [3. 게임 로직 (배틀 & 애니메이션)]
+// [3. 게임 로직 (전투 & 애니메이션)]
 // ============================================================
 function startGame() {
     if (vocabulary.length < 1) return showToast("데이터가 없습니다!", 'error');
@@ -420,7 +431,7 @@ function startGame() {
     prepareDeck(); 
     showScreen('game');
 
-    // ★ [이미지 설정] 로컬 파일 ★
+    // ★ [이미지 설정] 로컬 파일 사용 ★
     const heroImg = document.getElementById('hero-img');
     heroImg.src = "player.PNG"; 
     
@@ -458,6 +469,7 @@ function spawnMob() {
     const level = (currentStage * 3) + subStage + 1;
     mob = { hp: hp, maxHp: hp, level: level, isBoss: isBoss };
     
+    // 몬스터 이미지 (PokeAPI)
     let mobId;
     if (isBoss) mobId = (currentStage * 10) + 100 + Math.floor(Math.random() * 50);
     else mobId = (currentStage * 5) + (subStage * 2) + Math.floor(Math.random() * 20);
@@ -468,6 +480,7 @@ function spawnMob() {
     const mobImg = document.getElementById('mob-img');
     mobImg.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${mobId}.png`;
     
+    // UI 업데이트
     document.getElementById('stage-display').innerText = isBoss ? `BOSS STAGE` : `STAGE ${currentStage}-${subStage + 1}`;
     document.getElementById('mob-lv').innerText = level;
     
@@ -495,6 +508,7 @@ function gameLoop(timestamp) {
     bar.style.width = Math.max(0, pct) + "%";
     bar.style.background = stageTimeLeft < 5 ? "#D32F2F" : "#FFD600";
     
+    // 공격 속도 로직
     let totalAspd = player.aspd + (combo * 0.15);
     let currentAspd = Math.min(3.0, totalAspd);
     document.getElementById('stat-aspd').innerText = currentAspd.toFixed(1);
@@ -516,36 +530,36 @@ function handleStageFail() {
     startStage(currentStage);
 }
 
-// ★ 공격 애니메이션 로직 강화 ★
+// ★ 공격 애니메이션 트리거 (수정됨: 절제된 모션) ★
 function heroAttack() {
     const hero = document.getElementById('hero-img');
     const mobEl = document.getElementById('mob-img');
 
-    // 1. 플레이어 돌진 (Tackle)
+    // 1. 플레이어 공격 (CSS의 tackle 애니메이션 실행)
     hero.classList.remove('attack');
-    void hero.offsetWidth; // 리플로우 강제 (애니메이션 리셋)
+    void hero.offsetWidth; // 리플로우 강제 (애니메이션 재실행)
     hero.classList.add('attack');
     
-    // 사운드 재생
     playSound('attack');
     
     // 데미지 계산
     const result = calculateInfiniteCrit(player.atk, player.crit, 0);
     mob.hp = Math.max(0, mob.hp - result.damage);
     
-    // 2. 몬스터 피격 (Knockback & Flash) - 약간의 딜레이 후 적용
+    // 2. 몬스터 피격 (약간의 딜레이 후 실행)
     setTimeout(() => {
         createDamageText(result.damage, result.tier);
         updateMobHpUI();
         
+        // 몬스터 넉백 & 플래시 효과
         mobEl.classList.remove('hit');
         void mobEl.offsetWidth;
-        mobEl.classList.add('hit'); // CSS의 @keyframes damage 실행
-    }, 150); // 0.15초 딜레이 (돌진해서 때리는 순간)
+        mobEl.classList.add('hit');
+    }, 150); // 0.15초 딜레이 (찌르는 순간 타격)
     
     // 처치 확인
     if (mob.hp <= 0) {
-        setTimeout(() => { // 피격 모션 보여주고 죽음 처리
+        setTimeout(() => {
             player.killCount++;
             subStage++;
             if (subStage >= 3) { 
@@ -556,7 +570,7 @@ function heroAttack() {
             } else {
                 spawnMob();
             }
-        }, 400);
+        }, 400); // 피격 모션 후 사망 처리
     }
 }
 
@@ -582,7 +596,6 @@ function createDamageText(dmg, tier) {
         el.style.color = "#FFD600";
         el.innerText += "!";
     }
-    // 몬스터 근처에 뜨도록 위치 조정
     el.style.right = "15%"; 
     el.style.top = "15%";
     
@@ -605,7 +618,7 @@ function updateStatUI() {
 }
 
 // ============================================================
-// [4. 퀴즈 시스템 (해설 표시 수정됨)]
+// [4. 퀴즈 시스템]
 // ============================================================
 function prepareDeck() {
     let eligible = vocabulary.filter(v => v.nextTurn <= player.totalTurns);
@@ -630,6 +643,7 @@ function nextQuiz() {
     const idx = Math.floor(Math.random() * weightedPool.length);
     currentQuizData = weightedPool[idx];
 
+    // UI 리셋
     document.getElementById('ox-buttons').style.display = 'flex'; 
     document.getElementById('btn-next-quiz').style.display = 'none'; 
     document.getElementById('q-feedback').innerText = "";
@@ -668,10 +682,9 @@ function updateWordStats(word) {
     tx.objectStore('vocab').put(word);
 }
 
-// ★ 해설(desc) 표시 로직 ★
+// ★ 해설 표시 (스크롤 박스 연동) ★
 function showResultUI() {
     const descDisplay = document.getElementById('q-desc-display');
-    // 해설이 존재하면 block으로 표시
     if (currentQuizData.desc && currentQuizData.desc.trim() !== "") {
         descDisplay.style.display = 'block';
         descDisplay.innerText = "💡 " + currentQuizData.desc;
@@ -706,7 +719,7 @@ function handleCorrect() {
     fb.style.color = "#2979FF";
     fb.innerText = `효과가 굉장했다! (${msg})`;
     
-    showResultUI(); // 결과 화면 호출
+    showResultUI(); 
 }
 
 function handleWrong() {
@@ -719,7 +732,7 @@ function handleWrong() {
     fb.style.color = "#D32F2F";
     fb.innerText = `공격이 빗나갔다... (정답: ${currentQuizData.a})`;
     
-    showResultUI(); // 결과 화면 호출
+    showResultUI(); 
 }
 
 function updateBuffUI() {
@@ -774,7 +787,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 // ============================================================
-// [6. 관리 및 데이터 (엑셀 파싱 수정됨)]
+// [6. 관리 및 데이터 (엑셀/오답노트)]
 // ============================================================
 function startReview() {
     if (vocabulary.length === 0) return showToast("데이터 없음", 'error');
@@ -802,7 +815,7 @@ function submitReview(choice) {
     if (choice === realAns) { playSound('correct'); fb.style.color = "#2979FF"; fb.innerText = "정답!"; } 
     else { playSound('wrong'); fb.style.color = "#D32F2F"; fb.innerText = `땡! 정답: ${realAns}`; currentReviewData.wrongCount++; updateWordStats(currentReviewData); }
     
-    // 오답노트에서도 해설 보여주기
+    // 오답 노트에서도 해설 표시
     if (currentReviewData.desc) {
         const d = document.getElementById('review-desc'); 
         d.style.display = 'block'; d.innerText = "💡 " + currentReviewData.desc;
@@ -824,7 +837,7 @@ function addTextWord() {
     tx.oncomplete=()=>{showToast("등록 완료"); loadVocabulary(); document.getElementById('new-q').value=""; document.getElementById('new-desc').value="";};
 }
 
-// ★ 엑셀 일괄 등록 (수정됨) ★
+// ★ 엑셀 파싱 (해설 포함) ★
 function parseExcel() {
     const v = document.getElementById('excel-input').value.trim();
     if(!v) return showToast("내용 없음", 'error');
@@ -840,7 +853,7 @@ function parseExcel() {
             let a = p[1].trim().toUpperCase(); 
             if(a==='0')a='X'; if(a==='1')a='O';
             
-            // 3번째 칸(해설) 파싱 추가
+            // 해설 파싱
             let d = "";
             if(p.length >= 3 && p[2]) d = p[2].trim();
 
@@ -859,7 +872,6 @@ function renderWordList() {
     vocabulary.forEach(v => {
         const d = document.createElement('div');
         d.style = "background:#FAFAFA; padding:8px; border-bottom:1px solid #eee; display:flex; gap:5px; align-items:center;";
-        // 리스트에서도 해설이 살짝 보이도록 추가
         d.innerHTML = `<input type="checkbox" class="word-check" data-id="${v.id}">
             <div style="flex:1; font-size:0.9rem;">
                 <b style="color:${v.a==='O'?'#2979FF':'#D32F2F'}">[${v.a}]</b> ${v.q}
