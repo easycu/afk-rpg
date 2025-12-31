@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>암기 용사: OX Edition</title>
+<title>암기 용사: Final OX</title>
 <style>
 /* --- [1. 기본 설정 & 앱 레이아웃] --- */
 :root { --p: #2e7d32; --s: #66bb6a; --bg: #f1f8e9; --text: #1b5e20; --danger: #e53935; --gold: #fdd835; --excel: #1b5e20; --o-color: #1976d2; --x-color: #d32f2f; }
@@ -24,11 +24,11 @@ textarea { user-select: text; -webkit-user-select: text; font-size: 16px !import
 .menu-btn:active { transform: scale(0.98); }
 .btn-game { background: var(--p); }
 .btn-manage { background: #795548; }
+.btn-review { background: #ef6c00; } /* 오답노트 주황색 */
 .toast { position: fixed; bottom: 40%; left: 50%; transform: translate(-50%, 20px); background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px; border-radius: 20px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 9999; text-align: center; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-/* --- [3. 게임 화면 UI (레이아웃 고정 최적화)] --- */
-/* (1) 전투 화면: 25% 고정 (줄어들지 않음) */
+/* --- [3. 게임 화면 UI] --- */
 #area-battle { 
     flex: 0 0 25%; flex-shrink: 0;
     position: relative; 
@@ -51,8 +51,7 @@ textarea { user-select: text; -webkit-user-select: text; font-size: 16px !import
 .battle-field { 
     flex: 1; width: 100%; 
     display: flex; justify-content: space-between; align-items: flex-end; 
-    padding: 0 12% 10px 12%; 
-    position: relative; 
+    padding: 0 12% 10px 12%; position: relative; 
 }
 .sprite { font-size: 3rem; position: relative; transition: transform 0.1s; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.2)); }
 .sprite.hero { transform: scaleX(-1); }
@@ -66,7 +65,6 @@ textarea { user-select: text; -webkit-user-select: text; font-size: 16px !import
 .dmg-text { position: absolute; font-weight: 900; color: #fff; font-size: 1.2rem; text-shadow: -1px -1px 0 #000; pointer-events: none; animation: floatUp 0.8s forwards; z-index: 20; white-space: nowrap;}
 .crit-text { color: var(--gold) !important; font-size: 1.5rem !important; }
 
-/* (2) 스탯 화면: 6% 고정 */
 #area-stat { 
     flex: 0 0 6%; flex-shrink: 0;
     background: #263238; color: #fff; 
@@ -78,74 +76,63 @@ textarea { user-select: text; -webkit-user-select: text; font-size: 16px !import
 .stat-val { font-weight: bold; font-family: monospace; font-size: 0.85rem; color: var(--s); }
 .buff-badge { position:absolute; top:-15px; left:50%; transform:translateX(-50%); background: var(--danger); color: #fff; border-radius: 3px; padding: 1px 4px; font-size: 0.6rem; animation: pulse 1s infinite; display: none; }
 
-/* (3) 퀴즈 화면 (내부 스크롤 적용) */
+/* (4) 퀴즈 화면 (게임용) */
 #area-quiz { 
-    flex: 1; 
-    padding: 10px 15px; background: #fff; 
-    display: flex; flex-direction: column; align-items: center; 
-    overflow: hidden; /* 전체 화면 밀림 방지 */
+    flex: 1; padding: 10px 15px; background: #fff; 
+    display: flex; flex-direction: column; align-items: center; overflow: hidden; 
 }
-
-/* 문제 텍스트 영역: 남는 공간 차지하되 길어지면 내부 스크롤 */
 #q-text-container {
-    flex: 1; width: 100%;
-    margin-bottom: 10px;
-    overflow-y: auto; 
+    flex: 1; width: 100%; margin-bottom: 10px; overflow-y: auto; 
     display: flex; align-items: center; justify-content: center;
-    border: 1px solid #eee; border-radius: 8px; padding: 10px;
-    background: #fafafa;
+    border: 1px solid #eee; border-radius: 8px; padding: 10px; background: #fafafa;
 }
-#q-text { 
-    font-size: 1.1rem; font-weight: bold; text-align: center; line-height: 1.5; 
-    width: 100%; white-space: pre-wrap;
-}
-
-/* OX 버튼 영역: 고정 높이 */
-.ox-btn-group {
-    flex: 0 0 auto;
-    width: 100%; display: flex; gap: 15px; margin-bottom: 10px;
-    height: 80px; /* 버튼 높이 고정 */
-}
+#q-text { font-size: 1.1rem; font-weight: bold; text-align: center; line-height: 1.5; width: 100%; white-space: pre-wrap; }
+.ox-btn-group { flex: 0 0 auto; width: 100%; display: flex; gap: 15px; margin-bottom: 10px; height: 80px; }
 .btn-ox {
     flex: 1; border: none; border-radius: 12px;
     font-size: 2.5rem; font-weight: 900; color: #fff;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.2);
-    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.2); transition: 0.1s;
 }
 .btn-ox:active { transform: translateY(4px); box-shadow: none; }
 .btn-o { background: var(--o-color); }
 .btn-x { background: var(--x-color); }
-
-/* 해설 영역: 나타나면 남는 공간 분배, 내부 스크롤 */
 #q-desc-display { 
-    display: none; /* 평소엔 숨김 */
-    flex: 0.8; /* 해설이 나오면 문제와 공간을 나눔 */
-    width: 100%; 
+    display: none; flex: 0.8; width: 100%; 
     padding: 10px; background: #e3f2fd; border-radius: 8px; 
     color: #1565c0; font-size: 0.95rem; line-height: 1.4;
-    overflow-y: auto; white-space: pre-wrap; text-align: left;
-    margin-bottom: 10px;
+    overflow-y: auto; white-space: pre-wrap; text-align: left; margin-bottom: 10px;
 }
-
-/* 정답/오답 피드백 텍스트 */
-#q-feedback { 
-    flex: 0 0 auto; height: 24px; margin-bottom: 5px; 
-    font-size: 1rem; font-weight: bold; text-align: center; 
-}
-
+#q-feedback { flex: 0 0 auto; height: 24px; margin-bottom: 5px; font-size: 1rem; font-weight: bold; text-align: center; }
 #btn-next-quiz { 
     display: none; width: 100%; flex: 0 0 auto; padding: 12px; 
     background: #FF9800; color: #fff; border: none; border-radius: 10px; 
     font-weight: bold; font-size: 1.1rem; animation: pulse 1s infinite;
 }
-
-/* (4) 메뉴 화면 */
 #area-menu { 
     flex: 0 0 8%; min-height: 40px; flex-shrink: 0;
     background: #f5f5f5; border-top: 1px solid #ddd; 
     display: flex; align-items: center; justify-content: space-between; padding: 0 10px; 
 }
 .small-btn { padding: 6px 10px; background: #fff; border: 1px solid #ccc; border-radius: 6px; font-size: 0.75rem; color: #555; }
+
+/* (5) 오답 노트 화면 (별도 팝업 스타일) */
+#screen-review {
+    background: #fff5e6; /* 연한 주황 배경 */
+    padding: 20px;
+}
+.review-header {
+    flex: 0 0 auto; margin-bottom: 20px; text-align: center;
+}
+.review-card {
+    flex: 1; display: flex; flex-direction: column; 
+    background: #fff; border-radius: 15px; padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px;
+    overflow: hidden;
+}
+.wrong-badge {
+    background: var(--danger); color: #fff; padding: 4px 8px; border-radius: 4px;
+    font-size: 0.8rem; font-weight: bold; display: inline-block; margin-bottom: 10px;
+}
 
 /* 관리자 모달 등 */
 #excel-area { display:none; width:100%; background:#f9f9f9; padding:10px; border:2px dashed var(--excel); border-radius:10px; margin-bottom:10px; }
@@ -167,7 +154,7 @@ textarea { user-select: text; -webkit-user-select: text; font-size: 16px !import
     <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;">
         <div style="font-size:4rem;margin-bottom:10px;">🛡️</div>
         <h1 style="color:var(--text);margin-bottom:5px;">암기 용사</h1>
-        <p style="color:#666;font-size:0.9rem;">OX Edition</p>
+        <p style="color:#666;font-size:0.9rem;">Final OX</p>
         <div style="background:#fff;padding:15px;border-radius:15px;margin:30px 0;width:80%;box-shadow:0 2px 10px rgba(0,0,0,0.05);">
             <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span>최고 스테이지</span><b style="color:var(--p)" id="home-best-stage">1-1</b></div>
             <div style="display:flex;justify-content:space-between;"><span>총 처치</span><b id="home-kill-count">0</b></div>
@@ -175,6 +162,7 @@ textarea { user-select: text; -webkit-user-select: text; font-size: 16px !import
     </div>
     <div style="padding:20px;">
         <button id="btn-start" class="menu-btn btn-game" onclick="startGame()" disabled>게임 시작 (로딩 중)</button>
+        <button class="menu-btn btn-review" onclick="startReview()">📕 오답 노트</button>
         <button class="menu-btn btn-manage" onclick="showScreen('manage')">문제 관리</button>
     </div>
 </div>
@@ -210,11 +198,43 @@ textarea { user-select: text; -webkit-user-select: text; font-size: 16px !import
         </div>
 
         <div id="q-feedback"></div>
-        <div id="q-desc-display"></div> <button id="btn-next-quiz" onclick="manualNextQuiz()">🔜 다음 문제</button>
+        <div id="q-desc-display"></div> 
+        
+        <button id="btn-next-quiz" onclick="manualNextQuiz()">🔜 다음 문제</button>
     </div>
     <div id="area-menu">
         <button class="small-btn" onclick="stopGame()">🏠 홈</button><span style="font-size:0.7rem; color:#888;">자동 공격 중</span><button class="small-btn" onclick="toggleSound()">🔊 소리</button>
     </div>
+</div>
+
+<div id="screen-review" class="screen">
+    <div class="review-header">
+        <h2 style="color:#ef6c00;">📕 오답 노트</h2>
+        <p id="review-status" style="font-size:0.9rem; color:#666;">총 0개의 오답 문제</p>
+    </div>
+    
+    <div class="review-card">
+        <div style="text-align:center; margin-bottom:10px;">
+            <span id="review-badge" class="wrong-badge">3번 틀림</span>
+        </div>
+        <div id="review-q-container" style="flex:1; overflow-y:auto; display:flex; align-items:center; justify-content:center; margin-bottom:15px; border-bottom:1px solid #eee;">
+            <div id="review-q-text" style="font-size:1.1rem; font-weight:bold; text-align:center; line-height:1.5;">문제</div>
+        </div>
+        
+        <div id="review-ox-btns" class="ox-btn-group" style="height:60px;">
+            <button class="btn-ox btn-o" onclick="submitReview('O')">O</button>
+            <button class="btn-ox btn-x" onclick="submitReview('X')">X</button>
+        </div>
+        
+        <div id="review-feedback" style="text-align:center; font-weight:bold; height:24px; margin-bottom:5px;"></div>
+        
+        <div id="review-desc" style="display:none; height:100px; overflow-y:auto; background:#f5f5f5; padding:10px; border-radius:8px; font-size:0.9rem; margin-bottom:10px;">
+        </div>
+
+        <button id="btn-review-next" onclick="nextReview()" style="display:none; width:100%; padding:10px; background:#ef6c00; color:#fff; border:none; border-radius:8px; font-weight:bold;">다음 문제</button>
+    </div>
+
+    <button class="menu-btn" style="background:#8d6e63;" onclick="stopReview()">🏠 홈으로 나가기</button>
 </div>
 
 <div id="screen-manage" class="screen" style="padding:15px; overflow-y:auto;">
@@ -257,8 +277,8 @@ textarea { user-select: text; -webkit-user-select: text; font-size: 16px !import
 // ============================================================
 // [1. 전역 변수 및 설정]
 // ============================================================
-const DB_NAME = "HeroQuizDB";
-const DB_VERSION = 5; 
+const DB_NAME = "HeroQuizDB_Final";
+const DB_VERSION = 1; 
 let db;
 let vocabulary = [];
 
@@ -269,7 +289,8 @@ let player = {
     cdmg: 150,     // 치명타 피해 (%)
     aspd: 1.0,     // 공격 속도
     maxStage: 1,   // 최고 스테이지
-    killCount: 0   // 총 처치 수
+    killCount: 0,  // 총 처치 수
+    totalTurns: 0  // [NEW] 앱 전체 누적 턴 (라이트너 시스템용 시간축)
 };
 
 // 게임 상태 변수
@@ -277,11 +298,15 @@ let gameRunning = false;
 let lastTime = 0;
 let attackTimer = 0;
 let combo = 0;
-let comboTimer = null; // 버프 타이머
+let comboTimer = null; 
 let currentStage = 1;
 let subStage = 0; 
 let stageTimeLeft = 30;
 let mob = { hp: 100, maxHp: 100, isBoss: false };
+
+// 오답 노트 관련 변수
+let reviewQueue = []; // 오답 문제들만 모아둘 큐
+let currentReviewData = null;
 
 // 오디오 컨텍스트
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -295,7 +320,6 @@ window.onload = function() {
     initDB();
     loadPlayerStats();
     
-    // 로딩 완료 처리
     setTimeout(() => {
         const loader = document.getElementById('loading-overlay');
         if(loader && loader.style.display !== 'none') {
@@ -313,17 +337,13 @@ function initDB() {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = function(e) {
         db = e.target.result;
-        if (db.objectStoreNames.contains('vocab')) {
-            db.deleteObjectStore('vocab');
+        if (!db.objectStoreNames.contains('vocab')) {
+            db.createObjectStore('vocab', { keyPath: 'id', autoIncrement: true });
         }
-        db.createObjectStore('vocab', { keyPath: 'id', autoIncrement: true });
     };
     req.onsuccess = function(e) {
         db = e.target.result;
         loadVocabulary();
-    };
-    req.onerror = function(e) {
-        document.getElementById('loading-overlay').style.display = 'none';
     };
 }
 
@@ -333,6 +353,14 @@ function loadVocabulary() {
     const store = tx.objectStore('vocab');
     store.getAll().onsuccess = function(e) {
         vocabulary = e.target.result || [];
+        
+        // 데이터 무결성 검사 (필드 없으면 기본값 세팅)
+        vocabulary.forEach(v => {
+            if (typeof v.wrongCount === 'undefined') v.wrongCount = 0; // 틀린 횟수
+            if (typeof v.lv === 'undefined') v.lv = 0;       // 숙련도
+            if (typeof v.nextTurn === 'undefined') v.nextTurn = 0; // 다음에 등장할 턴(Global Turn 기준)
+        });
+
         updateHomeUI();
         if(document.getElementById('screen-manage').classList.contains('active')) {
             renderWordList();
@@ -341,11 +369,12 @@ function loadVocabulary() {
 }
 
 function savePlayerStats() {
-    localStorage.setItem('hero_stats_ox_v1', JSON.stringify(player));
+    localStorage.setItem('hero_stats_ox_final', JSON.stringify(player));
 }
 function loadPlayerStats() {
-    const data = localStorage.getItem('hero_stats_ox_v1');
+    const data = localStorage.getItem('hero_stats_ox_final');
     if (data) player = { ...player, ...JSON.parse(data) };
+    if (typeof player.totalTurns === 'undefined') player.totalTurns = 0; // 구버전 호환
     updateHomeUI();
 }
 
@@ -355,17 +384,55 @@ function updateHomeUI() {
 }
 
 // ============================================================
-// [3. 전투 메인 로직]
+// [3. 오답 노트 시스템 (별도 화면)]
+// ============================================================
+function startReview() {
+    if (vocabulary.length === 0) return showToast("등록된 문제가 없습니다.", 'error');
+
+    // 1. 한번이라도 틀린 적이 있는(wrongCount > 0) 문제 필터링
+    reviewQueue = vocabulary.filter(v => v.wrongCount > 0);
+
+    if (reviewQueue.length === 0) {
+        return showToast("아직 틀린 문제가 없습니다! 훌륭해요!", 'success');
+    }
+
+    // 2. 많이 틀린 순서(내림차순)로 정렬
+    reviewQueue.sort((a, b) => b.wrongCount - a.wrongCount);
+
+    // 3. 화면 전환
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-review').classList.add('active');
+    
+    document.getElementById('review-status').innerText = `총 ${reviewQueue.length}개의 오답 문제`;
+    
+    // 첫 문제 시작
+    nextReview();
+}
+
+function stopReview() {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-home').classList.add('active');
+    updateHomeUI();
+}
+
+// ============================================================
+// [4. 전투 메인 로직]
 // ============================================================
 function startGame() {
     if (vocabulary.length < 1) return showToast("문제가 최소 1개 있어야 합니다!", 'error');
     if (audioCtx.state === 'suspended') audioCtx.resume();
+    
+    // 게임 시작 시 덱 준비 (Global Turn 시스템 적용)
+    // Part 3에 있는 함수지만, 호출 순서상 문제 없음
+    prepareDeck(); 
+
     document.getElementById('screen-home').classList.remove('active');
     document.getElementById('screen-game').classList.add('active');
     currentStage = player.maxStage; 
     startStage(currentStage);
     gameRunning = true;
     lastTime = performance.now();
+    
     nextQuiz(); // 퀴즈 시작
     requestAnimationFrame(gameLoop);
 }
@@ -506,76 +573,106 @@ function updateStatUI() {
 }
 /* [파트 2에서 이어짐] */
 // ============================================================
-// [4. 퀴즈 시스템 (OX 전용 & 7초 버프)]
+// [5. 퀴즈 시스템 (Global Turn 라이트너 시스템)]
 // ============================================================
 let currentQuizData = null;
 
+// 게임 시작 시, 혹은 문제가 넘어갈 때 덱 상태 점검
+function prepareDeck() {
+    // 1. 현재 턴(totalTurns)보다 nextTurn이 작거나 같은(쿨타임 찬) 문제 찾기
+    let eligible = vocabulary.filter(v => v.nextTurn <= player.totalTurns);
+
+    // 2. 만약 풀 문제가 하나도 없다면? (미래의 문제 중 가장 빨리 돌아오는 것 땡겨옴)
+    if (eligible.length === 0 && vocabulary.length > 0) {
+        vocabulary.sort((a, b) => a.nextTurn - b.nextTurn);
+        eligible.push(vocabulary[0]);
+    }
+    
+    return eligible;
+}
+
 function nextQuiz() {
-    if (vocabulary.length === 0) {
+    const deck = prepareDeck();
+    if (deck.length === 0) {
         document.getElementById('q-text').innerText = "문제 관리 메뉴에서\n문제를 등록해주세요!";
         return;
     }
 
-    // UI 상태 초기화 (새 문제)
-    document.getElementById('ox-buttons').style.display = 'flex'; // OX 버튼 보이기
-    document.getElementById('btn-next-quiz').style.display = 'none'; // 다음 버튼 숨기기
-    
+    // 덱 안에서 가중치 랜덤 선택 (레벨이 낮을수록 자주 등장)
+    const weightedPool = [];
+    deck.forEach(v => {
+        const weight = Math.max(1, 6 - v.lv); // Lv0=6장, Lv5=1장
+        for(let i=0; i<weight; i++) weightedPool.push(v);
+    });
+
+    const idx = Math.floor(Math.random() * weightedPool.length);
+    currentQuizData = weightedPool[idx];
+
+    // UI 초기화
+    document.getElementById('ox-buttons').style.display = 'flex'; 
+    document.getElementById('btn-next-quiz').style.display = 'none'; 
     document.getElementById('q-feedback').innerText = "";
-    const descDisplay = document.getElementById('q-desc-display');
-    descDisplay.style.display = 'none';
-    descDisplay.innerText = "";
-
-    // 랜덤 문제 선택
-    const idx = Math.floor(Math.random() * vocabulary.length);
-    currentQuizData = vocabulary[idx];
-
-    // 텍스트 표시
+    document.getElementById('q-desc-display').style.display = 'none';
+    
     document.getElementById('q-text').innerText = currentQuizData.q;
 }
 
-// [수동 넘기기] 버튼 클릭 시 실행
 function manualNextQuiz() {
     playSound('click'); 
     nextQuiz();
 }
 
-// OX 버튼 클릭 처리
 function submitAnswer(choice) {
     if (!currentQuizData) return;
-
-    // 이미 결과가 나온 상태면 무시
     if (document.getElementById('btn-next-quiz').style.display === 'block') return;
 
-    const realAns = currentQuizData.a.trim().toUpperCase(); // DB에는 'O' 또는 'X'로 저장됨
-    
-    if (choice === realAns) handleCorrect();
-    else handleWrong();
+    const realAns = currentQuizData.a.trim().toUpperCase();
+    player.totalTurns++; // 전체 턴 증가 (시간 흐름)
+
+    if (choice === realAns) {
+        // [정답] 레벨 UP, 휴식 턴 증가
+        handleCorrect();
+        currentQuizData.lv = Math.min(5, currentQuizData.lv + 1);
+        // 공식: 현재턴 + (레벨*3 + 2) -> 나중에 등장
+        currentQuizData.nextTurn = player.totalTurns + (currentQuizData.lv * 3) + 2; 
+    } else {
+        // [오답] 레벨 초기화, 즉시 등장, 오답카운트 증가
+        handleWrong();
+        currentQuizData.lv = 0;
+        currentQuizData.nextTurn = player.totalTurns; // 바로 다시 등장
+        currentQuizData.wrongCount++; // 오답 횟수 기록
+    }
+
+    // 변경된 단어 정보 DB 저장
+    updateWordStats(currentQuizData);
+    savePlayerStats(); // totalTurns 저장
 }
 
-// 결과 공통 처리 (정답/오답 시 화면 멈춤 및 해설 표시)
+function updateWordStats(word) {
+    const tx = db.transaction(['vocab'], 'readwrite');
+    const store = tx.objectStore('vocab');
+    store.put(word); // 수정된 정보 업데이트
+}
+
 function showResultUI() {
     const descDisplay = document.getElementById('q-desc-display');
-    
-    // 해설이 있으면 표시
     if (currentQuizData.desc && currentQuizData.desc.trim() !== "") {
         descDisplay.style.display = 'block';
         descDisplay.innerText = "💡 해설:\n" + currentQuizData.desc;
     } else {
         descDisplay.style.display = 'none';
     }
-
-    // OX 버튼 숨기고 다음 문제 버튼 표시 (레이아웃 교체)
     document.getElementById('ox-buttons').style.display = 'none';
     const nextBtn = document.getElementById('btn-next-quiz');
     nextBtn.style.display = 'block';
-    nextBtn.focus(); // 키보드 접근성/포커스 이동
+    nextBtn.focus(); 
 }
 
 function handleCorrect() {
     playSound('correct');
     combo++;
     updateBuffUI();
-    resetComboTimer(); // 7초 타이머
+    resetComboTimer(); 
 
     const rand = Math.random();
     let msg = "";
@@ -584,7 +681,6 @@ function handleCorrect() {
     else { player.cdmg += 1; msg = "💪치피 +1%"; }
     
     updateStatUI();
-    savePlayerStats();
     heroAttack(); 
 
     const fb = document.getElementById('q-feedback');
@@ -621,7 +717,6 @@ function updateBuffUI() {
 
 function resetComboTimer() {
     if (comboTimer) clearTimeout(comboTimer);
-    // [변경 요청] 버프 유지 시간 7초로 설정
     comboTimer = setTimeout(() => {
         if (combo > 0) {
             showToast("콤보 종료", 'info');
@@ -632,7 +727,61 @@ function resetComboTimer() {
 }
 
 // ============================================================
-// [5. 오디오 시스템]
+// [6. 오답 노트 전용 로직]
+// ============================================================
+function nextReview() {
+    if (reviewQueue.length === 0) {
+        alert("모든 오답 문제를 복습했습니다!");
+        stopReview();
+        return;
+    }
+
+    // 큐에서 하나 꺼냄 (이미 정렬되어 있음)
+    currentReviewData = reviewQueue.shift();
+    
+    // UI 업데이트
+    document.getElementById('review-q-text').innerText = currentReviewData.q;
+    document.getElementById('review-badge').innerText = `${currentReviewData.wrongCount}번 틀림`;
+    
+    // 버튼 초기화
+    document.getElementById('review-ox-btns').style.display = 'flex';
+    document.getElementById('btn-review-next').style.display = 'none';
+    document.getElementById('review-feedback').innerText = "";
+    document.getElementById('review-desc').style.display = 'none';
+}
+
+function submitReview(choice) {
+    if(!currentReviewData) return;
+    
+    const realAns = currentReviewData.a.trim().toUpperCase();
+    const fb = document.getElementById('review-feedback');
+    
+    if (choice === realAns) {
+        playSound('correct');
+        fb.style.color = "var(--p)";
+        fb.innerText = "정답입니다!";
+    } else {
+        playSound('wrong');
+        fb.style.color = "var(--danger)";
+        fb.innerText = `오답! 정답은 [${realAns}] 입니다.`;
+        // 오답노트에서 또 틀리면 카운트 증가
+        currentReviewData.wrongCount++;
+        updateWordStats(currentReviewData);
+    }
+    
+    // 해설 표시
+    if (currentReviewData.desc) {
+        const desc = document.getElementById('review-desc');
+        desc.style.display = 'block';
+        desc.innerText = "💡 " + currentReviewData.desc;
+    }
+    
+    document.getElementById('review-ox-btns').style.display = 'none';
+    document.getElementById('btn-review-next').style.display = 'block';
+}
+
+// ============================================================
+// [7. 오디오 및 유틸]
 // ============================================================
 function toggleSound() {
     isSoundOn = !isSoundOn;
@@ -641,20 +790,16 @@ function toggleSound() {
 
 const snd = {
     click: (t) => {
-        const o = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
+        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
         o.type = 'triangle'; o.frequency.setValueAtTime(600, t);
         g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-        o.connect(g); g.connect(audioCtx.destination);
-        o.start(t); o.stop(t + 0.05);
+        o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.05);
     },
     attack: (t) => {
-        const o = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
+        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
         o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(0.01, t + 0.1);
         g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-        o.connect(g); g.connect(audioCtx.destination);
-        o.start(t); o.stop(t + 0.1);
+        o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.1);
     },
     correct: (t) => {
         const g = audioCtx.createGain(); g.gain.value = 0.1; g.connect(audioCtx.destination);
@@ -664,19 +809,15 @@ const snd = {
         });
     },
     wrong: (t) => {
-        const o = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
+        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
         o.type = 'sawtooth'; o.frequency.setValueAtTime(100, t); o.frequency.linearRampToValueAtTime(50, t + 0.3);
         g.gain.setValueAtTime(0.1, t); g.gain.linearRampToValueAtTime(0, t + 0.3);
-        o.connect(g); g.connect(audioCtx.destination);
-        o.start(t); o.stop(t + 0.3);
+        o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.3);
     },
     fail: (t) => {
-        const o = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
+        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
         o.type = 'triangle'; o.frequency.setValueAtTime(300, t); o.frequency.linearRampToValueAtTime(100, t + 1);
-        g.gain.value = 0.1; o.connect(g); g.connect(audioCtx.destination);
-        o.start(t); o.stop(t + 1);
+        g.gain.value = 0.1; o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 1);
     },
     clear: (t) => {
         const g = audioCtx.createGain(); g.gain.value = 0.1; g.connect(audioCtx.destination);
@@ -694,20 +835,28 @@ function playSound(type) {
     if (snd[type]) snd[type](t);
 }
 
-// 키보드 지원 (왼쪽 화살표=O, 오른쪽 화살표=X)
+// 키보드 지원
 window.addEventListener('keydown', (e) => {
-    if (!gameRunning) return;
-    if (e.key === 'ArrowLeft') submitAnswer('O');
-    else if (e.key === 'ArrowRight') submitAnswer('X');
-    else if (e.key === 'Enter') {
-        if (document.getElementById('btn-next-quiz').style.display === 'block') {
-            manualNextQuiz();
+    // 게임 화면일 때
+    if (document.getElementById('screen-game').classList.contains('active')) {
+        if (e.key === 'ArrowLeft') submitAnswer('O');
+        else if (e.key === 'ArrowRight') submitAnswer('X');
+        else if (e.key === 'Enter') {
+            if (document.getElementById('btn-next-quiz').style.display === 'block') manualNextQuiz();
+        }
+    }
+    // 오답노트 화면일 때
+    else if (document.getElementById('screen-review').classList.contains('active')) {
+        if (e.key === 'ArrowLeft') submitReview('O');
+        else if (e.key === 'ArrowRight') submitReview('X');
+        else if (e.key === 'Enter') {
+            if (document.getElementById('btn-review-next').style.display === 'block') nextReview();
         }
     }
 });
 
 // ============================================================
-// [6. 관리자 기능: 메뉴 및 엑셀]
+// [8. 관리자 기능 & DB IO]
 // ============================================================
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -725,21 +874,22 @@ function escapeHtml(text) {
     return text.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#039;"}[m]));
 }
 
-// 텍스트 문제 등록 (O/X 라디오 버튼 사용)
 function addTextWord() {
     const q = document.getElementById('new-q').value.trim();
     const desc = document.getElementById('new-desc').value.trim();
-    
-    // 라디오 버튼에서 정답 가져오기
     const radios = document.getElementsByName('new-a-radio');
     let a = 'O';
     for(let r of radios) { if(r.checked) a = r.value; }
 
     if (!q) return showToast("문제를 입력하세요", 'error');
     
-    saveToDB({ type: 'text', q: escapeHtml(q), a: a, desc: escapeHtml(desc) });
+    // DB 저장 (초기값 설정)
+    const newWord = { 
+        type: 'text', q: escapeHtml(q), a: a, desc: escapeHtml(desc),
+        lv: 0, nextTurn: 0, wrongCount: 0 
+    };
+    saveToDB(newWord);
     
-    // 입력창 초기화 (정답은 O로 리셋)
     document.getElementById('new-q').value = "";
     document.getElementById('new-desc').value = "";
     radios[0].checked = true; 
@@ -756,20 +906,20 @@ function parseExcel() {
     
     lines.forEach(line => {
         let parts = line.split('\t');
-        if (parts.length < 2) parts = line.split(/ {2,}/); // 탭 없으면 2칸 이상 공백으로 분리
+        if (parts.length < 2) parts = line.split(/ {2,}/); 
         
         if (parts.length >= 2) {
             const q = parts[0].trim();
-            // 정답 정제 (O, X, o, x, 0, 1 등 대응 가능하게 하려면 여기서 처리)
             let rawA = parts[1].trim().toUpperCase();
-            // 간단하게 O/X만 허용하거나 변환
             if (rawA === '0') rawA = 'X';
             if (rawA === '1') rawA = 'O';
-            
             const desc = parts[2] ? parts[2].trim() : ""; 
             
             if (q && (rawA === 'O' || rawA === 'X')) {
-                store.add({ type: 'text', q: escapeHtml(q), a: rawA, desc: escapeHtml(desc) });
+                store.add({ 
+                    type: 'text', q: escapeHtml(q), a: rawA, desc: escapeHtml(desc),
+                    lv: 0, nextTurn: 0, wrongCount: 0 
+                });
                 count++;
             }
         }
@@ -783,133 +933,91 @@ function parseExcel() {
     };
 }
 
-// ============================================================
-// [7. 데이터베이스 실제 입출력 및 목록 UI]
-// ============================================================
 function saveToDB(data) {
     const tx = db.transaction(['vocab'], 'readwrite');
     const store = tx.objectStore('vocab');
     store.add(data);
-    tx.oncomplete = () => {
-        showToast("등록 완료!");
-        loadVocabulary(); 
-    };
+    tx.oncomplete = () => { showToast("등록 완료!"); loadVocabulary(); };
 }
 
-// 단어 목록 렌더링
 function renderWordList() {
     const list = document.getElementById('word-list');
     list.innerHTML = "";
-    
     if (vocabulary.length === 0) {
         list.innerHTML = "<p style='text-align:center; padding:20px; color:#888;'>등록된 문제가 없습니다.</p>";
         return;
     }
-
     vocabulary.forEach(v => {
         const div = document.createElement('div');
         div.style = "background:#fff; padding:10px; border-radius:8px; margin-bottom:8px; display:flex; align-items:center; gap:10px; border:1px solid #eee; box-shadow:0 1px 3px rgba(0,0,0,0.05);";
-        
         const check = document.createElement('input');
-        check.type = "checkbox"; 
-        check.className = "word-check"; 
-        check.dataset.id = v.id;
-
+        check.type = "checkbox"; check.className = "word-check"; check.dataset.id = v.id;
+        
+        const ansColor = v.a === 'O' ? 'var(--o-color)' : 'var(--x-color)';
         const info = document.createElement('div');
         info.style = "flex:1; font-size:0.85rem; overflow:hidden;";
-        
-        // 정답 색상 표시
-        const ansColor = v.a === 'O' ? 'var(--o-color)' : 'var(--x-color)';
-        const ansHtml = `<span style="color:${ansColor}; font-weight:900;">[${v.a}]</span>`;
-
         info.innerHTML = `
-            <div style="margin-bottom:4px; font-weight:bold; line-height:1.3;">${ansHtml} ${v.q}</div>
+            <div style="margin-bottom:4px; font-weight:bold; line-height:1.3;"><span style="color:${ansColor}">[${v.a}]</span> ${v.q}</div>
+            <div style="font-size:0.7rem; color:#888; display:flex; gap:10px;">
+                <span>Lv.${v.lv}</span> <span>오답: ${v.wrongCount}회</span>
+            </div>
             ${v.desc ? `<div style="color:#666; font-size:0.75rem; background:#f5f5f5; padding:3px 6px; border-radius:4px; margin-top:4px;">💡 ${v.desc}</div>` : ""}
         `;
-
-        div.appendChild(check);
-        div.appendChild(info);
-        list.appendChild(div);
+        div.appendChild(check); div.appendChild(info); list.appendChild(div);
     });
 }
 
-// 선택 항목 삭제
 function deleteSelected() {
     const checks = document.querySelectorAll('.word-check:checked');
-    if (checks.length === 0) return showToast("삭제할 항목을 선택하세요.");
-    
-    if (!confirm(`${checks.length}개의 문제를 삭제하시겠습니까?`)) return;
-
+    if (checks.length === 0) return showToast("선택된 항목이 없습니다.");
+    if (!confirm(`${checks.length}개 삭제하시겠습니까?`)) return;
     const tx = db.transaction(['vocab'], 'readwrite');
     const store = tx.objectStore('vocab');
-    
-    checks.forEach(c => {
-        store.delete(Number(c.dataset.id));
-    });
-
-    tx.oncomplete = () => {
-        showToast("삭제되었습니다.");
-        loadVocabulary();
-    };
+    checks.forEach(c => store.delete(Number(c.dataset.id)));
+    tx.oncomplete = () => { showToast("삭제됨"); loadVocabulary(); };
 }
 
-// 전체 선택/해제
 function selectAll() {
     const checks = document.querySelectorAll('.word-check');
     const isAllChecked = Array.from(checks).every(c => c.checked);
     checks.forEach(c => c.checked = !isAllChecked);
 }
 
-// ============================================================
-// [8. 백업 및 복구 (JSON)]
-// ============================================================
 function exportJSON() {
-    if (vocabulary.length === 0) return showToast("백업할 데이터가 없습니다.");
-    
+    if (vocabulary.length === 0) return showToast("데이터 없음");
     const data = JSON.stringify(vocabulary);
     const blob = new Blob([data], {type: "application/json"});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `hero_ox_backup_${new Date().toISOString().slice(0,10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    a.href = url; a.download = `hero_ox_backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.click(); URL.revokeObjectURL(url);
 }
 
 function handleJsonFile(e) {
     const file = e.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (event) => {
         try {
             const imported = JSON.parse(event.target.result);
             if (!Array.isArray(imported)) throw new Error();
-
-            if (!confirm(`${imported.length}개의 데이터를 복구할까요? (기존 데이터와 합쳐집니다)`)) return;
-
+            if (!confirm(`${imported.length}개 복구? (기존 데이터 유지)`)) return;
             const tx = db.transaction(['vocab'], 'readwrite');
             const store = tx.objectStore('vocab');
-            
-            imported.forEach(item => {
-                const newItem = { ...item };
-                delete newItem.id; 
-                store.add(newItem);
+            imported.forEach(item => { 
+                const newItem = { ...item }; delete newItem.id; 
+                // 기존 백업 파일에 새 필드가 없을 수 있으므로 초기화
+                if(typeof newItem.lv === 'undefined') newItem.lv = 0;
+                if(typeof newItem.nextTurn === 'undefined') newItem.nextTurn = 0;
+                if(typeof newItem.wrongCount === 'undefined') newItem.wrongCount = 0;
+                store.add(newItem); 
             });
-
-            tx.oncomplete = () => {
-                showToast("데이터 복구 성공!");
-                loadVocabulary();
-            };
-        } catch(err) {
-            showToast("유효한 백업 파일이 아닙니다.", 'error');
-        }
+            tx.oncomplete = () => { showToast("복구 완료"); loadVocabulary(); };
+        } catch(err) { showToast("파일 오류", 'error'); }
     };
-    reader.readAsText(file);
-    e.target.value = ""; 
+    reader.readAsText(file); e.target.value = ""; 
 }
 
-// 토스트 메시지
 function showToast(msg, type = 'info') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
@@ -917,13 +1025,9 @@ function showToast(msg, type = 'info') {
     toast.innerText = msg;
     if (type === 'error') toast.style.background = "var(--danger)";
     if (type === 'success') toast.style.background = "#43a047";
-    
     container.appendChild(toast);
     setTimeout(() => toast.classList.add('show'), 10);
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
-    }, 2500);
+    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 2500);
 }
 </script>
 </body>
