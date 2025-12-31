@@ -318,23 +318,16 @@ body {
 // ============================================================
 // [1. 전역 변수 및 설정]
 // ============================================================
-const DB_NAME = "HeroQuizDB_Legend_Final_v3"; // 버전 변경 (DB 충돌 방지)
+const DB_NAME = "HeroQuizDB_Legend_Final_v3"; 
 const DB_VERSION = 1; 
 let db;
 let vocabulary = [];
 
-// 플레이어 스탯 (무적 모드: HP/Level 관련 데이터 삭제됨)
 let player = {
-    atk: 10,       
-    crit: 0,       
-    cdmg: 150,     
-    aspd: 1.0,     
-    maxStage: 1,   
-    killCount: 0,  
-    totalTurns: 0  // 시간축 (복습 알고리즘용)
+    atk: 10, crit: 0, cdmg: 150, aspd: 1.0,     
+    maxStage: 1, killCount: 0, totalTurns: 0  
 };
 
-// 게임 상태
 let gameRunning = false;
 let lastTime = 0;
 let attackTimer = 0;
@@ -344,15 +337,11 @@ let currentStage = 1;
 let subStage = 0; 
 let stageTimeLeft = 30;
 
-// 몬스터 상태
 let mob = { hp: 100, maxHp: 100, level: 1, isBoss: false };
-
-// 퀴즈 관련
 let currentQuizData = null;
 let reviewQueue = [];
 let currentReviewData = null;
 
-// 오디오
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let audioCtx = new AudioCtx();
 let isSoundOn = true;
@@ -363,8 +352,6 @@ let isSoundOn = true;
 window.onload = function() {
     initDB();
     loadPlayerStats();
-    
-    // 로딩 화면 제거
     setTimeout(() => {
         const loader = document.getElementById('loading-overlay');
         if(loader) {
@@ -396,7 +383,6 @@ function loadVocabulary() {
     const store = tx.objectStore('vocab');
     store.getAll().onsuccess = function(e) {
         vocabulary = e.target.result || [];
-        // 데이터 무결성 검사
         vocabulary.forEach(v => {
             if (typeof v.wrongCount === 'undefined') v.wrongCount = 0;
             if (typeof v.lv === 'undefined') v.lv = 0;
@@ -409,37 +395,30 @@ function loadVocabulary() {
     };
 }
 
-function savePlayerStats() {
-    localStorage.setItem('hero_stats_legend_final_v3', JSON.stringify(player));
-}
+function savePlayerStats() { localStorage.setItem('hero_stats_legend_final_v3', JSON.stringify(player)); }
 function loadPlayerStats() {
     const data = localStorage.getItem('hero_stats_legend_final_v3');
     if (data) player = { ...player, ...JSON.parse(data) };
     updateHomeUI();
 }
-function updateHomeUI() {
-    document.getElementById('home-best-stage').innerText = `${player.maxStage}-1`; 
-}
+function updateHomeUI() { document.getElementById('home-best-stage').innerText = `${player.maxStage}-1`; }
 
 // ============================================================
-// [3. 게임 로직 (전투 & 애니메이션)]
+// [3. 게임 로직]
 // ============================================================
 function startGame() {
     if (vocabulary.length < 1) return showToast("데이터가 없습니다!", 'error');
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    
     prepareDeck(); 
     showScreen('game');
-
-    // ★ [이미지 설정] 로컬 파일 사용 ★
-    const heroImg = document.getElementById('hero-img');
-    heroImg.src = "player.PNG"; 
+    
+    // 이미지 설정
+    document.getElementById('hero-img').src = "player.PNG"; 
     
     currentStage = player.maxStage; 
     startStage(currentStage);
     gameRunning = true;
     lastTime = performance.now();
-    
     nextQuiz(); 
     requestAnimationFrame(gameLoop);
 }
@@ -463,35 +442,26 @@ function startStage(stg) {
 
 function spawnMob() {
     const isBoss = subStage === 2; 
-    // 체력 기하급수 증가 (복리)
     let hp = Math.floor(200 * Math.pow(1.08, currentStage - 1));
     if (isBoss) hp *= 4; 
     
     const level = (currentStage * 3) + subStage + 1;
     mob = { hp: hp, maxHp: hp, level: level, isBoss: isBoss };
     
-    // 몬스터 이미지 (PokeAPI)
     let mobId;
     if (isBoss) mobId = (currentStage * 10) + 100 + Math.floor(Math.random() * 50);
     else mobId = (currentStage * 5) + (subStage * 2) + Math.floor(Math.random() * 20);
-    
     if (mobId > 898) mobId = (mobId % 898) + 1;
     if (mobId < 1) mobId = 1;
 
     const mobImg = document.getElementById('mob-img');
     mobImg.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${mobId}.png`;
     
-    // UI 업데이트
     document.getElementById('stage-display').innerText = isBoss ? `BOSS STAGE` : `STAGE ${currentStage}-${subStage + 1}`;
     document.getElementById('mob-lv').innerText = level;
     
-    if (isBoss) {
-        mobImg.style.transform = "scale(1.5)";
-        mobImg.style.filter = "drop-shadow(0 0 5px #D32F2F)";
-    } else {
-        mobImg.style.transform = "scale(1.0)";
-        mobImg.style.filter = "none";
-    }
+    if (isBoss) { mobImg.style.transform = "scale(1.5)"; mobImg.style.filter = "drop-shadow(0 0 5px #D32F2F)"; } 
+    else { mobImg.style.transform = "scale(1.0)"; mobImg.style.filter = "none"; }
     
     updateMobHpUI();
 }
@@ -509,7 +479,6 @@ function gameLoop(timestamp) {
     bar.style.width = Math.max(0, pct) + "%";
     bar.style.background = stageTimeLeft < 5 ? "#D32F2F" : "#FFD600";
     
-    // 공격 속도 로직
     let totalAspd = player.aspd + (combo * 0.15);
     let currentAspd = Math.min(3.0, totalAspd);
     document.getElementById('stat-aspd').innerText = currentAspd.toFixed(1);
@@ -531,34 +500,25 @@ function handleStageFail() {
     startStage(currentStage);
 }
 
-// ★ 공격 애니메이션 (절제된 돌진 Lunge) ★
 function heroAttack() {
     const hero = document.getElementById('hero-img');
     const mobEl = document.getElementById('mob-img');
-
-    // 1. 플레이어 공격 (CSS의 tackle 애니메이션 실행)
     hero.classList.remove('attack');
-    void hero.offsetWidth; // 리플로우 강제
+    void hero.offsetWidth; 
     hero.classList.add('attack');
-    
     playSound('attack');
     
-    // 데미지 계산 (무한 치명타 로직 적용)
     const result = calculateInfiniteCrit(player.atk, player.crit, 0);
     mob.hp = Math.max(0, mob.hp - result.damage);
     
-    // 2. 몬스터 피격 (0.15초 후 타격감 표현)
     setTimeout(() => {
         createDamageText(result.damage, result.tier);
         updateMobHpUI();
-        
-        // 몬스터 넉백 & 플래시 효과
         mobEl.classList.remove('hit');
         void mobEl.offsetWidth;
         mobEl.classList.add('hit');
     }, 150); 
     
-    // 처치 확인
     if (mob.hp <= 0) {
         setTimeout(() => {
             player.killCount++;
@@ -568,14 +528,11 @@ function heroAttack() {
                 showToast(`STAGE ${currentStage} 클리어!`, 'success');
                 player.maxStage = Math.max(player.maxStage, currentStage + 1);
                 startStage(currentStage + 1);
-            } else {
-                spawnMob();
-            }
+            } else { spawnMob(); }
         }, 400); 
     }
 }
 
-// [무한 치명타 재귀 함수]
 function calculateInfiniteCrit(dmg, critRate, tier) {
     let currentTierCrit = false;
     let chance = critRate - (tier * 100);
@@ -593,14 +550,8 @@ function createDamageText(dmg, tier) {
     const el = document.createElement('div');
     el.className = 'dmg-text';
     el.innerText = dmg.toLocaleString();
-    
-    if (tier >= 1) {
-        el.style.color = "#FFD600";
-        el.innerText += "!";
-    }
-    el.style.right = "15%"; 
-    el.style.top = "15%";
-    
+    if (tier >= 1) { el.style.color = "#FFD600"; el.innerText += "!"; }
+    el.style.right = "15%"; el.style.top = "15%";
     field.appendChild(el);
     setTimeout(() => el.remove(), 800);
 }
@@ -609,8 +560,7 @@ function updateMobHpUI() {
     const fill = document.getElementById('mob-hp');
     const pct = (mob.hp / mob.maxHp) * 100;
     fill.style.width = pct + "%";
-    if(pct < 30) fill.classList.add('low');
-    else fill.classList.remove('low');
+    if(pct < 30) fill.classList.add('low'); else fill.classList.remove('low');
 }
 
 function updateStatUI() {
@@ -620,12 +570,10 @@ function updateStatUI() {
 }
 
 // ============================================================
-// [4. 퀴즈 시스템 (알고리즘 유지)]
+// [4. 퀴즈 시스템 (수정됨: innerHTML 사용)]
 // ============================================================
 function prepareDeck() {
-    // 복습 알고리즘: nextTurn이 현재 턴보다 작거나 같은 것만 출제
     let eligible = vocabulary.filter(v => v.nextTurn <= player.totalTurns);
-    // 풀 게 없으면 가장 오래된 것 하나 가져옴
     if (eligible.length === 0 && vocabulary.length > 0) {
         vocabulary.sort((a, b) => a.nextTurn - b.nextTurn);
         eligible.push(vocabulary[0]);
@@ -639,7 +587,6 @@ function nextQuiz() {
         document.getElementById('q-text').innerText = "데이터가 없습니다.";
         return;
     }
-    // 가중치 랜덤 (자주 틀린게 더 자주 나옴)
     const weightedPool = [];
     deck.forEach(v => {
         const weight = Math.max(1, 6 - v.lv); 
@@ -648,34 +595,30 @@ function nextQuiz() {
     const idx = Math.floor(Math.random() * weightedPool.length);
     currentQuizData = weightedPool[idx];
 
-    // UI 리셋
     document.getElementById('ox-buttons').style.display = 'flex'; 
     document.getElementById('btn-next-quiz').style.display = 'none'; 
     document.getElementById('q-feedback').innerText = "";
     document.getElementById('q-desc-display').style.display = 'none';
-    document.getElementById('q-text').innerText = currentQuizData.q;
+    
+    // ★ [수정 포인트 1] innerText -> innerHTML (특수문자 정상 출력) ★
+    document.getElementById('q-text').innerHTML = currentQuizData.q;
 }
 
-function manualNextQuiz() {
-    playSound('click'); 
-    nextQuiz();
-}
+function manualNextQuiz() { playSound('click'); nextQuiz(); }
 
 function submitAnswer(choice) {
     if (!currentQuizData) return;
     if (document.getElementById('btn-next-quiz').style.display === 'block') return;
 
     const realAns = currentQuizData.a.trim().toUpperCase();
-    player.totalTurns++; // 시간 경과
+    player.totalTurns++; 
 
     if (choice === realAns) {
         handleCorrect();
-        // [라이트너 알고리즘] 정답 시 레벨 상승 -> 복습 간격 증가
         currentQuizData.lv = Math.min(5, currentQuizData.lv + 1);
         currentQuizData.nextTurn = player.totalTurns + (currentQuizData.lv * 3) + 2; 
     } else {
         handleWrong();
-        // [라이트너 알고리즘] 오답 시 레벨 초기화 -> 즉시 복습
         currentQuizData.lv = 0;
         currentQuizData.nextTurn = player.totalTurns; 
         currentQuizData.wrongCount++; 
@@ -689,12 +632,12 @@ function updateWordStats(word) {
     tx.objectStore('vocab').put(word);
 }
 
-// ★ 해설 표시 (스크롤 박스 연동) ★
 function showResultUI() {
     const descDisplay = document.getElementById('q-desc-display');
     if (currentQuizData.desc && currentQuizData.desc.trim() !== "") {
         descDisplay.style.display = 'block';
-        descDisplay.innerText = "💡 " + currentQuizData.desc;
+        // ★ [수정 포인트 2] 해설도 innerHTML로 변경 ★
+        descDisplay.innerHTML = "💡 " + currentQuizData.desc;
     } else {
         descDisplay.style.display = 'none';
     }
@@ -709,9 +652,7 @@ function handleCorrect() {
     combo++;
     updateBuffUI();
     if(comboTimer) clearTimeout(comboTimer);
-    comboTimer = setTimeout(() => {
-        if(combo > 0) { showToast("콤보 종료"); combo = 0; updateBuffUI(); }
-    }, 8000);
+    comboTimer = setTimeout(() => { if(combo > 0) { showToast("콤보 종료"); combo = 0; updateBuffUI(); } }, 8000);
 
     const rand = Math.random();
     let msg = "";
@@ -721,11 +662,8 @@ function handleCorrect() {
     
     updateStatUI();
     heroAttack(); 
-
-    const fb = document.getElementById('q-feedback');
-    fb.style.color = "#2979FF";
-    fb.innerText = `효과가 굉장했다! (${msg})`;
-    
+    document.getElementById('q-feedback').style.color = "#2979FF";
+    document.getElementById('q-feedback').innerText = `효과가 굉장했다! (${msg})`;
     showResultUI(); 
 }
 
@@ -734,11 +672,8 @@ function handleWrong() {
     combo = 0;
     updateBuffUI();
     if (comboTimer) clearTimeout(comboTimer);
-
-    const fb = document.getElementById('q-feedback');
-    fb.style.color = "#D32F2F";
-    fb.innerText = `공격이 빗나갔다... (정답: ${currentQuizData.a})`;
-    
+    document.getElementById('q-feedback').style.color = "#D32F2F";
+    document.getElementById('q-feedback').innerText = `공격이 빗나갔다... (정답: ${currentQuizData.a})`;
     showResultUI(); 
 }
 
@@ -752,8 +687,7 @@ function updateBuffUI() {
 // ============================================================
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => {
-        s.classList.remove('active');
-        s.style.display = 'none';
+        s.classList.remove('active'); s.style.display = 'none';
     });
     const target = document.getElementById('screen-' + id);
     target.style.display = 'flex';
@@ -769,10 +703,7 @@ function showToast(msg, type = 'info') {
     if (type === 'error') toast.style.background = "#D32F2F";
     container.appendChild(toast);
     requestAnimationFrame(() => { toast.classList.add('show'); });
-    setTimeout(() => { 
-        toast.classList.remove('show'); 
-        setTimeout(() => toast.remove(), 300); 
-    }, 2000);
+    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 2000);
 }
 
 const snd = {
@@ -794,7 +725,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 // ============================================================
-// [6. 관리 및 데이터 (중복 검사 추가됨)]
+// [6. 관리 및 데이터 (수정됨: innerHTML 사용)]
 // ============================================================
 function startReview() {
     if (vocabulary.length === 0) return showToast("데이터 없음", 'error');
@@ -808,7 +739,9 @@ function stopReview() { showScreen('home'); }
 function nextReview() {
     if (reviewQueue.length === 0) { alert("복습 완료!"); stopReview(); return; }
     currentReviewData = reviewQueue.shift();
-    document.getElementById('review-q-text').innerText = currentReviewData.q;
+    // ★ [수정 포인트 3] 오답노트 문제도 innerHTML로 변경 ★
+    document.getElementById('review-q-text').innerHTML = currentReviewData.q;
+    
     document.getElementById('review-badge').innerText = `${currentReviewData.wrongCount}회 틀림`;
     document.getElementById('review-ox-btns').style.display = 'flex';
     document.getElementById('btn-review-next').style.display = 'none';
@@ -822,10 +755,11 @@ function submitReview(choice) {
     if (choice === realAns) { playSound('correct'); fb.style.color = "#2979FF"; fb.innerText = "정답!"; } 
     else { playSound('wrong'); fb.style.color = "#D32F2F"; fb.innerText = `땡! 정답: ${realAns}`; currentReviewData.wrongCount++; updateWordStats(currentReviewData); }
     
-    // 오답 노트 해설 표시
     if (currentReviewData.desc) {
         const d = document.getElementById('review-desc'); 
-        d.style.display = 'block'; d.innerText = "💡 " + currentReviewData.desc;
+        d.style.display = 'block'; 
+        // ★ [수정 포인트 4] 오답노트 해설도 innerHTML로 변경 ★
+        d.innerHTML = "💡 " + currentReviewData.desc;
     }
     document.getElementById('review-ox-btns').style.display = 'none';
     document.getElementById('btn-review-next').style.display = 'block';
@@ -834,7 +768,6 @@ function submitReview(choice) {
 function toggleExcel() { const el = document.getElementById('excel-area'); el.style.display = el.style.display==='none'?'block':'none'; }
 function escapeHtml(t) { if(!t)return t; return t.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#039;"}[m])); }
 
-// ★ 낱개 추가 (중복 검사 적용) ★
 function addTextWord() {
     const q = document.getElementById('new-q').value.trim();
     const d = document.getElementById('new-desc').value.trim();
@@ -842,19 +775,14 @@ function addTextWord() {
     let a = 'O'; for(let r of radios) if(r.checked) a = r.value;
     
     if (!q) return showToast("문제 입력 필요", 'error');
-
-    // 중복 검사
     const isDuplicate = vocabulary.some(v => v.q === escapeHtml(q));
-    if (isDuplicate) {
-        return showToast("이미 등록된 문제입니다!", 'error');
-    }
+    if (isDuplicate) return showToast("이미 등록된 문제입니다!", 'error');
 
     const tx=db.transaction(['vocab'],'readwrite');
     tx.objectStore('vocab').add({ type:'text', q:escapeHtml(q), a:a, desc:escapeHtml(d), lv:0, nextTurn:0, wrongCount:0 });
     tx.oncomplete=()=>{showToast("등록 완료"); loadVocabulary(); document.getElementById('new-q').value=""; document.getElementById('new-desc').value="";};
 }
 
-// ★ 엑셀 일괄 등록 (중복 제거 & 해설 포함) ★
 function parseExcel() {
     const v = document.getElementById('excel-input').value.trim();
     if(!v) return showToast("내용 없음", 'error');
@@ -862,11 +790,8 @@ function parseExcel() {
     const lines = v.split(/\r?\n/).filter(l=>l.trim()!=="");
     let addedCount = 0;
     let duplicateCount = 0;
-    
     const tx = db.transaction(['vocab'], 'readwrite'); 
     const s = tx.objectStore('vocab');
-    
-    // 이번 배치에서 중복 추가 방지를 위한 임시 Set
     const newBatchQs = new Set();
 
     lines.forEach(l => {
@@ -882,30 +807,16 @@ function parseExcel() {
 
             if(q && (a==='O'||a==='X')) {
                 const escapedQ = escapeHtml(q);
-                
-                // 1. 기존 DB에 있는지 확인
                 const existsInDB = vocabulary.some(v => v.q === escapedQ);
-                // 2. 지금 붙여넣은 리스트 내에서 중복인지 확인
                 const existsInBatch = newBatchQs.has(escapedQ);
 
-                if (existsInDB || existsInBatch) {
-                    duplicateCount++;
-                } else {
-                    newBatchQs.add(escapedQ);
-                    s.add({ type:'text', q:escapedQ, a:a, desc:escapeHtml(d), lv:0, nextTurn:0, wrongCount:0 });
-                    addedCount++;
-                }
+                if (existsInDB || existsInBatch) { duplicateCount++; } 
+                else { newBatchQs.add(escapedQ); s.add({ type:'text', q:escapedQ, a:a, desc:escapeHtml(d), lv:0, nextTurn:0, wrongCount:0 }); addedCount++; }
             }
         }
     });
     
-    tx.oncomplete = () => { 
-        // 최종 결과 토스트 메시지
-        showToast(`중복 ${duplicateCount}문제를 제외한 ${addedCount}문제가 등록되었습니다.`, 'success'); 
-        document.getElementById('excel-input').value=""; 
-        toggleExcel(); 
-        loadVocabulary(); 
-    };
+    tx.oncomplete = () => { showToast(`중복 ${duplicateCount}문제를 제외한 ${addedCount}문제가 등록되었습니다.`, 'success'); document.getElementById('excel-input').value=""; toggleExcel(); loadVocabulary(); };
 }
 
 function renderWordList() {
@@ -952,5 +863,3 @@ function handleJsonFile(e) {
     r.readAsText(f); e.target.value = "";
 }
 </script>
-</body>
-</html>
