@@ -31,7 +31,7 @@ body {
     box-shadow: 0 0 40px rgba(0,0,0,0.6);
 }
 
-/* --- [2. 배틀 필드] --- */
+/* --- [2. 배틀 필드 & 구도] --- */
 #area-battle { 
     flex: 0 0 45%; 
     position: relative; 
@@ -41,6 +41,7 @@ body {
     border-bottom: 4px solid #333;
 }
 
+/* 스테이지 바 */
 .stage-info-bar { 
     position: absolute; top: 0; left: 0; width: 100%;
     padding: 8px 15px; 
@@ -55,20 +56,11 @@ body {
     width: 100%; height: 100%; 
 }
 
-/* ★ 생동감 애니메이션 (둥둥 떠다니기) ★ */
-@keyframes floating {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-6px); }
-    100% { transform: translateY(0px); }
-}
-
+/* 캐릭터 위치 잡기 (대각선 구도) */
 .sprite-wrapper { 
     position: absolute; 
     display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
-    /* 애니메이션 적용 */
-    animation: floating 3s ease-in-out infinite;
 }
-
 .mob-zone { top: 15%; right: 10%; width: 120px; height: 120px; z-index: 5; }
 .hero-zone { bottom: 5%; left: 5%; width: 180px; height: 180px; z-index: 10; }
 
@@ -81,6 +73,28 @@ body {
     transition: transform 0.1s;
 }
 
+/* ★ 1. 플레이어 공격 애니메이션 (돌진) ★ */
+/* 원래 크기 1.4배 유지하면서 대각선(50px, -50px)으로 돌진 */
+@keyframes tackle {
+    0% { transform: scale(1.4) translate(0, 0); }
+    50% { transform: scale(1.4) translate(50px, -50px); }
+    100% { transform: scale(1.4) translate(0, 0); }
+}
+
+/* ★ 2. 몬스터 피격 애니메이션 (넉백 & 섬광) ★ */
+/* 원래 크기 1.2배 유지하면서 뒤로 밀리고 하얗게 번쩍임 */
+@keyframes damage {
+    0% { transform: scale(1.2) translate(0, 0); filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2)); }
+    20% { transform: scale(1.2) translate(15px, -15px); filter: brightness(5) sepia(1) saturate(0); } /* 충격 */
+    50% { filter: brightness(5) sepia(1) saturate(0); }
+    100% { transform: scale(1.2) translate(0, 0); filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2)); }
+}
+
+/* 애니메이션 클래스 (JS에서 붙였다 뗌) */
+.sprite.attack { animation: tackle 0.2s ease-out; }
+.sprite.hit { animation: damage 0.3s ease-out; }
+
+/* 그림자 */
 .shadow {
     width: 80%; height: 20px;
     background: rgba(0,0,0,0.15);
@@ -89,7 +103,7 @@ body {
     margin-top: -15px;
 }
 
-/* 몬스터 HP UI (플레이어 HP UI는 제거됨) */
+/* UI 요소 */
 .hp-ui {
     position: absolute;
     background: #fff;
@@ -100,7 +114,6 @@ body {
     box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
 }
 .mob-hp-ui { top: 20px; left: 20px; z-index: 4; }
-
 .hp-bar-bg { width: 100%; height: 8px; background: #ddd; border-radius: 4px; overflow: hidden; margin-top: 3px; border:1px solid #999;}
 .hp-fill { height: 100%; background: #4CAF50; width: 100%; transition: width 0.2s; }
 .hp-fill.low { background: #D32F2F !important; }
@@ -112,64 +125,36 @@ body {
 }
 @keyframes floatUp { 0%{opacity:1; transform:translateY(0)} 100%{opacity:0; transform:translateY(-50px)} }
 
-/* --- [3. 하단 UI & 스크롤 설정] --- */
+/* --- [3. 하단 UI & 스크롤] --- */
 #area-stat { background: #37474F; color: #fff; padding: 5px; font-size: 0.8rem; display:flex; justify-content:space-around; border-bottom:2px solid #222; }
 
-/* 퀴즈 영역 레이아웃 고정 */
 #area-quiz { 
-    flex: 1; 
-    padding: 15px; 
-    background: #fff; 
+    flex: 1; padding: 15px; background: #fff; 
     display: flex; flex-direction: column; align-items: center; 
-    overflow: hidden; /* 전체 스크롤 방지 */
+    overflow: hidden; 
 }
 
-/* ★ 긴 문제 스크롤 처리 ★ */
+/* 문제 스크롤 박스 */
 #q-text-container {
-    flex: 1; /* 남은 공간 차지 */
-    width: 100%; 
-    min-height: 0; /* Flex 자식 스크롤 필수 설정 */
-    margin-bottom: 10px; 
-    padding: 15px; 
-    background: #FAFAFA; 
-    border: 3px solid #333; 
-    border-radius: 10px; 
-    display: flex; 
-    flex-direction: column; /* 텍스트 정렬용 */
-    align-items: center; 
-    justify-content: center;
-    overflow-y: auto; /* 세로 스크롤 허용 */
+    flex: 1; width: 100%; min-height: 0; margin-bottom: 10px; padding: 15px; 
+    background: #FAFAFA; border: 3px solid #333; border-radius: 10px; 
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    overflow-y: auto; 
 }
-#q-text { 
-    font-size: 1.3rem; 
-    text-align: center; 
-    line-height: 1.5; 
-    color: #000; 
-    font-weight:bold; 
-    width: 100%;
-}
+#q-text { font-size: 1.3rem; text-align: center; line-height: 1.5; color: #000; font-weight:bold; width: 100%; }
 
+/* 버튼 그룹 */
 .ox-btn-group { flex: 0 0 auto; width: 100%; display: flex; gap: 10px; height: 70px; margin-bottom: 10px; }
 .btn-ox { flex: 1; border: 2px solid #000; border-radius: 10px; font-size: 2.5rem; color: #fff; font-family: 'Jua'; box-shadow: 2px 4px 0 rgba(0,0,0,0.3); }
 .btn-ox:active { transform: translateY(4px); box-shadow: none; }
 .btn-o { background: var(--o-color); }
 .btn-x { background: var(--x-color); }
 
-/* 해설창 스크롤 처리 */
+/* 해설 스크롤 박스 */
 #q-desc-display {
-    display: none; 
-    flex: 0 0 auto; /* 높이 고정 or 내용물만큼 */
-    max-height: 120px; /* 너무 커지지 않게 제한 */
-    width: 100%; 
-    padding: 10px; 
-    background: #E3F2FD; 
-    border-radius: 10px; 
-    color: #1565C0; 
-    font-size: 0.95rem; 
-    margin-bottom: 10px; 
-    overflow-y: auto; /* 내부 스크롤 */
-    border: 2px solid #2196F3; 
-    line-height: 1.4;
+    display: none; flex: 0 0 auto; max-height: 120px; width: 100%; 
+    padding: 10px; background: #E3F2FD; border-radius: 10px; color: #1565C0; font-size: 0.95rem; 
+    margin-bottom: 10px; overflow-y: auto; border: 2px solid #2196F3; line-height: 1.4;
 }
 
 .screen { display: none; width: 100%; height: 100%; flex-direction: column; }
@@ -182,7 +167,7 @@ body {
 <body>
 <div id="loading-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#212121;z-index:9999;display:flex;justify-content:center;align-items:center;color:#fff;flex-direction:column;">
     <div style="font-size:3rem; margin-bottom:15px; animation:bounce 1s infinite;">⚡</div>
-    <div>배틀 준비 중...</div>
+    <div>배틀 데이터 로딩 중...</div>
 </div>
 <style>@keyframes bounce {0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)}}</style>
 <div id="toast-container"></div>
@@ -201,9 +186,9 @@ body {
             </div>
         </div>
         <div style="padding:20px;">
-            <button id="btn-start" class="menu-btn btn-game" style="background:#FF5252; border-color:#b71c1c;" onclick="startGame()" disabled>모험 시작</button>
-            <button class="menu-btn btn-review" style="background:#FF9800; border-color:#e65100;" onclick="startReview()">오답 노트</button>
-            <button class="menu-btn btn-manage" style="background:#795548; border-color:#3e2723;" onclick="showScreen('manage')">문제 관리</button>
+            <button id="btn-start" class="menu-btn" style="background:#FF5252; border-color:#b71c1c;" onclick="startGame()" disabled>모험 시작</button>
+            <button class="menu-btn" style="background:#FF9800; border-color:#e65100;" onclick="startReview()">오답 노트</button>
+            <button class="menu-btn" style="background:#795548; border-color:#3e2723;" onclick="showScreen('manage')">문제 관리</button>
         </div>
     </div>
 
@@ -263,8 +248,8 @@ body {
         </div>
 
         <div id="area-menu" style="flex:0 0 auto; padding:10px; background:#eee; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #ccc;">
-            <button class="small-btn" onclick="stopGame()" style="padding:8px 15px; border:1px solid #999; border-radius:5px; background:#fff; color:#333;">도망치기</button>
-            <button class="small-btn" onclick="toggleSound()" style="padding:8px 15px; border:1px solid #999; border-radius:5px; background:#fff; color:#333;">소리</button>
+            <button class="menu-btn" onclick="stopGame()" style="width:auto; padding:8px 15px; border:1px solid #999; border-radius:5px; background:#fff; color:#333; font-size:1rem; margin:0;">도망치기</button>
+            <button class="menu-btn" onclick="toggleSound()" style="width:auto; padding:8px 15px; border:1px solid #999; border-radius:5px; background:#fff; color:#333; font-size:1rem; margin:0;">소리</button>
         </div>
     </div>
 
@@ -298,24 +283,23 @@ body {
             </div>
             <textarea id="new-desc" placeholder="해설 (선택사항)" style="width:100%; height:40px; margin-bottom:10px; padding:10px; border:1px solid #ccc;"></textarea>
             <button onclick="addTextWord()" class="menu-btn" style="padding:10px; background:#4CAF50; border-color:#2e7d32;">추가</button>
-            
             <button class="menu-btn" style="background:#388E3C; margin-top:5px; padding:10px; font-size:0.9rem; border-color:#1b5e20;" onclick="toggleExcel()">엑셀 붙여넣기</button>
             <div id="excel-area" style="display:none; margin-top:10px; background:#E8F5E9; padding:10px; border-radius:5px;">
                 <p style="font-size:0.8rem; color:#2E7D32; margin-bottom:5px;">[문제] [탭] [O/X] [탭] [해설]</p>
-                <textarea id="excel-input" style="width:100%; height:80px; padding:5px; border:1px solid #A5D6A7;" placeholder="예: 사과는 과일이다	O	당연한 사실"></textarea>
+                <textarea id="excel-input" style="width:100%; height:80px; padding:5px; border:1px solid #A5D6A7;" placeholder="예: 사과는 과일이다	O	당연하다"></textarea>
                 <button class="menu-btn" style="margin-top:5px; padding:8px; font-size:0.9rem; background:#4CAF50; border-color:#2e7d32;" onclick="parseExcel()">일괄 등록</button>
             </div>
         </div>
         <div style="background:#fff; padding:10px; border-radius:10px; border:2px solid #ccc; margin-bottom:10px;">
             <div style="display:flex; gap:5px; margin-bottom:10px;">
-                <button class="small-btn" style="flex:1; padding:8px; border:1px solid #999; background:#eee;" onclick="selectAll()">전체 선택</button>
-                <button class="small-btn" style="flex:1; padding:8px; border:1px solid #d32f2f; background:#ffcdd2; color:#d32f2f;" onclick="deleteSelected()">삭제</button>
+                <button class="menu-btn" style="flex:1; padding:8px; border:1px solid #999; background:#eee; font-size:0.9rem; color:#333; margin:0;" onclick="selectAll()">전체 선택</button>
+                <button class="menu-btn" style="flex:1; padding:8px; border:1px solid #d32f2f; background:#ffcdd2; color:#d32f2f; font-size:0.9rem; margin:0;" onclick="deleteSelected()">삭제</button>
             </div>
             <div id="word-list" style="max-height:200px; overflow-y:auto;"></div>
         </div>
         <div style="display:flex; gap:10px;">
-            <button class="small-btn" style="flex:1; padding:10px; border:1px solid #999; background:#fff;" onclick="exportJSON()">저장</button>
-            <button class="small-btn" style="flex:1; padding:10px; border:1px solid #999; background:#fff;" onclick="document.getElementById('json-input').click()">불러오기</button>
+            <button class="menu-btn" style="flex:1; padding:10px; border:1px solid #999; background:#fff; color:#333; margin:0;" onclick="exportJSON()">저장</button>
+            <button class="menu-btn" style="flex:1; padding:10px; border:1px solid #999; background:#fff; color:#333; margin:0;" onclick="document.getElementById('json-input').click()">불러오기</button>
         </div>
         <button class="menu-btn" style="background:#546E7A; margin-top:20px; border-color:#37474f;" onclick="showScreen('home')">종료</button>
     </div>
@@ -325,7 +309,7 @@ body {
 // ============================================================
 // [1. 전역 변수 및 설정]
 // ============================================================
-const DB_NAME = "HeroQuizDB_Legend_v2"; 
+const DB_NAME = "HeroQuizDB_Legend_Final"; 
 const DB_VERSION = 1; 
 let db;
 let vocabulary = [];
@@ -351,7 +335,7 @@ let currentStage = 1;
 let subStage = 0; 
 let stageTimeLeft = 30;
 
-// 몬스터 상태 (플레이어 HP 제거)
+// 몬스터 상태
 let mob = { hp: 100, maxHp: 100, level: 1, isBoss: false };
 
 // 퀴즈 관련
@@ -415,10 +399,10 @@ function loadVocabulary() {
 }
 
 function savePlayerStats() {
-    localStorage.setItem('hero_stats_legend_v2', JSON.stringify(player));
+    localStorage.setItem('hero_stats_legend_final', JSON.stringify(player));
 }
 function loadPlayerStats() {
-    const data = localStorage.getItem('hero_stats_legend_v2');
+    const data = localStorage.getItem('hero_stats_legend_final');
     if (data) player = { ...player, ...JSON.parse(data) };
     updateHomeUI();
 }
@@ -427,7 +411,7 @@ function updateHomeUI() {
 }
 
 // ============================================================
-// [3. 게임 로직 (배틀 & 이미지)]
+// [3. 게임 로직 (배틀 & 애니메이션)]
 // ============================================================
 function startGame() {
     if (vocabulary.length < 1) return showToast("데이터가 없습니다!", 'error');
@@ -436,9 +420,9 @@ function startGame() {
     prepareDeck(); 
     showScreen('game');
 
-    // ★ [이미지 설정] 깃허브/로컬 파일 ★
+    // ★ [이미지 설정] 로컬 파일 ★
     const heroImg = document.getElementById('hero-img');
-    heroImg.src = "player.PNG"; // 대소문자 정확히 일치해야 함
+    heroImg.src = "player.PNG"; 
     
     currentStage = player.maxStage; 
     startStage(currentStage);
@@ -532,37 +516,47 @@ function handleStageFail() {
     startStage(currentStage);
 }
 
+// ★ 공격 애니메이션 로직 강화 ★
 function heroAttack() {
     const hero = document.getElementById('hero-img');
-    // 애니메이션 리셋 (강제 리플로우)
+    const mobEl = document.getElementById('mob-img');
+
+    // 1. 플레이어 돌진 (Tackle)
     hero.classList.remove('attack');
-    void hero.offsetWidth; 
+    void hero.offsetWidth; // 리플로우 강제 (애니메이션 리셋)
     hero.classList.add('attack');
     
+    // 사운드 재생
     playSound('attack');
     
+    // 데미지 계산
     const result = calculateInfiniteCrit(player.atk, player.crit, 0);
     mob.hp = Math.max(0, mob.hp - result.damage);
     
-    createDamageText(result.damage, result.tier);
-    updateMobHpUI();
+    // 2. 몬스터 피격 (Knockback & Flash) - 약간의 딜레이 후 적용
+    setTimeout(() => {
+        createDamageText(result.damage, result.tier);
+        updateMobHpUI();
+        
+        mobEl.classList.remove('hit');
+        void mobEl.offsetWidth;
+        mobEl.classList.add('hit'); // CSS의 @keyframes damage 실행
+    }, 150); // 0.15초 딜레이 (돌진해서 때리는 순간)
     
-    const mobEl = document.getElementById('mob-img');
-    mobEl.classList.remove('hit');
-    void mobEl.offsetWidth;
-    mobEl.classList.add('hit');
-    
+    // 처치 확인
     if (mob.hp <= 0) {
-        player.killCount++;
-        subStage++;
-        if (subStage >= 3) { 
-            playSound('clear');
-            showToast(`STAGE ${currentStage} 클리어!`, 'success');
-            player.maxStage = Math.max(player.maxStage, currentStage + 1);
-            startStage(currentStage + 1);
-        } else {
-            spawnMob();
-        }
+        setTimeout(() => { // 피격 모션 보여주고 죽음 처리
+            player.killCount++;
+            subStage++;
+            if (subStage >= 3) { 
+                playSound('clear');
+                showToast(`STAGE ${currentStage} 클리어!`, 'success');
+                player.maxStage = Math.max(player.maxStage, currentStage + 1);
+                startStage(currentStage + 1);
+            } else {
+                spawnMob();
+            }
+        }, 400);
     }
 }
 
@@ -588,8 +582,9 @@ function createDamageText(dmg, tier) {
         el.style.color = "#FFD600";
         el.innerText += "!";
     }
-    el.style.right = "10%"; 
-    el.style.top = "10%";
+    // 몬스터 근처에 뜨도록 위치 조정
+    el.style.right = "15%"; 
+    el.style.top = "15%";
     
     field.appendChild(el);
     setTimeout(() => el.remove(), 800);
@@ -610,7 +605,7 @@ function updateStatUI() {
 }
 
 // ============================================================
-// [4. 퀴즈 시스템]
+// [4. 퀴즈 시스템 (해설 표시 수정됨)]
 // ============================================================
 function prepareDeck() {
     let eligible = vocabulary.filter(v => v.nextTurn <= player.totalTurns);
@@ -673,10 +668,10 @@ function updateWordStats(word) {
     tx.objectStore('vocab').put(word);
 }
 
-// ★ 해설 표시 로직 수정 ★
+// ★ 해설(desc) 표시 로직 ★
 function showResultUI() {
     const descDisplay = document.getElementById('q-desc-display');
-    // 해설이 있으면 보여줌
+    // 해설이 존재하면 block으로 표시
     if (currentQuizData.desc && currentQuizData.desc.trim() !== "") {
         descDisplay.style.display = 'block';
         descDisplay.innerText = "💡 " + currentQuizData.desc;
@@ -711,7 +706,7 @@ function handleCorrect() {
     fb.style.color = "#2979FF";
     fb.innerText = `효과가 굉장했다! (${msg})`;
     
-    showResultUI(); // 결과 화면 표시 (해설 포함)
+    showResultUI(); // 결과 화면 호출
 }
 
 function handleWrong() {
@@ -724,7 +719,7 @@ function handleWrong() {
     fb.style.color = "#D32F2F";
     fb.innerText = `공격이 빗나갔다... (정답: ${currentQuizData.a})`;
     
-    showResultUI(); // 결과 화면 표시 (해설 포함)
+    showResultUI(); // 결과 화면 호출
 }
 
 function updateBuffUI() {
@@ -779,7 +774,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 // ============================================================
-// [6. 관리 및 데이터 (해설 파싱 수정됨)]
+// [6. 관리 및 데이터 (엑셀 파싱 수정됨)]
 // ============================================================
 function startReview() {
     if (vocabulary.length === 0) return showToast("데이터 없음", 'error');
@@ -807,7 +802,7 @@ function submitReview(choice) {
     if (choice === realAns) { playSound('correct'); fb.style.color = "#2979FF"; fb.innerText = "정답!"; } 
     else { playSound('wrong'); fb.style.color = "#D32F2F"; fb.innerText = `땡! 정답: ${realAns}`; currentReviewData.wrongCount++; updateWordStats(currentReviewData); }
     
-    // 오답노트에서도 해설 보이기
+    // 오답노트에서도 해설 보여주기
     if (currentReviewData.desc) {
         const d = document.getElementById('review-desc'); 
         d.style.display = 'block'; d.innerText = "💡 " + currentReviewData.desc;
@@ -829,7 +824,7 @@ function addTextWord() {
     tx.oncomplete=()=>{showToast("등록 완료"); loadVocabulary(); document.getElementById('new-q').value=""; document.getElementById('new-desc').value="";};
 }
 
-// ★ 엑셀 파싱 버그 수정 (해설 3번째 칸 인식) ★
+// ★ 엑셀 일괄 등록 (수정됨) ★
 function parseExcel() {
     const v = document.getElementById('excel-input').value.trim();
     if(!v) return showToast("내용 없음", 'error');
@@ -837,29 +832,20 @@ function parseExcel() {
     let c = 0; const tx = db.transaction(['vocab'], 'readwrite'); const s = tx.objectStore('vocab');
     
     lines.forEach(l => {
-        // 1차 시도: 탭으로 분리
         let p = l.split('\t'); 
-        // 탭이 없으면 2칸 이상 공백으로 분리
         if(p.length < 2) p = l.split(/ {2,}/);
         
         if(p.length >= 2) {
-            // [0]: 문제, [1]: 정답, [2]: 해설(옵션)
             let q = p[0].trim();
             let a = p[1].trim().toUpperCase(); 
             if(a==='0')a='X'; if(a==='1')a='O';
             
-            // 해설 파싱 강화 (p[2]가 존재하면 가져옴)
+            // 3번째 칸(해설) 파싱 추가
             let d = "";
             if(p.length >= 3 && p[2]) d = p[2].trim();
 
             if(q && (a==='O'||a==='X')) {
-                s.add({ 
-                    type:'text', 
-                    q: escapeHtml(q), 
-                    a: a, 
-                    desc: escapeHtml(d), // 해설 저장
-                    lv: 0, nextTurn: 0, wrongCount: 0 
-                });
+                s.add({ type:'text', q:escapeHtml(q), a:a, desc:escapeHtml(d), lv:0, nextTurn:0, wrongCount:0 });
                 c++;
             }
         }
@@ -873,10 +859,11 @@ function renderWordList() {
     vocabulary.forEach(v => {
         const d = document.createElement('div');
         d.style = "background:#FAFAFA; padding:8px; border-bottom:1px solid #eee; display:flex; gap:5px; align-items:center;";
+        // 리스트에서도 해설이 살짝 보이도록 추가
         d.innerHTML = `<input type="checkbox" class="word-check" data-id="${v.id}">
             <div style="flex:1; font-size:0.9rem;">
                 <b style="color:${v.a==='O'?'#2979FF':'#D32F2F'}">[${v.a}]</b> ${v.q}
-                ${v.desc ? `<div style='font-size:0.8rem; color:#666;'>└ ${v.desc}</div>` : ''} 
+                ${v.desc ? `<div style='font-size:0.75rem; color:#666; margin-top:2px;'>└ ${v.desc.substring(0,20)}${v.desc.length>20?'...':''}</div>` : ''}
             </div>`;
         l.appendChild(d);
     });
