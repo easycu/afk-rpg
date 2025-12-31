@@ -69,7 +69,7 @@ body {
 }
 
 .mob-zone { top: 15%; right: 10%; width: 120px; height: 120px; z-index: 5; }
-.hero-zone { bottom: 5%; left: 5%; width: 120px; height: 120px; z-index: 10; }
+.hero-zone { bottom: 5%; left: 5%; width: 180px; height: 180px; z-index: 10; }
 
 .sprite { 
     width: 100%; height: 100%; 
@@ -80,13 +80,12 @@ body {
     transition: transform 0.1s;
 }
 
-/* 기본 크기 설정 (애니메이션에서 이 크기를 유지해야 함) */
+/* 기본 크기 설정 */
 #hero-img { transform: scale(1.4) translateY(-5px); transform-origin: bottom center; }
 #mob-img { transform: scale(1.2) translateY(-5px); transform-origin: bottom center; }
 
 
-/* ★ [수정됨] 1. 플레이어 공격 (돌진) ★ */
-/* 크기는 커지지 않고(scale 1.4 유지), 대각선으로만 30px 이동 */
+/* ★ 1. 플레이어 공격 (절제된 돌진) ★ */
 @keyframes tackle {
     0% { transform: scale(1.4) translate(0, 0); }
     50% { transform: scale(1.4) translate(30px, -30px); } /* 대각선 이동 */
@@ -96,7 +95,7 @@ body {
 /* ★ 2. 몬스터 피격 (넉백 & 섬광) ★ */
 @keyframes damage {
     0% { transform: scale(1.2) translate(0, 0); filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2)); }
-    20% { transform: scale(1.2) translate(15px, -15px); filter: brightness(5) sepia(1) saturate(0); } /* 밀림 + 번쩍임 */
+    20% { transform: scale(1.2) translate(15px, -15px); filter: brightness(5) sepia(1) saturate(0); }
     50% { filter: brightness(5) sepia(1) saturate(0); }
     100% { transform: scale(1.2) translate(0, 0); filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2)); }
 }
@@ -178,6 +177,7 @@ body {
     <div>배틀 데이터 로딩 중...</div>
 </div>
 <style>@keyframes bounce {0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)}}</style>
+
 <div id="toast-container"></div>
 
 <div id="app-container">
@@ -318,12 +318,12 @@ body {
 // ============================================================
 // [1. 전역 변수 및 설정]
 // ============================================================
-const DB_NAME = "HeroQuizDB_Legend_Final_v2"; 
+const DB_NAME = "HeroQuizDB_Legend_Final_v3"; // 버전 변경 (DB 충돌 방지)
 const DB_VERSION = 1; 
 let db;
 let vocabulary = [];
 
-// 플레이어 스탯 (무적 모드: 체력 관련 스탯 제거)
+// 플레이어 스탯 (무적 모드: HP/Level 관련 데이터 삭제됨)
 let player = {
     atk: 10,       
     crit: 0,       
@@ -331,7 +331,7 @@ let player = {
     aspd: 1.0,     
     maxStage: 1,   
     killCount: 0,  
-    totalTurns: 0  
+    totalTurns: 0  // 시간축 (복습 알고리즘용)
 };
 
 // 게임 상태
@@ -396,7 +396,7 @@ function loadVocabulary() {
     const store = tx.objectStore('vocab');
     store.getAll().onsuccess = function(e) {
         vocabulary = e.target.result || [];
-        // 데이터 초기화
+        // 데이터 무결성 검사
         vocabulary.forEach(v => {
             if (typeof v.wrongCount === 'undefined') v.wrongCount = 0;
             if (typeof v.lv === 'undefined') v.lv = 0;
@@ -410,10 +410,10 @@ function loadVocabulary() {
 }
 
 function savePlayerStats() {
-    localStorage.setItem('hero_stats_legend_final_v2', JSON.stringify(player));
+    localStorage.setItem('hero_stats_legend_final_v3', JSON.stringify(player));
 }
 function loadPlayerStats() {
-    const data = localStorage.getItem('hero_stats_legend_final_v2');
+    const data = localStorage.getItem('hero_stats_legend_final_v3');
     if (data) player = { ...player, ...JSON.parse(data) };
     updateHomeUI();
 }
@@ -463,6 +463,7 @@ function startStage(stg) {
 
 function spawnMob() {
     const isBoss = subStage === 2; 
+    // 체력 기하급수 증가 (복리)
     let hp = Math.floor(200 * Math.pow(1.08, currentStage - 1));
     if (isBoss) hp *= 4; 
     
@@ -530,23 +531,23 @@ function handleStageFail() {
     startStage(currentStage);
 }
 
-// ★ 공격 애니메이션 트리거 (수정됨: 절제된 모션) ★
+// ★ 공격 애니메이션 (절제된 돌진 Lunge) ★
 function heroAttack() {
     const hero = document.getElementById('hero-img');
     const mobEl = document.getElementById('mob-img');
 
     // 1. 플레이어 공격 (CSS의 tackle 애니메이션 실행)
     hero.classList.remove('attack');
-    void hero.offsetWidth; // 리플로우 강제 (애니메이션 재실행)
+    void hero.offsetWidth; // 리플로우 강제
     hero.classList.add('attack');
     
     playSound('attack');
     
-    // 데미지 계산
+    // 데미지 계산 (무한 치명타 로직 적용)
     const result = calculateInfiniteCrit(player.atk, player.crit, 0);
     mob.hp = Math.max(0, mob.hp - result.damage);
     
-    // 2. 몬스터 피격 (약간의 딜레이 후 실행)
+    // 2. 몬스터 피격 (0.15초 후 타격감 표현)
     setTimeout(() => {
         createDamageText(result.damage, result.tier);
         updateMobHpUI();
@@ -555,7 +556,7 @@ function heroAttack() {
         mobEl.classList.remove('hit');
         void mobEl.offsetWidth;
         mobEl.classList.add('hit');
-    }, 150); // 0.15초 딜레이 (찌르는 순간 타격)
+    }, 150); 
     
     // 처치 확인
     if (mob.hp <= 0) {
@@ -570,10 +571,11 @@ function heroAttack() {
             } else {
                 spawnMob();
             }
-        }, 400); // 피격 모션 후 사망 처리
+        }, 400); 
     }
 }
 
+// [무한 치명타 재귀 함수]
 function calculateInfiniteCrit(dmg, critRate, tier) {
     let currentTierCrit = false;
     let chance = critRate - (tier * 100);
@@ -618,10 +620,12 @@ function updateStatUI() {
 }
 
 // ============================================================
-// [4. 퀴즈 시스템]
+// [4. 퀴즈 시스템 (알고리즘 유지)]
 // ============================================================
 function prepareDeck() {
+    // 복습 알고리즘: nextTurn이 현재 턴보다 작거나 같은 것만 출제
     let eligible = vocabulary.filter(v => v.nextTurn <= player.totalTurns);
+    // 풀 게 없으면 가장 오래된 것 하나 가져옴
     if (eligible.length === 0 && vocabulary.length > 0) {
         vocabulary.sort((a, b) => a.nextTurn - b.nextTurn);
         eligible.push(vocabulary[0]);
@@ -635,6 +639,7 @@ function nextQuiz() {
         document.getElementById('q-text').innerText = "데이터가 없습니다.";
         return;
     }
+    // 가중치 랜덤 (자주 틀린게 더 자주 나옴)
     const weightedPool = [];
     deck.forEach(v => {
         const weight = Math.max(1, 6 - v.lv); 
@@ -661,14 +666,16 @@ function submitAnswer(choice) {
     if (document.getElementById('btn-next-quiz').style.display === 'block') return;
 
     const realAns = currentQuizData.a.trim().toUpperCase();
-    player.totalTurns++; 
+    player.totalTurns++; // 시간 경과
 
     if (choice === realAns) {
         handleCorrect();
+        // [라이트너 알고리즘] 정답 시 레벨 상승 -> 복습 간격 증가
         currentQuizData.lv = Math.min(5, currentQuizData.lv + 1);
         currentQuizData.nextTurn = player.totalTurns + (currentQuizData.lv * 3) + 2; 
     } else {
         handleWrong();
+        // [라이트너 알고리즘] 오답 시 레벨 초기화 -> 즉시 복습
         currentQuizData.lv = 0;
         currentQuizData.nextTurn = player.totalTurns; 
         currentQuizData.wrongCount++; 
@@ -787,7 +794,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 // ============================================================
-// [6. 관리 및 데이터 (엑셀/오답노트)]
+// [6. 관리 및 데이터 (중복 검사 추가됨)]
 // ============================================================
 function startReview() {
     if (vocabulary.length === 0) return showToast("데이터 없음", 'error');
@@ -815,7 +822,7 @@ function submitReview(choice) {
     if (choice === realAns) { playSound('correct'); fb.style.color = "#2979FF"; fb.innerText = "정답!"; } 
     else { playSound('wrong'); fb.style.color = "#D32F2F"; fb.innerText = `땡! 정답: ${realAns}`; currentReviewData.wrongCount++; updateWordStats(currentReviewData); }
     
-    // 오답 노트에서도 해설 표시
+    // 오답 노트 해설 표시
     if (currentReviewData.desc) {
         const d = document.getElementById('review-desc'); 
         d.style.display = 'block'; d.innerText = "💡 " + currentReviewData.desc;
@@ -826,24 +833,42 @@ function submitReview(choice) {
 
 function toggleExcel() { const el = document.getElementById('excel-area'); el.style.display = el.style.display==='none'?'block':'none'; }
 function escapeHtml(t) { if(!t)return t; return t.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#039;"}[m])); }
+
+// ★ 낱개 추가 (중복 검사 적용) ★
 function addTextWord() {
     const q = document.getElementById('new-q').value.trim();
     const d = document.getElementById('new-desc').value.trim();
     const radios = document.getElementsByName('new-a-radio');
     let a = 'O'; for(let r of radios) if(r.checked) a = r.value;
+    
     if (!q) return showToast("문제 입력 필요", 'error');
+
+    // 중복 검사
+    const isDuplicate = vocabulary.some(v => v.q === escapeHtml(q));
+    if (isDuplicate) {
+        return showToast("이미 등록된 문제입니다!", 'error');
+    }
+
     const tx=db.transaction(['vocab'],'readwrite');
     tx.objectStore('vocab').add({ type:'text', q:escapeHtml(q), a:a, desc:escapeHtml(d), lv:0, nextTurn:0, wrongCount:0 });
     tx.oncomplete=()=>{showToast("등록 완료"); loadVocabulary(); document.getElementById('new-q').value=""; document.getElementById('new-desc').value="";};
 }
 
-// ★ 엑셀 파싱 (해설 포함) ★
+// ★ 엑셀 일괄 등록 (중복 제거 & 해설 포함) ★
 function parseExcel() {
     const v = document.getElementById('excel-input').value.trim();
     if(!v) return showToast("내용 없음", 'error');
-    const lines = v.split(/\r?\n/).filter(l=>l.trim()!=="");
-    let c = 0; const tx = db.transaction(['vocab'], 'readwrite'); const s = tx.objectStore('vocab');
     
+    const lines = v.split(/\r?\n/).filter(l=>l.trim()!=="");
+    let addedCount = 0;
+    let duplicateCount = 0;
+    
+    const tx = db.transaction(['vocab'], 'readwrite'); 
+    const s = tx.objectStore('vocab');
+    
+    // 이번 배치에서 중복 추가 방지를 위한 임시 Set
+    const newBatchQs = new Set();
+
     lines.forEach(l => {
         let p = l.split('\t'); 
         if(p.length < 2) p = l.split(/ {2,}/);
@@ -852,18 +877,35 @@ function parseExcel() {
             let q = p[0].trim();
             let a = p[1].trim().toUpperCase(); 
             if(a==='0')a='X'; if(a==='1')a='O';
-            
-            // 해설 파싱
             let d = "";
             if(p.length >= 3 && p[2]) d = p[2].trim();
 
             if(q && (a==='O'||a==='X')) {
-                s.add({ type:'text', q:escapeHtml(q), a:a, desc:escapeHtml(d), lv:0, nextTurn:0, wrongCount:0 });
-                c++;
+                const escapedQ = escapeHtml(q);
+                
+                // 1. 기존 DB에 있는지 확인
+                const existsInDB = vocabulary.some(v => v.q === escapedQ);
+                // 2. 지금 붙여넣은 리스트 내에서 중복인지 확인
+                const existsInBatch = newBatchQs.has(escapedQ);
+
+                if (existsInDB || existsInBatch) {
+                    duplicateCount++;
+                } else {
+                    newBatchQs.add(escapedQ);
+                    s.add({ type:'text', q:escapedQ, a:a, desc:escapeHtml(d), lv:0, nextTurn:0, wrongCount:0 });
+                    addedCount++;
+                }
             }
         }
     });
-    tx.oncomplete = () => { showToast(`${c}개 등록됨`, 'success'); document.getElementById('excel-input').value=""; toggleExcel(); loadVocabulary(); };
+    
+    tx.oncomplete = () => { 
+        // 최종 결과 토스트 메시지
+        showToast(`중복 ${duplicateCount}문제를 제외한 ${addedCount}문제가 등록되었습니다.`, 'success'); 
+        document.getElementById('excel-input').value=""; 
+        toggleExcel(); 
+        loadVocabulary(); 
+    };
 }
 
 function renderWordList() {
@@ -912,4 +954,3 @@ function handleJsonFile(e) {
 </script>
 </body>
 </html>
-
