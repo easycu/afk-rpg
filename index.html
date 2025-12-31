@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>암기 용사: Final Remaster</title>
+<title>암기 용사: OX Edition</title>
 <style>
 /* --- [1. 기본 설정 & 앱 레이아웃] --- */
-:root { --p: #2e7d32; --s: #66bb6a; --bg: #f1f8e9; --text: #1b5e20; --danger: #e53935; --gold: #fdd835; --excel: #1b5e20; }
+:root { --p: #2e7d32; --s: #66bb6a; --bg: #f1f8e9; --text: #1b5e20; --danger: #e53935; --gold: #fdd835; --excel: #1b5e20; --o-color: #1976d2; --x-color: #d32f2f; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; user-select: none; touch-action: manipulation; }
 body { 
     font-family: -apple-system, 'Pretendard', sans-serif; 
@@ -15,7 +15,7 @@ body {
     overflow: hidden; display: flex; flex-direction: column; 
 }
 button { cursor: pointer; font-family: inherit; }
-input, textarea { user-select: text; -webkit-user-select: text; font-size: 16px !important; }
+textarea { user-select: text; -webkit-user-select: text; font-size: 16px !important; }
 
 /* --- [2. 공통 UI] --- */
 .screen { display: none; width: 100%; height: 100%; flex-direction: column; background: var(--bg); position: relative; }
@@ -24,14 +24,13 @@ input, textarea { user-select: text; -webkit-user-select: text; font-size: 16px 
 .menu-btn:active { transform: scale(0.98); }
 .btn-game { background: var(--p); }
 .btn-manage { background: #795548; }
-.btn-blue { background: #1976d2; }
-.toast { position: fixed; bottom: 20%; left: 50%; transform: translate(-50%, 20px); background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px; border-radius: 20px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 9999; }
+.toast { position: fixed; bottom: 40%; left: 50%; transform: translate(-50%, 20px); background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px; border-radius: 20px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 9999; text-align: center; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-/* --- [3. 게임 화면 UI (앱 최적화)] --- */
-/* (1) 전투 화면: 25% */
+/* --- [3. 게임 화면 UI (레이아웃 고정 최적화)] --- */
+/* (1) 전투 화면: 25% 고정 (줄어들지 않음) */
 #area-battle { 
-    flex: 0 0 25%; 
+    flex: 0 0 25%; flex-shrink: 0;
     position: relative; 
     background: linear-gradient(to bottom, #81c784, #a5d6a7); 
     overflow: hidden; 
@@ -44,10 +43,7 @@ input, textarea { user-select: text; -webkit-user-select: text; font-size: 16px 
     background: rgba(0,0,0,0.15); color: #fff; 
     font-weight: bold; font-size: 0.9rem; z-index: 10; 
 }
-/* 시간 막대와 텍스트 컨테이너 */
-.timer-container {
-    flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-left: 10px;
-}
+.timer-container { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-left: 10px; }
 .time-bar-bg { width: 100%; max-width: 150px; height: 6px; background: rgba(255,255,255,0.3); border-radius: 3px; overflow: hidden; }
 .time-bar-fill { height: 100%; width: 100%; background: #fff; transition: width 0.1s linear; }
 #time-text { font-family: monospace; font-size: 0.9rem; width: 45px; text-align: right; }
@@ -70,9 +66,9 @@ input, textarea { user-select: text; -webkit-user-select: text; font-size: 16px 
 .dmg-text { position: absolute; font-weight: 900; color: #fff; font-size: 1.2rem; text-shadow: -1px -1px 0 #000; pointer-events: none; animation: floatUp 0.8s forwards; z-index: 20; white-space: nowrap;}
 .crit-text { color: var(--gold) !important; font-size: 1.5rem !important; }
 
-/* (2) 스탯 화면: 6% */
+/* (2) 스탯 화면: 6% 고정 */
 #area-stat { 
-    flex: 0 0 6%; 
+    flex: 0 0 6%; flex-shrink: 0;
     background: #263238; color: #fff; 
     display: flex; align-items: center; justify-content: space-around; 
     padding: 0 5px; font-size: 0.75rem; border-bottom: 1px solid #444; 
@@ -82,41 +78,76 @@ input, textarea { user-select: text; -webkit-user-select: text; font-size: 16px 
 .stat-val { font-weight: bold; font-family: monospace; font-size: 0.85rem; color: var(--s); }
 .buff-badge { position:absolute; top:-15px; left:50%; transform:translateX(-50%); background: var(--danger); color: #fff; border-radius: 3px; padding: 1px 4px; font-size: 0.6rem; animation: pulse 1s infinite; display: none; }
 
-/* (3) 퀴즈 화면 */
+/* (3) 퀴즈 화면 (내부 스크롤 적용) */
 #area-quiz { 
     flex: 1; 
     padding: 10px 15px; background: #fff; 
-    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-    overflow-y: auto; 
+    display: flex; flex-direction: column; align-items: center; 
+    overflow: hidden; /* 전체 화면 밀림 방지 */
 }
-#q-image { max-height: 100px; max-width: 100%; object-fit: contain; margin-bottom: 5px; border-radius: 6px; border: 1px solid #ddd; display: none; }
-#q-text { font-size: 1.0rem; font-weight: bold; text-align: center; margin: 5px 0 10px 0; line-height: 1.3; width: 100%; }
 
-.input-group { display: flex; width: 100%; gap: 8px; margin-top: auto; }
-#q-input { flex: 1; padding: 10px; font-size: 1rem; border: 2px solid #ccc; border-radius: 8px; outline: none; transition: 0.2s; }
-#q-input:focus { border-color: var(--p); }
-#btn-submit { padding: 0 15px; background: var(--p); color: #fff; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; }
+/* 문제 텍스트 영역: 남는 공간 차지하되 길어지면 내부 스크롤 */
+#q-text-container {
+    flex: 1; width: 100%;
+    margin-bottom: 10px;
+    overflow-y: auto; 
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid #eee; border-radius: 8px; padding: 10px;
+    background: #fafafa;
+}
+#q-text { 
+    font-size: 1.1rem; font-weight: bold; text-align: center; line-height: 1.5; 
+    width: 100%; white-space: pre-wrap;
+}
 
-/* 오답/정답 피드백 UI */
-#q-feedback { height:18px; margin-top:3px; font-size:0.8rem; font-weight:bold; }
-#q-desc-display { width:100%; margin-top:5px; padding:8px; background:#e3f2fd; border-radius:4px; color:#1565c0; font-size:0.85rem; display:none; white-space: pre-wrap; text-align: left; }
+/* OX 버튼 영역: 고정 높이 */
+.ox-btn-group {
+    flex: 0 0 auto;
+    width: 100%; display: flex; gap: 15px; margin-bottom: 10px;
+    height: 80px; /* 버튼 높이 고정 */
+}
+.btn-ox {
+    flex: 1; border: none; border-radius: 12px;
+    font-size: 2.5rem; font-weight: 900; color: #fff;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+.btn-ox:active { transform: translateY(4px); box-shadow: none; }
+.btn-o { background: var(--o-color); }
+.btn-x { background: var(--x-color); }
+
+/* 해설 영역: 나타나면 남는 공간 분배, 내부 스크롤 */
+#q-desc-display { 
+    display: none; /* 평소엔 숨김 */
+    flex: 0.8; /* 해설이 나오면 문제와 공간을 나눔 */
+    width: 100%; 
+    padding: 10px; background: #e3f2fd; border-radius: 8px; 
+    color: #1565c0; font-size: 0.95rem; line-height: 1.4;
+    overflow-y: auto; white-space: pre-wrap; text-align: left;
+    margin-bottom: 10px;
+}
+
+/* 정답/오답 피드백 텍스트 */
+#q-feedback { 
+    flex: 0 0 auto; height: 24px; margin-bottom: 5px; 
+    font-size: 1rem; font-weight: bold; text-align: center; 
+}
+
 #btn-next-quiz { 
-    display: none; width: 100%; margin-top: 10px; padding: 12px; 
+    display: none; width: 100%; flex: 0 0 auto; padding: 12px; 
     background: #FF9800; color: #fff; border: none; border-radius: 10px; 
-    font-weight: bold; font-size: 1rem; animation: pulse 1s infinite;
+    font-weight: bold; font-size: 1.1rem; animation: pulse 1s infinite;
 }
 
 /* (4) 메뉴 화면 */
 #area-menu { 
-    flex: 0 0 8%; min-height: 40px;
+    flex: 0 0 8%; min-height: 40px; flex-shrink: 0;
     background: #f5f5f5; border-top: 1px solid #ddd; 
     display: flex; align-items: center; justify-content: space-between; padding: 0 10px; 
 }
 .small-btn { padding: 6px 10px; background: #fff; border: 1px solid #ccc; border-radius: 6px; font-size: 0.75rem; color: #555; }
 
-/* --- [4. 관리 및 자르기 UI] --- */
-#crop-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:#222; display:none; flex-direction:column; justify-content:center; align-items:center; z-index:9500; }
-#crop-canvas-container { position:relative; width:100%; max-height:60vh; overflow:hidden; background:#333; margin-bottom:10px; touch-action: none; }
+/* 관리자 모달 등 */
 #excel-area { display:none; width:100%; background:#f9f9f9; padding:10px; border:2px dashed var(--excel); border-radius:10px; margin-bottom:10px; }
 
 @keyframes shake { 0%{transform:translateX(0)} 25%{transform:translateX(-5px)} 50%{transform:translateX(5px)} 75%{transform:translateX(-5px)} 100%{transform:translateX(0)} }
@@ -131,25 +162,12 @@ input, textarea { user-select: text; -webkit-user-select: text; font-size: 16px 
     <div>데이터 로딩 중...</div>
 </div>
 <div id="toast-container"></div>
-<div id="img-modal" onclick="this.style.display='none'" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9000;justify-content:center;align-items:center;">
-    <img id="img-modal-target" style="max-width:95%;max-height:95%;object-fit:contain;">
-</div>
-
-<div id="crop-modal">
-    <h3 style="color:#fff; margin-bottom:10px;">이미지 자르기</h3>
-    <div id="crop-canvas-container"><canvas id="crop-canvas"></canvas></div>
-    <div style="display:flex; gap:10px;">
-        <button class="menu-btn" style="background:#555; padding:8px; width:auto; font-size:0.9rem;" onclick="rotateImage()">🔄 회전</button>
-        <button class="menu-btn btn-manage" style="padding:8px; width:auto; font-size:0.9rem;" onclick="closeCrop()">취소</button>
-        <button class="menu-btn btn-game" style="padding:8px; width:auto; font-size:0.9rem;" onclick="applyCrop()">완료</button>
-    </div>
-</div>
 
 <div id="screen-home" class="screen active">
     <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;">
         <div style="font-size:4rem;margin-bottom:10px;">🛡️</div>
         <h1 style="color:var(--text);margin-bottom:5px;">암기 용사</h1>
-        <p style="color:#666;font-size:0.9rem;">Final Remaster</p>
+        <p style="color:#666;font-size:0.9rem;">OX Edition</p>
         <div style="background:#fff;padding:15px;border-radius:15px;margin:30px 0;width:80%;box-shadow:0 2px 10px rgba(0,0,0,0.05);">
             <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span>최고 스테이지</span><b style="color:var(--p)" id="home-best-stage">1-1</b></div>
             <div style="display:flex;justify-content:space-between;"><span>총 처치</span><b id="home-kill-count">0</b></div>
@@ -182,15 +200,17 @@ input, textarea { user-select: text; -webkit-user-select: text; font-size: 16px 
         <div class="stat-box" style="position:relative"><div class="buff-badge" id="buff-badge">FAST!</div><div class="stat-label">공격속도</div><div id="stat-aspd" class="stat-val">1.0</div></div>
     </div>
     <div id="area-quiz">
-        <img id="q-image" onclick="viewImage(this.src)">
-        <div id="q-text">로딩 중...</div>
-        <div class="input-group">
-            <input type="text" id="q-input" placeholder="정답 입력" autocomplete="off">
-            <button id="btn-submit" onclick="submitAnswer()">제출</button>
+        <div id="q-text-container">
+            <div id="q-text">로딩 중...</div>
         </div>
+        
+        <div class="ox-btn-group" id="ox-buttons">
+            <button class="btn-ox btn-o" onclick="submitAnswer('O')">O</button>
+            <button class="btn-ox btn-x" onclick="submitAnswer('X')">X</button>
+        </div>
+
         <div id="q-feedback"></div>
-        <div id="q-desc-display"></div>
-        <button id="btn-next-quiz" onclick="manualNextQuiz()">🔜 다음 문제</button>
+        <div id="q-desc-display"></div> <button id="btn-next-quiz" onclick="manualNextQuiz()">🔜 다음 문제</button>
     </div>
     <div id="area-menu">
         <button class="small-btn" onclick="stopGame()">🏠 홈</button><span style="font-size:0.7rem; color:#888;">자동 공격 중</span><button class="small-btn" onclick="toggleSound()">🔊 소리</button>
@@ -198,36 +218,27 @@ input, textarea { user-select: text; -webkit-user-select: text; font-size: 16px 
 </div>
 
 <div id="screen-manage" class="screen" style="padding:15px; overflow-y:auto;">
-    <h2 style="margin-bottom:10px; color:var(--text); font-size:1.2rem;">문제 관리</h2>
-    <div style="display:flex; gap:8px; margin-bottom:10px;">
-        <button class="menu-btn btn-game" style="flex:1; margin:0; padding:10px; font-size:0.9rem;" onclick="toggleAddMode('text')">텍스트 문제</button>
-        <button class="menu-btn btn-blue" style="flex:1; margin:0; padding:10px; font-size:0.9rem;" onclick="toggleAddMode('image')">이미지 문제</button>
-    </div>
+    <h2 style="margin-bottom:10px; color:var(--text); font-size:1.2rem;">문제 관리 (OX 전용)</h2>
     
-    <div id="add-text-box" class="add-box" style="display:none; background:#fff; padding:12px; border-radius:10px; margin-bottom:10px; border:1px solid #ddd;">
-        <textarea id="new-q" placeholder="문제" style="width:100%; height:40px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; padding:5px;"></textarea>
-        <textarea id="new-a" placeholder="정답 (O/X 가능)" style="width:100%; height:35px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; padding:5px;"></textarea>
-        <textarea id="new-desc" placeholder="해설/설명 (선택사항)" style="width:100%; height:40px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; padding:5px;"></textarea>
+    <div id="add-text-box" class="add-box" style="background:#fff; padding:12px; border-radius:10px; margin-bottom:10px; border:1px solid #ddd;">
+        <textarea id="new-q" placeholder="문제 내용을 입력하세요 (판례 등 긴 텍스트 가능)" style="width:100%; height:60px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; padding:5px;"></textarea>
+        
+        <div style="display:flex; gap:10px; margin-bottom:5px; align-items:center;">
+            <span style="font-weight:bold;">정답:</span>
+            <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="radio" name="new-a-radio" value="O" checked> <span style="color:var(--o-color); font-weight:bold;">O</span></label>
+            <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="radio" name="new-a-radio" value="X"> <span style="color:var(--x-color); font-weight:bold;">X</span></label>
+        </div>
+
+        <textarea id="new-desc" placeholder="해설/설명 (선택사항)" style="width:100%; height:50px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; padding:5px;"></textarea>
         
         <button onclick="addTextWord()" class="menu-btn btn-game" style="padding:8px; font-size:0.9rem;">등록</button>
         
         <button class="menu-btn" style="background:var(--excel); margin-top:10px; padding:8px; font-size:0.8rem;" onclick="toggleExcel()">📋 엑셀 붙여넣기</button>
         <div id="excel-area">
-            <p style="font-size:0.75rem; color:#555; margin-bottom:5px;">[문제] [정답] [해설] 순서로 복사</p>
-            <textarea id="excel-input" placeholder="Apple   사과   과일" style="width:100%; height:60px; padding:5px; font-size:0.8rem;"></textarea>
+            <p style="font-size:0.75rem; color:#555; margin-bottom:5px;">[문제] [O/X] [해설] 순서로 복사 (탭 간격)</p>
+            <textarea id="excel-input" placeholder="사과는 과일이다   O   당연하다" style="width:100%; height:60px; padding:5px; font-size:0.8rem;"></textarea>
             <button class="menu-btn btn-game" style="margin-top:5px; padding:6px; font-size:0.8rem;" onclick="parseExcel()">일괄 등록</button>
         </div>
-    </div>
-
-    <div id="add-image-box" class="add-box" style="display:none; background:#fff; padding:12px; border-radius:10px; margin-bottom:10px; border:1px solid #ddd;">
-        <button onclick="document.getElementById('camera-input').click()" class="menu-btn btn-blue" style="padding:8px; margin-bottom:5px; font-size:0.9rem;">📷 사진 선택</button>
-        <img id="preview-q-img" style="max-width:100%; display:none; margin-bottom:5px; border:2px solid var(--p);">
-        
-        <textarea id="img-q-text" placeholder="문제 텍스트(선택)" style="width:100%; height:35px; margin-bottom:5px; padding:5px; border:1px solid #ccc;"></textarea>
-        <textarea id="img-a" placeholder="정답 (필수)" style="width:100%; height:35px; margin-bottom:5px; padding:5px; border:1px solid #ccc; font-weight:bold;"></textarea>
-        <textarea id="img-desc" placeholder="해설/설명 (선택사항)" style="width:100%; height:35px; margin-bottom:5px; padding:5px; border:1px solid #ccc;"></textarea>
-        
-        <button onclick="addImageWord()" class="menu-btn btn-game" style="padding:8px; font-size:0.9rem;">등록</button>
     </div>
 
     <div id="word-list" style="margin-top:15px;"></div>
@@ -241,7 +252,6 @@ input, textarea { user-select: text; -webkit-user-select: text; font-size: 16px 
     </div>
     <button class="menu-btn" style="background:#8d6e63; margin-top:20px;" onclick="showScreen('home')">돌아가기</button>
 </div>
-<input type="file" id="camera-input" style="display:none" accept="image/*" onchange="handleImageFile(event)">
 <input type="file" id="json-input" style="display:none" accept=".json" onchange="handleJsonFile(event)">
 <script>
 // ============================================================
@@ -267,18 +277,11 @@ let gameRunning = false;
 let lastTime = 0;
 let attackTimer = 0;
 let combo = 0;
-let comboTimer = null;
+let comboTimer = null; // 버프 타이머
 let currentStage = 1;
 let subStage = 0; 
 let stageTimeLeft = 30;
 let mob = { hp: 100, maxHp: 100, isBoss: false };
-
-// 자르기(Crop) 관련 변수
-let cropImg = new Image();
-let cropCtx = null;
-let cropRect = { x: 0, y: 0, w: 100, h: 100 };
-let currentCropBlob = null;
-let rotationAngle = 0;
 
 // 오디오 컨텍스트
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -292,16 +295,7 @@ window.onload = function() {
     initDB();
     loadPlayerStats();
     
-    const cvs = document.getElementById('crop-canvas');
-    if(cvs) cropCtx = cvs.getContext('2d');
-    
-    window.addEventListener('popstate', function() {
-        const modal = document.getElementById('crop-modal');
-        if(modal.style.display === 'flex') {
-            modal.style.display = 'none';
-        }
-    });
-
+    // 로딩 완료 처리
     setTimeout(() => {
         const loader = document.getElementById('loading-overlay');
         if(loader && loader.style.display !== 'none') {
@@ -312,7 +306,7 @@ window.onload = function() {
                 btnStart.innerText = "게임 시작";
             }
         }
-    }, 3000);
+    }, 2000);
 };
 
 function initDB() {
@@ -339,12 +333,6 @@ function loadVocabulary() {
     const store = tx.objectStore('vocab');
     store.getAll().onsuccess = function(e) {
         vocabulary = e.target.result || [];
-        document.getElementById('loading-overlay').style.display = 'none';
-        const btnStart = document.getElementById('btn-start');
-        if(btnStart) {
-            btnStart.disabled = false;
-            btnStart.innerText = "게임 시작";
-        }
         updateHomeUI();
         if(document.getElementById('screen-manage').classList.contains('active')) {
             renderWordList();
@@ -353,10 +341,10 @@ function loadVocabulary() {
 }
 
 function savePlayerStats() {
-    localStorage.setItem('hero_stats_final_v5', JSON.stringify(player));
+    localStorage.setItem('hero_stats_ox_v1', JSON.stringify(player));
 }
 function loadPlayerStats() {
-    const data = localStorage.getItem('hero_stats_final_v5');
+    const data = localStorage.getItem('hero_stats_ox_v1');
     if (data) player = { ...player, ...JSON.parse(data) };
     updateHomeUI();
 }
@@ -378,7 +366,7 @@ function startGame() {
     startStage(currentStage);
     gameRunning = true;
     lastTime = performance.now();
-    nextQuiz(); 
+    nextQuiz(); // 퀴즈 시작
     requestAnimationFrame(gameLoop);
 }
 
@@ -516,9 +504,9 @@ function updateStatUI() {
     document.getElementById('stat-cdmg').innerText = player.cdmg + "%";
     document.getElementById('stat-crit').style.color = player.crit >= 100 ? "#e040fb" : "#66bb6a";
 }
-/* [파트 2 끝] */
+/* [파트 2에서 이어짐] */
 // ============================================================
-// [4. 퀴즈 시스템 (성장 및 버프)]
+// [4. 퀴즈 시스템 (OX 전용 & 7초 버프)]
 // ============================================================
 let currentQuizData = null;
 
@@ -529,12 +517,8 @@ function nextQuiz() {
     }
 
     // UI 상태 초기화 (새 문제)
-    document.getElementById('btn-submit').style.display = 'block';
-    document.getElementById('btn-next-quiz').style.display = 'none';
-    const inputEl = document.getElementById('q-input');
-    inputEl.disabled = false;
-    inputEl.value = "";
-    inputEl.focus();
+    document.getElementById('ox-buttons').style.display = 'flex'; // OX 버튼 보이기
+    document.getElementById('btn-next-quiz').style.display = 'none'; // 다음 버튼 숨기기
     
     document.getElementById('q-feedback').innerText = "";
     const descDisplay = document.getElementById('q-desc-display');
@@ -545,63 +529,53 @@ function nextQuiz() {
     const idx = Math.floor(Math.random() * vocabulary.length);
     currentQuizData = vocabulary[idx];
 
-    const qText = document.getElementById('q-text');
-    const qImg = document.getElementById('q-image');
-
-    if (currentQuizData.type === 'image') {
-        qImg.style.display = 'block';
-        qImg.src = currentQuizData.q;
-        qText.innerText = currentQuizData.qText || ""; 
-    } else {
-        qImg.style.display = 'none';
-        qText.innerText = currentQuizData.q;
-    }
+    // 텍스트 표시
+    document.getElementById('q-text').innerText = currentQuizData.q;
 }
 
-// [수동 넘기기] 정답/오답 확인 후 버튼 클릭 시 실행
+// [수동 넘기기] 버튼 클릭 시 실행
 function manualNextQuiz() {
     playSound('click'); 
     nextQuiz();
 }
 
-function submitAnswer() {
-    // 결과창 상태에서 엔터/클릭 시 다음 문제로
-    if (document.getElementById('btn-next-quiz').style.display === 'block') {
-        manualNextQuiz();
-        return;
-    }
-
+// OX 버튼 클릭 처리
+function submitAnswer(choice) {
     if (!currentQuizData) return;
-    const input = document.getElementById('q-input').value.trim();
-    if (!input) return;
 
-    const userAns = input.replace(/\s/g, "").toUpperCase();
-    const realAns = currentQuizData.a.replace(/\s/g, "").toUpperCase();
+    // 이미 결과가 나온 상태면 무시
+    if (document.getElementById('btn-next-quiz').style.display === 'block') return;
+
+    const realAns = currentQuizData.a.trim().toUpperCase(); // DB에는 'O' 또는 'X'로 저장됨
     
-    if (userAns === realAns) handleCorrect();
+    if (choice === realAns) handleCorrect();
     else handleWrong();
 }
 
 // 결과 공통 처리 (정답/오답 시 화면 멈춤 및 해설 표시)
 function showResultUI() {
     const descDisplay = document.getElementById('q-desc-display');
-    // 해설이 있으면 무조건 표시
+    
+    // 해설이 있으면 표시
     if (currentQuizData.desc && currentQuizData.desc.trim() !== "") {
         descDisplay.style.display = 'block';
-        descDisplay.innerText = "💡 해설: " + currentQuizData.desc;
+        descDisplay.innerText = "💡 해설:\n" + currentQuizData.desc;
+    } else {
+        descDisplay.style.display = 'none';
     }
 
-    document.getElementById('btn-submit').style.display = 'none';
-    document.getElementById('q-input').disabled = true;
-    document.getElementById('btn-next-quiz').style.display = 'block';
-    document.getElementById('btn-next-quiz').focus();
+    // OX 버튼 숨기고 다음 문제 버튼 표시 (레이아웃 교체)
+    document.getElementById('ox-buttons').style.display = 'none';
+    const nextBtn = document.getElementById('btn-next-quiz');
+    nextBtn.style.display = 'block';
+    nextBtn.focus(); // 키보드 접근성/포커스 이동
 }
 
 function handleCorrect() {
     playSound('correct');
     combo++;
     updateBuffUI();
-    resetComboTimer();
+    resetComboTimer(); // 7초 타이머
 
     const rand = Math.random();
     let msg = "";
@@ -617,7 +591,7 @@ function handleCorrect() {
     fb.style.color = "var(--p)";
     fb.innerText = `정답! (${msg})`;
     
-    showResultUI(); // 정답 시에도 멈춤
+    showResultUI(); 
 }
 
 function handleWrong() {
@@ -630,7 +604,7 @@ function handleWrong() {
     fb.style.color = "var(--danger)";
     fb.innerText = `오답! 정답: ${currentQuizData.a}`;
     
-    showResultUI(); // 오답 시 멈춤
+    showResultUI(); 
 }
 
 function updateBuffUI() {
@@ -647,20 +621,14 @@ function updateBuffUI() {
 
 function resetComboTimer() {
     if (comboTimer) clearTimeout(comboTimer);
-    // 버프 유지 시간 15초로 설정
+    // [변경 요청] 버프 유지 시간 7초로 설정
     comboTimer = setTimeout(() => {
         if (combo > 0) {
             showToast("콤보 종료", 'info');
             combo = 0;
             updateBuffUI();
         }
-    }, 15000); 
-}
-
-function viewImage(src) {
-    if (!src) return;
-    document.getElementById('img-modal-target').src = src;
-    document.getElementById('img-modal').style.display = "flex";
+    }, 7000); 
 }
 
 // ============================================================
@@ -726,21 +694,25 @@ function playSound(type) {
     if (snd[type]) snd[type](t);
 }
 
-// 엔터키 지원
-document.getElementById('q-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') submitAnswer(); });
-/* [파트 3 끝] */
+// 키보드 지원 (왼쪽 화살표=O, 오른쪽 화살표=X)
+window.addEventListener('keydown', (e) => {
+    if (!gameRunning) return;
+    if (e.key === 'ArrowLeft') submitAnswer('O');
+    else if (e.key === 'ArrowRight') submitAnswer('X');
+    else if (e.key === 'Enter') {
+        if (document.getElementById('btn-next-quiz').style.display === 'block') {
+            manualNextQuiz();
+        }
+    }
+});
+
 // ============================================================
-// [6. 관리자 기능: 메뉴 및 엑셀 (3열 해설 인식 강화)]
+// [6. 관리자 기능: 메뉴 및 엑셀]
 // ============================================================
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById('screen-' + id).classList.add('active');
     if (id === 'manage') loadVocabulary(); 
-}
-
-function toggleAddMode(mode) {
-    document.querySelectorAll('.add-box').forEach(b => b.style.display = 'none');
-    document.getElementById(`add-${mode}-box`).style.display = 'block';
 }
 
 function toggleExcel() {
@@ -753,37 +725,56 @@ function escapeHtml(text) {
     return text.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#039;"}[m]));
 }
 
+// 텍스트 문제 등록 (O/X 라디오 버튼 사용)
 function addTextWord() {
     const q = document.getElementById('new-q').value.trim();
-    const a = document.getElementById('new-a').value.trim();
     const desc = document.getElementById('new-desc').value.trim();
-    if (!q || !a) return showToast("내용을 입력하세요", 'error');
-    saveToDB({ type: 'text', q: escapeHtml(q), a: escapeHtml(a), desc: escapeHtml(desc) });
+    
+    // 라디오 버튼에서 정답 가져오기
+    const radios = document.getElementsByName('new-a-radio');
+    let a = 'O';
+    for(let r of radios) { if(r.checked) a = r.value; }
+
+    if (!q) return showToast("문제를 입력하세요", 'error');
+    
+    saveToDB({ type: 'text', q: escapeHtml(q), a: a, desc: escapeHtml(desc) });
+    
+    // 입력창 초기화 (정답은 O로 리셋)
     document.getElementById('new-q').value = "";
-    document.getElementById('new-a').value = "";
     document.getElementById('new-desc').value = "";
+    radios[0].checked = true; 
 }
 
 function parseExcel() {
     const val = document.getElementById('excel-input').value.trim();
     if (!val) return showToast("내용이 없습니다.", 'error');
+    
     const lines = val.split(/\r?\n/).filter(line => line.trim() !== "");
     let count = 0;
     const tx = db.transaction(['vocab'], 'readwrite');
     const store = tx.objectStore('vocab');
+    
     lines.forEach(line => {
         let parts = line.split('\t');
-        if (parts.length < 2) parts = line.split(/ {2,}/);
+        if (parts.length < 2) parts = line.split(/ {2,}/); // 탭 없으면 2칸 이상 공백으로 분리
+        
         if (parts.length >= 2) {
             const q = parts[0].trim();
-            const a = parts[1].trim();
+            // 정답 정제 (O, X, o, x, 0, 1 등 대응 가능하게 하려면 여기서 처리)
+            let rawA = parts[1].trim().toUpperCase();
+            // 간단하게 O/X만 허용하거나 변환
+            if (rawA === '0') rawA = 'X';
+            if (rawA === '1') rawA = 'O';
+            
             const desc = parts[2] ? parts[2].trim() : ""; 
-            if (q && a) {
-                store.add({ type: 'text', q: escapeHtml(q), a: escapeHtml(a), desc: escapeHtml(desc) });
+            
+            if (q && (rawA === 'O' || rawA === 'X')) {
+                store.add({ type: 'text', q: escapeHtml(q), a: rawA, desc: escapeHtml(desc) });
                 count++;
             }
         }
     });
+    
     tx.oncomplete = () => {
         showToast(`${count}개 등록 완료!`, 'success');
         document.getElementById('excel-input').value = "";
@@ -793,180 +784,19 @@ function parseExcel() {
 }
 
 // ============================================================
-// [7. 이미지 자르기(Crop) 시스템 (터치 핸들 조작)]
+// [7. 데이터베이스 실제 입출력 및 목록 UI]
 // ============================================================
-let imgDrawInfo = { x:0, y:0, w:0, h:0, scale:1 };
-const TOUCH_BUFFER = 40;
-const VISUAL_HANDLE = 10;
-let dragMode = null;
-let isDragging = false;
-let startX = 0, startY = 0;
-let startRect = {};
-
-function handleImageFile(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    if(cropImg.src) URL.revokeObjectURL(cropImg.src);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-        cropImg.src = ev.target.result;
-        currentCropBlob = file;
-    };
-    reader.readAsDataURL(file);
-    cropImg.onload = () => startCropping();
-    e.target.value = "";
-}
-
-function startCropping() {
-    document.getElementById('crop-modal').style.display = 'flex';
-    rotationAngle = 0;
-    const cw = document.getElementById('crop-canvas-container').clientWidth;
-    const ch = window.innerHeight * 0.5; 
-    const size = Math.min(cw, ch) * 0.6;
-    cropRect = { x: (cw - size)/2, y: (ch - size)/2, w: size, h: size };
-    drawCropCanvas();
-}
-
-function drawCropCanvas() {
-    const canvas = document.getElementById('crop-canvas');
-    const container = document.getElementById('crop-canvas-container');
-    const cw = container.clientWidth;
-    const ch = window.innerHeight * 0.5;
-    canvas.width = cw; canvas.height = ch;
-    cropCtx.fillStyle = "#222";
-    cropCtx.fillRect(0, 0, cw, ch);
-    cropCtx.save();
-    cropCtx.translate(cw/2, ch/2);
-    cropCtx.rotate(rotationAngle * Math.PI / 180);
-    let imgW = cropImg.width, imgH = cropImg.height;
-    if (rotationAngle % 180 !== 0) { imgW = cropImg.height; imgH = cropImg.width; }
-    const scale = Math.min(cw / imgW, ch / imgH) * 0.9;
-    const dw = cropImg.width * scale, dh = cropImg.height * scale;
-    cropCtx.drawImage(cropImg, -dw/2, -dh/2, dw, dh);
-    cropCtx.restore();
-    imgDrawInfo = { w: dw, h: dh, scale: scale, angle: rotationAngle };
-    cropCtx.fillStyle = "rgba(0,0,0,0.6)";
-    cropCtx.fillRect(0, 0, cw, cropRect.y);
-    cropCtx.fillRect(0, cropRect.y + cropRect.h, cw, ch - (cropRect.y + cropRect.h));
-    cropCtx.fillRect(0, cropRect.y, cropRect.x, cropRect.h);
-    cropCtx.fillRect(cropRect.x + cropRect.w, cropRect.y, cw - (cropRect.x + cropRect.w), cropRect.h);
-    cropCtx.strokeStyle = "#fff"; cropCtx.lineWidth = 2;
-    cropCtx.strokeRect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
-    cropCtx.fillStyle = "#fff";
-    const r = VISUAL_HANDLE / 2;
-    cropCtx.fillRect(cropRect.x - r, cropRect.y - r, VISUAL_HANDLE, VISUAL_HANDLE);
-    cropCtx.fillRect(cropRect.x + cropRect.w - r, cropRect.y - r, VISUAL_HANDLE, VISUAL_HANDLE);
-    cropCtx.fillRect(cropRect.x - r, cropRect.y + cropRect.h - r, VISUAL_HANDLE, VISUAL_HANDLE);
-    cropCtx.fillRect(cropRect.x + cropRect.w - r, cropRect.y + cropRect.h - r, VISUAL_HANDLE, VISUAL_HANDLE);
-}
-
-const cropContainer = document.getElementById('crop-canvas-container');
-cropContainer.addEventListener('touchstart', dragStart, {passive: false});
-cropContainer.addEventListener('touchmove', dragMove, {passive: false});
-cropContainer.addEventListener('touchend', dragEnd);
-cropContainer.addEventListener('mousedown', dragStart);
-cropContainer.addEventListener('mousemove', dragMove);
-cropContainer.addEventListener('mouseup', dragEnd);
-
-function getHandle(x, y) {
-    const b = TOUCH_BUFFER;
-    if (Math.abs(x - cropRect.x) < b && Math.abs(y - cropRect.y) < b) return 'tl';
-    if (Math.abs(x - (cropRect.x+cropRect.w)) < b && Math.abs(y - cropRect.y) < b) return 'tr';
-    if (Math.abs(x - cropRect.x) < b && Math.abs(y - (cropRect.y+cropRect.h)) < b) return 'bl';
-    if (Math.abs(x - (cropRect.x+cropRect.w)) < b && Math.abs(y - (cropRect.y+cropRect.h)) < b) return 'br';
-    if (x > cropRect.x && x < cropRect.x + cropRect.w && y > cropRect.y && y < cropRect.y + cropRect.h) return 'move';
-    return null;
-}
-
-function dragStart(e) {
-    if(e.target.id !== 'crop-canvas') return;
-    e.preventDefault();
-    const pt = e.touches ? e.touches[0] : e;
-    const bcr = e.target.getBoundingClientRect();
-    dragMode = getHandle(pt.clientX - bcr.left, pt.clientY - bcr.top);
-    if (!dragMode) return;
-    isDragging = true; startX = pt.clientX; startY = pt.clientY; startRect = { ...cropRect };
-}
-
-function dragMove(e) {
-    if (!isDragging) return;
-    e.preventDefault();
-    const pt = e.touches ? e.touches[0] : e;
-    const dx = pt.clientX - startX, dy = pt.clientY - startY;
-    if (dragMode === 'move') { cropRect.x = startRect.x + dx; cropRect.y = startRect.y + dy; }
-    else if (dragMode === 'br') { cropRect.w = Math.max(50, startRect.w + dx); cropRect.h = Math.max(50, startRect.h + dy); }
-    else if (dragMode === 'bl') { const nw = startRect.w - dx; if(nw>50){ cropRect.x = startRect.x + dx; cropRect.w = nw; } cropRect.h = Math.max(50, startRect.h + dy); }
-    else if (dragMode === 'tr') { cropRect.w = Math.max(50, startRect.w + dx); const nh = startRect.h - dy; if(nh>50){ cropRect.y = startRect.y + dy; cropRect.h = nh; } }
-    else if (dragMode === 'tl') { const nw = startRect.w - dx; if(nw>50){ cropRect.x = startRect.x + dx; cropRect.w = nw; } const nh = startRect.h - dy; if(nh>50){ cropRect.y = startRect.y + dy; cropRect.h = nh; } }
-    drawCropCanvas();
-}
-function dragEnd() { isDragging = false; dragMode = null; }
-function rotateImage() { rotationAngle = (rotationAngle + 90) % 360; startCropping(); }
-function closeCrop() { document.getElementById('crop-modal').style.display = 'none'; }
-
-function applyCrop() {
-    const tempCvs = document.createElement('canvas');
-    let rad = imgDrawInfo.angle * Math.PI / 180, sin = Math.abs(Math.sin(rad)), cos = Math.abs(Math.cos(rad));
-    let nw = cropImg.width * cos + cropImg.height * sin, nh = cropImg.width * sin + cropImg.height * cos;
-    tempCvs.width = nw; tempCvs.height = nh;
-    const tCtx = tempCvs.getContext('2d');
-    tCtx.translate(nw/2, nh/2); tCtx.rotate(rad); tCtx.drawImage(cropImg, -cropImg.width/2, -cropImg.height/2);
-    const canvas = document.getElementById('crop-canvas');
-    const sx = (nw/2) + ((cropRect.x - canvas.width/2) / imgDrawInfo.scale);
-    const sy = (nh/2) + ((cropRect.y - canvas.height/2) / imgDrawInfo.scale);
-    const sw = cropRect.w / imgDrawInfo.scale, sh = cropRect.h / imgDrawInfo.scale;
-    const finalCvs = document.createElement('canvas');
-    finalCvs.width = sw; finalCvs.height = sh;
-    finalCvs.getContext('2d').drawImage(tempCvs, sx, sy, sw, sh, 0, 0, sw, sh);
-    const base64 = finalCvs.toDataURL('image/jpeg', 0.85);
-    const preview = document.getElementById('preview-q-img');
-    preview.src = base64; preview.style.display = 'block'; preview.dataset.base64 = base64;
-    closeCrop();
-}
-/* [파트 4 끝] */
-// ============================================================
-// [8. 데이터베이스 실제 입출력 및 목록 UI]
-// ============================================================
-
-// 공통 저장 함수
 function saveToDB(data) {
     const tx = db.transaction(['vocab'], 'readwrite');
     const store = tx.objectStore('vocab');
     store.add(data);
     tx.oncomplete = () => {
         showToast("등록 완료!");
-        loadVocabulary(); // 목록 갱신
+        loadVocabulary(); 
     };
 }
 
-// 이미지 문제 전용 등록 (Part 4의 applyCrop 결과 사용)
-function addImageWord() {
-    const preview = document.getElementById('preview-q-img');
-    const base64 = preview.dataset.base64;
-    const a = document.getElementById('img-a').value.trim();
-    const qText = document.getElementById('img-q-text').value.trim();
-    const desc = document.getElementById('img-desc').value.trim();
-
-    if (!base64) return showToast("사진을 선택하고 '완료'를 눌러주세요.", 'error');
-    if (!a) return showToast("정답을 입력하세요.", 'error');
-
-    saveToDB({
-        type: 'image',
-        q: base64, // Base64 데이터 저장
-        qText: escapeHtml(qText),
-        a: escapeHtml(a),
-        desc: escapeHtml(desc)
-    });
-
-    // 입력창 초기화
-    preview.style.display = 'none';
-    preview.dataset.base64 = "";
-    document.getElementById('img-a').value = "";
-    document.getElementById('img-q-text').value = "";
-    document.getElementById('img-desc').value = "";
-}
-
-// 단어 목록 렌더링 (해설 포함)
+// 단어 목록 렌더링
 function renderWordList() {
     const list = document.getElementById('word-list');
     list.innerHTML = "";
@@ -988,17 +818,13 @@ function renderWordList() {
         const info = document.createElement('div');
         info.style = "flex:1; font-size:0.85rem; overflow:hidden;";
         
-        let titleHtml = "";
-        if (v.type === 'image') {
-            titleHtml = `<span style="color:#1976d2; font-weight:bold;">[이미지]</span> ${v.qText || '(텍스트 없음)'}`;
-        } else {
-            titleHtml = `<b>${v.q}</b>`;
-        }
+        // 정답 색상 표시
+        const ansColor = v.a === 'O' ? 'var(--o-color)' : 'var(--x-color)';
+        const ansHtml = `<span style="color:${ansColor}; font-weight:900;">[${v.a}]</span>`;
 
         info.innerHTML = `
-            <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${titleHtml}</div>
-            <div style="color:var(--p); font-weight:bold; margin-top:2px;">정답: ${v.a}</div>
-            ${v.desc ? `<div style="color:#666; font-size:0.75rem; margin-top:2px; background:#f9f9f9; padding:2px 5px; border-radius:3px;">💡 ${v.desc}</div>` : ""}
+            <div style="margin-bottom:4px; font-weight:bold; line-height:1.3;">${ansHtml} ${v.q}</div>
+            ${v.desc ? `<div style="color:#666; font-size:0.75rem; background:#f5f5f5; padding:3px 6px; border-radius:4px; margin-top:4px;">💡 ${v.desc}</div>` : ""}
         `;
 
         div.appendChild(check);
@@ -1035,7 +861,7 @@ function selectAll() {
 }
 
 // ============================================================
-// [9. 백업 및 복구 (JSON)]
+// [8. 백업 및 복구 (JSON)]
 // ============================================================
 function exportJSON() {
     if (vocabulary.length === 0) return showToast("백업할 데이터가 없습니다.");
@@ -1045,7 +871,7 @@ function exportJSON() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `hero_quiz_backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.download = `hero_ox_backup_${new Date().toISOString().slice(0,10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
 }
@@ -1066,7 +892,6 @@ function handleJsonFile(e) {
             const store = tx.objectStore('vocab');
             
             imported.forEach(item => {
-                // 기존 ID는 삭제하고 새로 생성되도록 함
                 const newItem = { ...item };
                 delete newItem.id; 
                 store.add(newItem);
@@ -1081,10 +906,10 @@ function handleJsonFile(e) {
         }
     };
     reader.readAsText(file);
-    e.target.value = ""; // 초기화
+    e.target.value = ""; 
 }
 
-// 토스트 메시지 함수 (중복 방지용 재정의)
+// 토스트 메시지
 function showToast(msg, type = 'info') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
@@ -1094,16 +919,12 @@ function showToast(msg, type = 'info') {
     if (type === 'success') toast.style.background = "#43a047";
     
     container.appendChild(toast);
-    
-    // 리플로우 강제 후 클래스 추가
     setTimeout(() => toast.classList.add('show'), 10);
-    
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 300);
     }, 2500);
 }
-
 </script>
 </body>
 </html>
