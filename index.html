@@ -584,7 +584,6 @@ function updateStatUI() {
 // ============================================================
 function prepareDeck() {
     let eligible = vocabulary.filter(v => v.nextTurn <= player.totalTurns);
-    // 복습할 게 없으면, 가장 급한 것부터 당겨옴 (데이터가 적을 때 대비)
     if (eligible.length === 0 && vocabulary.length > 0) {
         vocabulary.sort((a, b) => a.nextTurn - b.nextTurn);
         eligible.push(vocabulary[0]);
@@ -599,7 +598,6 @@ function nextQuiz() {
         return;
     }
 
-    // 가중치 뽑기 (레벨이 낮을수록 자주 등장)
     const weightedPool = [];
     deck.forEach(v => {
         const weight = Math.max(1, 6 - v.lv); 
@@ -612,14 +610,12 @@ function nextQuiz() {
 }
 
 function renderQuizUI() {
-    // 1. 초기화
     document.getElementById('box-answer').style.display = 'none';
     document.getElementById('btns-ox').style.display = 'none';
     document.getElementById('btns-check').style.display = 'none';
     document.getElementById('btns-judge').style.display = 'none';
     document.getElementById('btns-next').style.display = 'none';
 
-    // 2. 질문 표시 (텍스트 + 이미지)
     const qText = document.getElementById('q-content-text');
     const qImg = document.getElementById('q-content-img');
     
@@ -631,36 +627,26 @@ function renderQuizUI() {
         qImg.style.display = 'none';
     }
 
-    // 3. 모드 결정 (정답이 O 또는 X 인가?)
     const pureAns = currentQuizData.a ? currentQuizData.a.trim().toUpperCase() : "";
     const isAutoOX = (pureAns === 'O' || pureAns === 'X');
 
     if (isAutoOX) {
-        // [모드 A] 즉시 판정 O/X
         document.getElementById('btns-ox').style.display = 'flex';
     } else {
-        // [모드 B] 자가 판정 (주관식/이미지 답안)
         document.getElementById('btns-check').style.display = 'flex';
     }
 }
 
-// [모드 A] O/X 제출
 function submitAnswer(choice) {
     if (!currentQuizData) return;
     player.totalTurns++; 
-    
     const realAns = currentQuizData.a.trim().toUpperCase();
-    if (choice === realAns) {
-        handleCorrect();
-    } else {
-        handleWrong(realAns);
-    }
+    if (choice === realAns) handleCorrect();
+    else handleWrong(realAns);
 }
 
-// [모드 B] 정답 확인 (공격 개시)
 function revealAnswer() {
     playSound('click');
-    // 정답 화면 표시
     const aBox = document.getElementById('box-answer');
     const aText = document.getElementById('a-content-text');
     const aImg = document.getElementById('a-content-img');
@@ -672,45 +658,49 @@ function revealAnswer() {
     } else {
         aImg.style.display = 'none';
     }
-    aBox.style.display = 'flex'; // 정답 박스 등장
+    aBox.style.display = 'flex'; 
 
-    // 버튼 교체 (공격 -> 채점)
     document.getElementById('btns-check').style.display = 'none';
     document.getElementById('btns-judge').style.display = 'flex';
 }
 
-// [모드 B] 자가 채점
 function judgeSelf(isCorrect) {
     player.totalTurns++;
-    if (isCorrect) {
-        handleCorrect();
-    } else {
-        handleWrong("직접 확인"); // 오답 처리
-    }
+    if (isCorrect) handleCorrect();
+    else handleWrong("직접 확인");
 }
 
-// 공통 정답 처리
 function handleCorrect() {
     playSound('correct');
     combo++;
     updateBuffUI();
     
-    // 강한 공격 (데미지 공식 적용)
-    const result = calculateInfiniteCrit(player.atk * 3, player.crit, 0); // 기본 공격보다 3배 강함
+    // 공격 처리
+    const result = calculateInfiniteCrit(player.atk * 3, player.crit, 0); 
     mob.hp = Math.max(0, mob.hp - result.damage);
     updateMobHpUI();
     createDamageText(result.damage, result.tier);
-    checkMobDeath(); // 처치 확인
+    checkMobDeath(); 
 
-    // 스탯 보너스 (랜덤)
+    // ★ [스탯 상승 로직] - 여기가 핵심입니다 ★
     const rand = Math.random();
     let msg = "";
-    if (rand < 0.4) { player.atk += 2; msg = "공격력▲"; } 
-    else if (rand < 0.7) { player.crit += 0.2; msg = "치명타▲"; } 
-    else { player.cdmg += 2; msg = "치명피해▲"; }
+    if (rand < 0.4) { 
+        player.atk += 2; 
+        msg = "공격력▲"; 
+    } else if (rand < 0.7) { 
+        player.crit += 0.2; 
+        msg = "치명타▲"; 
+    } else { 
+        player.cdmg += 2; 
+        msg = "치명피해▲"; 
+    }
+    
+    // ★ [누락되었던 부분] 화면 갱신 함수 호출 ★
+    updateStatUI(); 
+    
     showToast(`정답! ${msg}`, 'success');
 
-    // DB 업데이트 (성공 시 레벨업)
     currentQuizData.lv = Math.min(5, currentQuizData.lv + 1);
     currentQuizData.nextTurn = player.totalTurns + (currentQuizData.lv * 3) + 2; 
     updateWordStats(currentQuizData);
@@ -719,19 +709,16 @@ function handleCorrect() {
     showNextButton();
 }
 
-// 공통 오답 처리
 function handleWrong(answerText) {
     playSound('wrong');
     combo = 0;
     updateBuffUI();
     
     showToast(`틀렸습니다...`, 'error');
-    // 오답 시 플레이어 피격 연출 (화면 붉게)
     const screen = document.getElementById('screen-game');
     screen.style.backgroundColor = '#ffcdd2';
     setTimeout(() => screen.style.backgroundColor = '', 300);
 
-    // DB 업데이트 (실패 시 레벨 초기화)
     currentQuizData.lv = 0;
     currentQuizData.nextTurn = player.totalTurns; 
     currentQuizData.wrongCount++; 
@@ -747,13 +734,11 @@ function updateWordStats(word) {
 }
 
 function showNextButton() {
-    // 모든 버튼 숨기고 다음 버튼 표시
     document.getElementById('btns-ox').style.display = 'none';
     document.getElementById('btns-check').style.display = 'none';
     document.getElementById('btns-judge').style.display = 'none';
     const nextBtn = document.getElementById('btns-next');
     nextBtn.style.display = 'flex';
-    // 포커스 이동 (엔터키 연타 가능하게)
     document.getElementById('btn-next-quiz').focus();
 }
 
@@ -776,7 +761,6 @@ async function addProblem() {
     const qFile = document.getElementById('new-q-img').files[0];
     const aFile = document.getElementById('new-a-img').files[0];
 
-    // 유효성 검사: 질문이나 이미지 중 하나는 있어야 함
     if (!qText && !qFile) return showToast("질문을 입력하거나 사진을 올려주세요!", 'error');
     if (!aText && !aFile) return showToast("정답을 입력하거나 사진을 올려주세요!", 'error');
 
@@ -795,7 +779,7 @@ async function addProblem() {
 
     const newItem = {
         q: qText,
-        a: aText, // O, X 면 자동모드, 아니면 텍스트 정답
+        a: aText, 
         qImg: qImgData,
         aImg: aImgData,
         lv: 0,
@@ -808,7 +792,6 @@ async function addProblem() {
     tx.objectStore('vocab').add(newItem);
     tx.oncomplete = () => {
         showToast("문제 등록 완료!", 'success');
-        // 입력폼 초기화
         document.getElementById('new-q-text').value = "";
         document.getElementById('new-a-text').value = "";
         document.getElementById('new-q-img').value = "";
@@ -822,16 +805,13 @@ function renderWordList() {
     l.innerHTML = "";
     if(vocabulary.length===0) { l.innerHTML="<p style='text-align:center;color:#999;padding:10px;'>데이터 없음</p>"; return; }
     
-    // 최신순 정렬
     const sorted = [...vocabulary].sort((a,b) => (b.date || 0) - (a.date || 0));
 
     sorted.forEach(v => {
         const d = document.createElement('div');
         d.style = "background:#FAFAFA; padding:8px; border-bottom:1px solid #eee; display:flex; gap:5px; align-items:center;";
-        
         let typeBadge = "";
         if (v.qImg || v.aImg) typeBadge = "<span style='color:#E91E63; font-size:0.8rem;'>[📷]</span>";
-        
         d.innerHTML = `<input type="checkbox" class="word-check" data-id="${v.id}">
             <div style="flex:1; font-size:0.9rem; overflow:hidden;">
                 ${typeBadge} <b>Q:</b> ${v.q || "(이미지)"} <br>
@@ -845,7 +825,6 @@ function deleteSelected() {
     const chk = document.querySelectorAll('.word-check:checked');
     if(chk.length===0) return showToast("선택 항목 없음");
     if(!confirm(`${chk.length}개의 문제를 삭제하시겠습니까?`)) return;
-    
     const tx = db.transaction(['vocab'], 'readwrite'); 
     const s = tx.objectStore('vocab');
     chk.forEach(c => s.delete(Number(c.dataset.id)));
@@ -854,7 +833,6 @@ function deleteSelected() {
 
 function selectAll() { const chk = document.querySelectorAll('.word-check'); const all = Array.from(chk).every(c=>c.checked); chk.forEach(c=>c.checked=!all); }
 
-// JSON 내보내기/가져오기 (이미지 데이터 포함 백업)
 function exportJSON() {
     if(vocabulary.length===0) return showToast("데이터 없음");
     const blob = new Blob([JSON.stringify(vocabulary)], {type: "application/json"});
@@ -872,20 +850,15 @@ function handleJsonFile(e) {
             const d = JSON.parse(ev.target.result);
             if(!Array.isArray(d)) throw new Error();
             if(!confirm(`총 ${d.length}개의 데이터를 복구하시겠습니까? (기존 데이터 유지)`)) return;
-            
             const tx = db.transaction(['vocab'], 'readwrite'); 
             const s = tx.objectStore('vocab');
-            d.forEach(i => { 
-                const n={...i}; delete n.id; // ID 재발급
-                s.add(n); 
-            });
+            d.forEach(i => { const n={...i}; delete n.id; s.add(n); });
             tx.oncomplete = () => { showToast("복구 완료"); loadVocabulary(); };
         } catch(err) { showToast("파일 오류", 'error'); }
     };
     r.readAsText(f); e.target.value = "";
 }
 
-// 엑셀 파싱 (기존 기능 유지)
 function toggleExcel() { const el = document.getElementById('excel-area'); el.style.display = el.style.display==='none'?'block':'none'; }
 function parseExcel() {
     const v = document.getElementById('excel-input').value.trim();
@@ -927,7 +900,6 @@ function showToast(msg, type = 'info') {
     setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 2000);
 }
 
-// 이미지 확대 모달
 function zoomImage(src) {
     if (!src) return;
     document.getElementById('modal-img').src = src;
@@ -937,7 +909,6 @@ function closeModal() {
     document.getElementById('modal-zoom').style.display = 'none';
 }
 
-// 사운드
 const snd = {
     click: (t) => { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = 'square'; o.frequency.setValueAtTime(600, t); g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05); o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.05); },
     attack: (t) => { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(150, t); g.gain.setValueAtTime(0.05, t); g.gain.linearRampToValueAtTime(0, t + 0.1); o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.1); },
@@ -949,26 +920,20 @@ const snd = {
 function playSound(type) { if (!isSoundOn || !audioCtx) return; if (audioCtx.state === 'suspended') audioCtx.resume(); snd[type](audioCtx.currentTime); }
 function toggleSound() { isSoundOn = !isSoundOn; showToast(isSoundOn ? "사운드 켜짐" : "사운드 꺼짐"); }
 
-// 키보드 조작
 window.addEventListener('keydown', (e) => {
     const gameScreen = document.getElementById('screen-game');
     if (gameScreen.style.display !== 'flex') return;
-
-    // 모드 A: O/X 키
     if (document.getElementById('btns-ox').style.display === 'flex') {
         if (e.key === 'ArrowLeft') submitAnswer('O');
         if (e.key === 'ArrowRight') submitAnswer('X');
     }
-    // 모드 B: 확인 키
     else if (document.getElementById('btns-check').style.display === 'flex') {
         if (e.key === ' ' || e.key === 'Enter') revealAnswer();
     }
-    // 모드 B: 채점 키
     else if (document.getElementById('btns-judge').style.display === 'flex') {
         if (e.key === 'ArrowLeft') judgeSelf(true);
         if (e.key === 'ArrowRight') judgeSelf(false);
     }
-    // 다음 문제
     else if (document.getElementById('btns-next').style.display === 'flex') {
         if (e.key === 'Enter' || e.key === ' ') manualNextQuiz();
     }
