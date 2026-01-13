@@ -483,7 +483,7 @@ function heroAttack() {
     hero.classList.add('attack');
     playSound('attack');
     
-    const baseDmg = Math.max(1, Math.floor(player.atk * 0.2));
+    const baseDmg = Math.max(1, Math.floor(player.atk * 0.5));
     const result = calculateInfiniteCrit(baseDmg, player.crit, 0);
     
     mob.hp = Math.max(0, mob.hp - result.damage);
@@ -637,7 +637,7 @@ function handleCorrect() {
     updateBuffUI();
     
     // 공격 및 데미지
-    const result = calculateInfiniteCrit(player.atk * 3, player.crit, 0); 
+    const result = calculateInfiniteCrit(player.atk * 2, player.crit, 0); 
     mob.hp = Math.max(0, mob.hp - result.damage);
     updateMobHpUI();
     createDamageText(result.damage, result.tier);
@@ -929,5 +929,6 @@ window.addEventListener('keydown', (e) => {
 </script>
 </body>
 </html>
+
 
 
