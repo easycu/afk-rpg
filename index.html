@@ -815,12 +815,20 @@ function handleJsonFile(e) {
 
 // 엑셀 기능 (통합 모드용으로 단순화)
 function toggleExcel() { const el = document.getElementById('excel-area'); el.style.display = el.style.display==='none'?'block':'none'; }
+// [수정됨] 엑셀/스프레드시트 줄바꿈 셀 인식 기능 강화
 function parseExcel() {
-    const v = document.getElementById('excel-input').value.trim();
-    if(!v) return showToast("내용 없음", 'error');
+    let v = document.getElementById('excel-input').value; // trim()을 미리 하지 않음 (데이터 보존)
+    if(!v || !v.trim()) return showToast("내용 없음", 'error');
     
-    const lines = v.split(/\r?\n/);
+    // 1. 구글 시트 특유의 "따옴표 안 줄바꿈" 처리
+    // 예: "첫째줄\n둘째줄" -> "첫째줄@@BR@@둘째줄" 로 임시 변경하고 따옴표 제거
+    v = v.replace(/"([^"]*)"/g, (match, p1) => {
+        return p1.replace(/\n/g, "@@BR@@");
+    });
+
+    const lines = v.split(/\r?\n/); // 이제 진짜 행바꿈(엔터) 기준으로만 나뉨
     let count = 0;
+    
     const tx = db.transaction(['vocab'], 'readwrite');
     const s = tx.objectStore('vocab');
     
@@ -828,8 +836,9 @@ function parseExcel() {
         // 탭으로 구분된 2개의 컬럼만 인식 (질문, 정답)
         const p = l.split('\t');
         if(p.length >= 2) {
-            const qRaw = p[0].trim();
-            const aRaw = p[1].trim();
+            // 2. 임시로 바꿔뒀던 @@BR@@을 다시 진짜 줄바꿈(\n)으로 복구
+            const qRaw = p[0].trim().replace(/@@BR@@/g, "\n").replace(/""/g, '"'); // 엑셀의 이중따옴표("")도 하나(")로 복구
+            const aRaw = p[1].trim().replace(/@@BR@@/g, "\n").replace(/""/g, '"');
             
             if(qRaw && aRaw) {
                 s.add({ 
@@ -846,7 +855,13 @@ function parseExcel() {
             }
         }
     });
-    tx.oncomplete = () => { showToast(`${count}건 등록 완료`); document.getElementById('excel-input').value=""; toggleExcel(); loadVocabulary(); };
+    
+    tx.oncomplete = () => { 
+        showToast(`${count}건 등록 완료`); 
+        document.getElementById('excel-input').value = ""; 
+        toggleExcel(); 
+        loadVocabulary(); 
+    };
 }
 
 // ============================================================
@@ -914,4 +929,5 @@ window.addEventListener('keydown', (e) => {
 </script>
 </body>
 </html>
+
 
